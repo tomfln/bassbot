@@ -28,11 +28,12 @@ export default createCommand({
 })
 
 export async function showQueue(i: RepliableInteraction, reply: ReplyHelper, player: PlayerWithQueue, page: number) {
-    const maxPage = Math.ceil(player.queue.length / 10) || 1
+    const totalTracks = [player.current, ...player.queue]
+    const maxPage = Math.ceil(totalTracks.length / 10) || 1
     if (page && page > maxPage)
       return reply.warn(`Page ${page} doesn't exist, queue only has ${maxPage} page${maxPage == 1 ? "" : "s"}`)
 
-    const tracksToShow = [player.current, ...player.queue].slice(10 * (page - 1), 10 * page)
+    const tracksToShow = totalTracks.slice(10 * (page - 1), 10 * page)
 
     if (tracksToShow.length === 0) return reply("No songs in queue")
     const rickroll = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
