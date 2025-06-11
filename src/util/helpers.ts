@@ -1,7 +1,7 @@
 import type { Track } from "shoukaku"
 import { type GuildOptions } from "./db"
 import type { z } from "zod"
-import { Maybe } from "./maybe"
+import { Result } from "./result"
 
 /** Checks if a channel id is an allowed channel based on the guild's options */
 export function isAllowedChannel(guildOpts: GuildOptions | null, channelId: string): guildOpts is null {
@@ -46,11 +46,11 @@ export async function fetchAndParse<T extends z.ZodSchema>(
   url: string,
   schema: T,
   init?: RequestInit
-): Promise<Maybe<z.infer<T>, unknown>> {
+): Promise<Result<z.infer<T>, unknown>> {
   try {
     const json = await fetch(url, init).then((d) => d.json())
-    return Maybe.Yes(schema.parse(json))
+    return Result.Ok(schema.parse(json))
   } catch (e) {
-    return Maybe.No(e)
+    return Result.Err(e)
   }
 }

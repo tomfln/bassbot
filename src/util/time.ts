@@ -1,4 +1,4 @@
-import { Maybe } from "./maybe"
+import { Result } from "./result"
 
 const timeRegex1 = new RegExp(/\s*(?<mins>\d{0,2}):(?<secs>\d{2})\s*/)
 const timeRegex2 = new RegExp(/\s*((?<mins>\d{1,2})m(in)?)?\s*((?<secs>\d{1,2})s)?\s*/)
@@ -18,16 +18,16 @@ export class Timestamp {
   }
 
   /** Takes a timestamp in format MM:SS or MM and returns the milliseconds */
-  static from(time: string): Maybe<Timestamp, string> {
+  static from(time: string): Result<Timestamp, string> {
     const match = timeRegex1.exec(time) ?? timeRegex2.exec(time)
-    if (!match) return Maybe.No("Invalid timestamp format, use MM:SS or MMm SSs")
+    if (!match) return Result.Err("Invalid timestamp format, use MM:SS or MMm SSs")
 
     const mins = parseInt(match.groups!.mins ?? "0")
     const secs = parseInt(match.groups!.secs ?? "0")
 
-    if (secs >= 60) return Maybe.No("Seconds must be less than 60")
+    if (secs >= 60) return Result.Err("Seconds must be less than 60")
 
-    return Maybe.Yes(new Timestamp(mins, secs))
+    return Result.Ok(new Timestamp(mins, secs))
   }
   
   static fromMillis(millis: number) {

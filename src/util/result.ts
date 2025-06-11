@@ -1,12 +1,12 @@
-export type Maybe<Value, Error = undefined> = 
+export type Result<Value, Error = undefined> = 
   | { success: true; value: Value, error?: undefined }
   | { success: false; value?: undefined, error: Error }
   
-export const Maybe = {
-  Yes<V, E = null>(value: V): Maybe<V, E> {
+export const Result = {
+  Ok<V, E = null>(value: V): Result<V, E> {
     return { success: true, value }
   },
-  No<V, E>(error: E): Maybe<V, E> {
+  Err<V, E>(error: E): Result<V, E> {
     return { success: false, error }
   }
 }

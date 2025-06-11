@@ -22,12 +22,13 @@ export default createCommand({
     const page = i.isButton()
       ? parseInt(i.customId.split(":")[1] ?? "1")
       : options.page ?? 1
+    const isFromQueueMessage = i.isButton() && i.customId.startsWith("queue:")
 
-    await showQueue(i, reply, player, page)
+    await showQueue(i, reply, player, page, isFromQueueMessage)
   },
 })
 
-export async function showQueue(i: RepliableInteraction, reply: ReplyHelper, player: PlayerWithQueue, page: number) {
+export async function showQueue(i: RepliableInteraction, reply: ReplyHelper, player: PlayerWithQueue, page: number, isFromQueueMessage: boolean) {
     const totalTracks = [player.current, ...player.queue]
     const maxPage = Math.ceil(totalTracks.length / 10) || 1
     if (page && page > maxPage)
@@ -38,11 +39,11 @@ export async function showQueue(i: RepliableInteraction, reply: ReplyHelper, pla
     if (tracksToShow.length === 0) return reply("No songs in queue")
     const rickroll = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
 
-    await replyEmbed(i, "Getting song data...", { flags: MessageFlags.Ephemeral })
-
-    const description = tracksToShow
+    if (!isFromQueueMessage) {
+      await replyEmbed(i, "Getting song data...", { flags: MessageFlags.Ephemeral })
+    }    const description = tracksToShow
       .map((song, index) => {
-        let label = page == 1 ? (index == 0 ? "▸" : index) : 10 * (page - 1) + index + 1
+        let label = page == 1 ? (index == 0 ? "▸" : index) : 10 * (page - 1) + index
         if (page != 1 || index != 0) label += ":"
 
         if (!song) return "No song playing"
@@ -83,5 +84,9 @@ export async function showQueue(i: RepliableInteraction, reply: ReplyHelper, pla
     } satisfies InteractionEditReplyOptions
 
 
-    await i.editReply(content)
+    if (isFromQueueMessage && i.isButton()) {
+      await i.update(content)
+    } else {
+      await i.editReply(content)
+    }
 }

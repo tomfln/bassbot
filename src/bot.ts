@@ -51,6 +51,13 @@ export class BassBot extends Client<true> {
     player.init(this, i)
     return player
   }
+  
+  public async getOrCreatePlayer(i: ChatInputCommandInteraction<"cached">) {
+    const player = this.getPlayer(i.guildId)
+    if (player) return player
+
+    return this.joinVC(i)
+  }
 
   public async leaveVC(guildId: string) {
     return this.lava.leaveVoiceChannel(guildId)
@@ -118,7 +125,7 @@ export class BassBot extends Client<true> {
       await command.run(ctx)
 
     } catch (e) {
-      logger.error("CMD ERROR", "Unhandled Exception in command:")
+      logger.error("command runner", "Unhandled Exception in command:")
       logger.debug(e)
 
       if (isCommand)
