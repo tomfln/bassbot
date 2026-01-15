@@ -1,4 +1,6 @@
+import env from "@/env"
 import StormDB, { FileSaveLocation, JsonFile, type DocType } from "@nlfmt/stormdb"
+import { join } from "node:path"
 import { z } from "zod"
 
 const models = {
@@ -10,8 +12,9 @@ const models = {
 
 export type GuildOptions = DocType<typeof models.guildOptions>
 
+const dbFile = join(env.DATA_DIR, "db.json")
 const storage = new JsonFile(
-  new FileSaveLocation("db.json", {
+  new FileSaveLocation(dbFile, {
     createIfNotExists: true,
   })
 )

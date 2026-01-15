@@ -1,5 +1,6 @@
 import z from "zod"
 import { initEnv } from "@/util/init-env"
+import { resolve } from "node:path"
 
 const envSchema = z.object({
   TOKEN: z.string().min(1),
@@ -7,6 +8,8 @@ const envSchema = z.object({
   W2G_KEY: z.string().min(1),
   SPOTIFY_CLIENT_ID: z.string().min(1),
   SPOTIFY_SECRET: z.string().min(1),
+  DATA_DIR: z.string().default("./")
+    .transform(dir => resolve(import.meta.dir, "..", dir)),
 })
 
 export default initEnv(envSchema)
