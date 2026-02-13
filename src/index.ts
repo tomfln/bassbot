@@ -5,7 +5,7 @@ import logger from "./util/logger"
 
 const bot = new BassBot()
 
-bot.on("ready", ({ user }) => {
+bot.on("clientReady", ({ user }) => {
   logger.info("Logged in as " + user.displayName)
 
   setupLavalinkEvents(bot)

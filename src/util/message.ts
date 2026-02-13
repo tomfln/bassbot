@@ -39,7 +39,7 @@ export function createMessageEmbed(msg: string, opts?: EmbedOpts) {
     description: msg,
     timestamp: opts?.timestamp ? new Date().toISOString() : undefined,
 
-    fields: opts?.fields ? opts?.fields : [],
+    fields: opts?.fields ?? [],
     footer: opts?.footer,
   }
   return embed

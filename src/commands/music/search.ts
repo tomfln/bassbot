@@ -37,7 +37,7 @@ export default createCommand({
     ])
     
     const songs = result
-      .map((r) => (r && r.loadType === LoadType.SEARCH ? r.data : []))
+      .map((r) => (r?.loadType === LoadType.SEARCH ? r.data : []))
       .flat()
       .splice(0, 25)
 

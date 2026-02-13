@@ -1,6 +1,5 @@
 import path from "node:path"
 import { z } from "zod"
-import { generateErrorMessage } from "zod-error"
 import env from "./env"
 
 const nodeOptionSchema = z.array(
@@ -24,7 +23,7 @@ async function loadNodes() {
 
   if (!parsed.success) {
     console.error("\n❌ Invalid node definition:")
-    console.error(generateErrorMessage(parsed.error.issues))
+    console.error(z.prettifyError(parsed.error))
     console.error("\n")
     process.exit(1)
   }
