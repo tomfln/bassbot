@@ -1,6 +1,7 @@
 import path from "node:path"
 import { z } from "zod"
 import { generateErrorMessage } from "zod-error"
+import env from "./env"
 
 const nodeOptionSchema = z.array(
   z.object({
@@ -13,7 +14,7 @@ const nodeOptionSchema = z.array(
 )
 
 async function loadNodes() {
-  const defPath = path.join(import.meta.dir, "..", "nodes.json")
+  const defPath = path.join(env.DATA_DIR, "nodes.json")
   const file = Bun.file(defPath)
 
   if (!await file.exists()) return []
@@ -26,6 +27,10 @@ async function loadNodes() {
     console.error(generateErrorMessage(parsed.error.issues))
     console.error("\n")
     process.exit(1)
+  }
+  
+  if (parsed.data.length === 0) {
+    console.warn("\n⚠️  No nodes defined in nodes.json\n")
   }
 
   return parsed.data
