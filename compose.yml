@@ -1,0 +1,37 @@
+# Sample docker-compose file to run the bot together with lavalink.
+version: "3.9"
+
+services:
+  bassbot:
+    image: ghcr.io/tomfln/bassbot:latest
+    container_name: bassbot
+    restart: unless-stopped
+    networks:
+      - lavalink
+    volumes:
+      - /path/to/bassbot-data:/data # Persist bot data (e.g., database, config) on the host
+    environment:
+      CLIENT_ID: your_client_id_here # Replace with your Discord application client ID
+      TOKEN: your_token_here # Replace with your Discord bot token
+      W2G_KEY: your_w2g_key_here # Replace with your Watch2Gether API key
+
+  lavalink:
+    image: ghcr.io/lavalink-devs/lavalink:latest
+    container_name: lavalink
+    restart: unless-stopped
+    environment:
+      - _JAVA_OPTIONS=-Xmx4G # Adjust memory allocation as needed
+    volumes:
+      - /path/to/lavalink/application.yml:/opt/Lavalink/application.yml # Persist lavalink config on the host
+      - /path/to/lavalink/plugins:/opt/Lavalink/plugins # Persist lavalink plugins on the host
+    expose:
+      - 2333
+    ports:
+      - "2333:2333"
+    networks:
+      - lavalink
+
+networks:
+  lavalink:
+    name: lavalink
+    
