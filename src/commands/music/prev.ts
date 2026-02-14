@@ -4,7 +4,7 @@ import isInGuild from "@/validators/isInGuild"
 
 export default createCommand({
   description: "Plays the previous song in the queue",
-  allowButtons: true,
+  sources: { command: true, button: true },
   
   validators: [isInGuild()],
   middleware: m => m.use(requireHistory),

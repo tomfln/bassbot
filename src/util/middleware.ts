@@ -1,17 +1,13 @@
-import type { ApplicationCommandOption, Awaitable } from "discord.js"
+import type { Awaitable } from "discord.js"
 import type { CommandContext } from "./command"
 import type { AbortHelper } from "./reply"
 
-export type MiddlewareFn<AllowButtons extends boolean, Options extends ApplicationCommandOption[], Data extends Record<string, any>, NewData extends Record<string, any>> = (
-  ctx: CommandContext<AllowButtons, Options, Data>,
-  abort: AbortHelper
-) => Awaitable<NewData | null>
+export type MiddlewareFn<
+  NewData extends Record<string, any> = Record<string, never>,
+> = (ctx: CommandContext<any, any, any>, abort: AbortHelper) => Awaitable<NewData | null>
 
-export function createMiddleware<
-  AllowButtons extends boolean,
-  Options extends ApplicationCommandOption[],
-  Data extends Record<string, any>,
-  NewData extends Record<string, any>,
->(fn: MiddlewareFn<AllowButtons, Options, Data, NewData>) {
+export function createMiddleware<NewData extends Record<string, any>>(
+  fn: (ctx: CommandContext<any, any, any>, abort: AbortHelper) => Awaitable<NewData | null>,
+) {
   return fn
 }

@@ -10,7 +10,6 @@ import { createReplyHelper } from "@/util/reply"
 
 export default createCommand({
   description: "Add multiple songs to the queue from a list",
-  allowButtons: false,
   options: buildOptions().build(),
 
   validators: [isInGuild(), isBoundChannel(), isInBoundVC()],

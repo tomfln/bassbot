@@ -3,6 +3,7 @@ import { Constants, Player, type Track } from "shoukaku"
 import { createMessageEmbed, EmbedColor, nowPlayingButtons, nowPlayingMessage } from "./util/message"
 import type { BassBot } from "./bot"
 import logger from "./util/logger"
+import { Queue } from "./queue"
 
 export const LoopMode = {
   None: "None",
@@ -13,9 +14,7 @@ export const LoopMode = {
 export type LoopMode = keyof typeof LoopMode
 
 export class PlayerWithQueue extends Player {
-  public history: Track[] = []
-  private _current?: Track
-  public queue: Track[] = []
+  public q = new Queue()
 
   public textChannel: GuildTextBasedChannel | null = null
   public bot!: BassBot
@@ -23,10 +22,18 @@ export class PlayerWithQueue extends Player {
   private playerMsgId: string | null = null
   private _disconnect: ReturnType<typeof setTimeout> | null = null
   private loopMode: LoopMode = LoopMode.None
+  private _playing = false
 
-  init(bot: BassBot, i: ChatInputCommandInteraction<"cached">) {
+  async init(bot: BassBot, i: ChatInputCommandInteraction<"cached">) {
     this.bot = bot
     this.textChannel = i.channel
+
+    // Try to restore a saved queue
+    const savedQueue = await Queue.load(i.guildId)
+    if (savedQueue) {
+      this.q = savedQueue
+      logger.info(`Restored saved queue for guild ${i.guild.name} (${this.q.totalLength} tracks)`)
+    }
 
     this.on("end", async ({ reason }) => {
       if (this.playerMsgId && this.textChannel) {
@@ -38,17 +45,11 @@ export class PlayerWithQueue extends Player {
       if (reason != "finished" && reason != "loadFailed") return
 
       if (this.loopMode == LoopMode.Song)
-        return this.play(this.current)
+        return this.play(this.q.current)
       
-      // Swap history and queue
-      if (this.loopMode == LoopMode.Queue && this.queue.length == 0) {
-        if (this._current) {
-          this.history.push(this._current)
-          this._current = undefined
-        }
-        if (this.history.length > 0) {
-          this.queue.push(this.history.shift()!)
-        }
+      // Restart queue when looping and reached the end
+      if (this.loopMode == LoopMode.Queue && this.q.length == 0) {
+        this.q.restart()
         return this.next()
       }
       else if (this.loopMode == LoopMode.Autoplay) {
@@ -96,17 +97,27 @@ export class PlayerWithQueue extends Player {
   }
 
   public get current() {
-    return this._current
+    return this._playing ? this.q.current : undefined
+  }
+
+  /** Convenience getters for backward compatibility with commands */
+  public get queue(): readonly Track[] {
+    return this.q.upcoming
+  }
+
+  public get history(): readonly Track[] {
+    return this.q.history
   }
 
   public async play(track: Track | undefined) {
-    this._current = track
     if (!track) {
+      this._playing = false
       await this.stopTrack()
       this.scheduleDisconnect()
       return
     }
 
+    this._playing = true
     this.cancelDisconnect()
     await this.playTrack({
       track: { encoded: track.encoded },
@@ -116,56 +127,48 @@ export class PlayerWithQueue extends Player {
   }
 
   public async next(pos: number | null = null) {
-    if (this.current) this.history.push(this.current)
-    if (pos && pos > 1) {
-      const skipped = this.queue.splice(0, pos - 1)
-      this.history.push(...skipped)
-    }
-    await this.play(this.queue.shift())
+    const track = this.q.next(pos && pos > 1 ? pos : 1)
+    await this.play(track)
+    void this.q.save(this.guildId)
   }
 
   public async prev() {
-    if (this.current) this.queue.unshift(this.current)
-    await this.play(this.history.pop())
+    const track = this.q.prev()
+    await this.play(track)
+    void this.q.save(this.guildId)
   }
 
   public async addTracks(tracks: Track[], next = false) {
-    if (next) this.queue.unshift(...tracks)
-    else this.queue.push(...tracks)
+    // When not actively playing, always insert as "next" so the new track
+    // plays before any remaining items from a restored queue
+    this.q.add(tracks, next || !this._playing)
     if (!this.current) await this.next()
+    else void this.q.save(this.guildId)
   }
   public addTrack(track: Track, next = false) {
     return this.addTracks([track], next)
   }
 
   public shuffle() {
-    for (let i = 0; i < this.queue.length; i++) {
-      const ri = Math.floor(Math.random() * this.queue.length)
-
-      const tmp = this.queue[ri]!
-      this.queue[ri] = this.queue[i]!
-      this.queue[i] = tmp
-    }
+    this.q.shuffle()
+    void this.q.save(this.guildId)
   }
 
   public clear() {
-    this.queue = []
+    this.q.clear()
+    void this.q.save(this.guildId)
   }
 
   public moveTrack(from: number, to: number) {
-    if (!this.isValidQueuePos(from, true)) return null
-    if (!this.isValidQueuePos(to, true)) return null
-
-    const track = this.queue.splice(from, 1)[0]!
-    this.queue.splice(to, 0, track)
+    const track = this.q.move(from, to)
+    if (track) void this.q.save(this.guildId)
     return track
   }
 
   public remove(from: number, to: number) {
-    if (from > to || !this.isValidQueuePos(from, false) || !this.isValidQueuePos(to, false)) return null
-
-    const deleted = this.queue.splice(from, to)
-    return deleted.length
+    const count = this.q.remove(from, to)
+    if (count) void this.q.save(this.guildId)
+    return count
   }
 
   public async setPaused(paused: boolean) {
@@ -181,14 +184,12 @@ export class PlayerWithQueue extends Player {
   }
 
   public getQueueDuration() {
-    return this.queue.reduce((acc, track) => acc + track.info.length, 0)
-  }
-
-  private isValidQueuePos(pos: number, allowEndPos: boolean) {
-    return allowEndPos ? pos >= 0 && pos <= this.queue.length : pos >= 0 && pos < this.queue.length
+    return this.q.getUpcomingDuration()
   }
 
   public async disconnect() {
+    // Save the queue before disconnecting
+    void this.q.save(this.guildId)
     await this.destroy()
     await this.bot.leaveVC(this.guildId)
   }

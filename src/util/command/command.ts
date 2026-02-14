@@ -1,9 +1,14 @@
 import type { BassBot } from "@/bot"
 import {
   type ApplicationCommandOption,
+  ApplicationCommandOptionType,
+  AutocompleteInteraction,
   type Awaitable,
   ButtonInteraction,
   ChatInputCommandInteraction,
+  type CommandOptionNumericResolvableType,
+  ContextMenuCommandInteraction,
+  type Permissions,
 } from "discord.js"
 import fs from "node:fs"
 import path from "node:path"
@@ -14,74 +19,165 @@ import type { Validator } from "../validator"
 import type { MiddlewareFn } from "../middleware"
 import type { Flatten } from "../types"
 
+export interface AutocompleteContext<
+  Options extends ApplicationCommandOption[] = [],
+> {
+    i: AutocompleteInteraction<"cached">
+    bot: BassBot
+    options: Partial<ResolveOptions<Options>>
+    getFocused: <Full extends boolean = false>(full?: Full) => Full extends true
+      ? ExtractAutocompleteOptions<Options>
+      : ExtractAutocompleteOptions<Options>["name"]
+}
+
+type ExtractAutocompleteOptions<T extends ApplicationCommandOption[]> = {
+  [K in keyof T]: T[K] extends { autocomplete: true }
+    ? {
+        name: T[K]["name"]
+        type: T[K]["type"]
+        value: T[K]["type"] extends CommandOptionNumericResolvableType
+          ? number
+          : T[K]["type"] extends ApplicationCommandOptionType.String
+          ? string
+          : never
+      }
+    : never
+}[number]
+
 export interface CommandContext<
-  AllowButtons extends boolean = false,
+  Sources extends CommandSources = DefaultCommandSources,
   Options extends ApplicationCommandOption[] = [],
   Data extends Record<string, any> = Record<string, never>,
 > {
-  i: AllowButtons extends true
-    ? ChatInputCommandInteraction<"cached"> | ButtonInteraction<"cached">
-    : ChatInputCommandInteraction<"cached">
+  i: (Sources["command"] extends true ? ChatInputCommandInteraction<"cached"> : never)
+    | (Sources["button"] extends true ? ButtonInteraction<"cached"> : never)
+    | (Sources["contextMenu"] extends true ? ContextMenuCommandInteraction<"cached"> : never) 
   bot: BassBot
   reply: ReplyHelper
   data: Data,
-  options: ResolveOptions<Options>
+  options: Sources["command"] extends true 
+    ? (Sources["button"] extends true ? ResolveOptions<Options> | undefined : 
+       Sources["contextMenu"] extends true ? ResolveOptions<Options> | undefined : 
+       ResolveOptions<Options>)
+    : undefined
 }
 
+type Locales =
+  | "da"
+  | "de"
+  | "en-GB"
+  | "en-US"
+  | "es-ES"
+  | "es-419"
+  | "fr"
+  | "hr"
+  | "it"
+  | "lt"
+  | "hu"
+  | "nl"
+  | "no"
+  | "pl"
+  | "pt-BR"
+  | "ro"
+  | "fi"
+  | "sv-SE"
+  | "vi"
+  | "tr"
+  | "cs"
+  | "el"
+  | "bg"
+  | "ru"
+  | "uk"
+  | "hi"
+  | "th"
+  | "zh-CN"
+  | "ja"
+  | "zh-TW"
+  | "ko"
+  
+export interface CommandSources {
+  command?: boolean
+  button?: boolean
+  contextMenu?: boolean
+}
+export interface DefaultCommandSources {
+  command: true
+}
+
+export interface CommandDefinition<
+  Sources extends CommandSources = DefaultCommandSources,
+  Options extends ApplicationCommandOption[] = [],
+  Data extends Record<string, any> = Record<string, never>,
+> {
+  name: string
+  description: string | Record<Locales, string>
+  options?: Options
+  defaultMemberPermissions?: Permissions | bigint | number | null | undefined
+  nsfw?: boolean
+  contexts?: {
+    guild?: boolean
+    botDm?: boolean
+    privateChannel?: boolean
+  }
+  sources?: Sources
+  validators?: Validator[]
+  middleware?: (m: MiddlewareBuilder) => MiddlewareBuilder<Data>
+  run: (ctx: CommandContext<NoInfer<Sources>, Options, Data>) => Awaitable<unknown>
+  autocomplete?: (ctx: AutocompleteContext<Options>) => Awaitable<void>
+}
+  
 type MergeData<A extends Record<string, any>, B extends Record<string, any> | null> = B extends null
   ? A
   : Flatten<A & B>
 
 export class MiddlewareBuilder<
-  AllowButtons extends boolean,
-  Options extends ApplicationCommandOption[],
   Data extends Record<string, any> = Record<string, never>,
 > {
-  middlewares: MiddlewareFn<any, any, any, any>[] = []
+  middlewares: MiddlewareFn<any>[] = []
 
-  public use<NewData extends Record<string, any>>(fn: MiddlewareFn<AllowButtons, Options, Data, NewData>) {
+  public use<NewData extends Record<string, any>>(fn: MiddlewareFn<NewData>) {
     this.middlewares.push(fn)
-    return this as unknown as MiddlewareBuilder<AllowButtons, Options, MergeData<Data, NewData>>
+    return this as unknown as MiddlewareBuilder<MergeData<Data, NewData>>
   }
 }
 
-export interface Command<
-  AllowButtons extends boolean = false,
+export type CommandConfig<
+  Sources extends CommandSources = DefaultCommandSources,
   Options extends ApplicationCommandOption[] = [],
   Data extends Record<string, any> = Record<string, never>,
-> {
-  name: string
-  description: string
-  allowButtons?: AllowButtons
-  category: string
-  options?: Options
-  validators?: Validator<NoInfer<AllowButtons>>[]
-  middleware?: ((m: MiddlewareBuilder<AllowButtons, Options>) => MiddlewareBuilder<AllowButtons, Options, Data>)
-  run: (ctx: CommandContext<NoInfer<AllowButtons>, Options, NoInfer<Data>>) => Awaitable<unknown>
-}
-
-export type CommandDef<
-  AllowButtons extends boolean = false,
-  Options extends ApplicationCommandOption[] = [],
-  Data extends Record<string, any> = Record<string, never>,
-> = Omit<Command<AllowButtons, Options, Data>, "category" | "name">
+> = Omit<CommandDefinition<Sources, Options, Data>, "name">
 
 export const createCommand = <
+  Sources extends CommandSources = DefaultCommandSources,
   Options extends ApplicationCommandOption[] = [],
-  Data extends Record<string, any> = Record<string, never>, 
-  AllowButtons extends boolean = false
->(cmd: CommandDef<AllowButtons, Options, Data>) => cmd
+  Data extends Record<string, any> = Record<string, never>,
+>(cmd: CommandConfig<Sources, Options, Data>) => cmd
+
+export interface LoadedCommand {
+  name: string
+  description: string | Record<Locales, string>
+  category: string
+  options?: ApplicationCommandOption[]
+  sources?: CommandSources
+  validators?: Validator[]
+  middleware?: (m: MiddlewareBuilder) => MiddlewareBuilder<any>
+  run: (ctx: CommandContext<any, any, any>) => Awaitable<unknown>
+  autocomplete?: (ctx: AutocompleteContext<any>) => Awaitable<void>
+  defaultMemberPermissions?: Permissions | bigint | number | null | undefined
+  nsfw?: boolean
+  contexts?: { guild?: boolean; botDm?: boolean; privateChannel?: boolean }
+}
 
 
 export async function loadCommands() {
   const dir = path.join(import.meta.dir, "..", "..", "commands")
-  const commands = new Map<string, Command<boolean, ApplicationCommandOption[], Record<string, never>>>()
+  const commands = new Map<string, LoadedCommand>()
   
   await Promise.allSettled(
     fs.readdirSync(dir).map(category =>
       fs.readdirSync(`${dir}/${category}`).map(async file => {
         const module = await import(`${dir}/${category}/${file}`)
-        const cmd = module.default as CommandDef<any, any>
+        const cmd = module.default as CommandConfig<any, any, any>
         const name = file.split(".")[0]!
         const valid = !!cmd.description
 

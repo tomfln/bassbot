@@ -3,7 +3,7 @@ import { createCommand } from "@/util/command"
 
 export default createCommand({
   description: "Pauses the player",
-  allowButtons: true,
+  sources: { command: true, button: true },
 
   middleware: m => m.use(requirePlayer),
 

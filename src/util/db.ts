@@ -8,6 +8,14 @@ const models = {
     guildId: z.string(),
     channels: z.array(z.string()).default([]),
   }),
+  savedQueues: z.object({
+    guildId: z.string(),
+    queue: z.object({
+      tracks: z.array(z.any()),
+      position: z.number(),
+      savedAt: z.number(),
+    }),
+  }),
 }
 
 export type GuildOptions = DocType<typeof models.guildOptions>

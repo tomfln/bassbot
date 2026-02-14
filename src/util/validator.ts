@@ -1,23 +1,16 @@
-import type { ApplicationCommandOption, Awaitable } from "discord.js"
+import type { Awaitable } from "discord.js"
 import type { CommandContext } from "./command"
 import { randomBytes } from "crypto"
 
-export type ValidatorFn<
-  AllowButtons extends boolean = false,
-  Options extends ApplicationCommandOption[] = [],
-  Data extends Record<string, unknown> = Record<string, never>,
-> = (ctx: CommandContext<AllowButtons, Options, Data>) => Awaitable<boolean>
+type Predicate<Args extends any[] = []> = Args extends [...infer _]
+  ? (ctx: CommandContext<any, any, any>, ...args: Args) => Awaitable<boolean>
+  : (ctx: CommandContext<any, any, any>) => Awaitable<boolean>
 
-type Predicate<AllowButtons extends boolean = false, Args extends any[] = []> = Args extends [...infer _]
-  ? (ctx: CommandContext<AllowButtons, any, any>, ...args: Args) => Awaitable<boolean>
-  : (ctx: CommandContext<AllowButtons, any, any>) => Awaitable<boolean>
-
-export interface Validator<AllowButtons extends boolean> {
+export interface Validator {
   readonly _id: string
-  validate: (ctx: CommandContext<AllowButtons, [], Record<string, never>>) => Awaitable<boolean>
-  deps?: Validator<any>[]
+  validate: (ctx: CommandContext<any, any, any>) => Awaitable<boolean>
+  deps?: Validator[]
 }
-type AnyValidator = Validator<any>
 
 function stableHashArray(arr: any[]): string {
   const json = JSON.stringify(arr, (key, value) =>
@@ -33,22 +26,22 @@ function stableHashArray(arr: any[]): string {
   return hash.toString(16)
 }
 
-function _createValidator<AllowButtons extends boolean = boolean, Args extends any[] = []>(
-  predicate: Predicate<AllowButtons, Args>,
-  deps?: Validator<any>[],
+function _createValidator<Args extends any[] = []>(
+  predicate: Predicate<Args>,
+  deps?: Validator[],
 ) {
   const id = randomBytes(8).toString("hex")
 
   return (...args: Args) =>
     ({
-      validate: (ctx: CommandContext<AllowButtons, [], Record<string, never>>) => predicate(ctx, ...args),
+      validate: (ctx: CommandContext<any, any, any>) => predicate(ctx, ...args),
       _id: id + "-" + stableHashArray(args),
       deps,
-    }) as Validator<AllowButtons>
+    }) as Validator
 }
 
-export function createValidator<Options extends any[] = [], AllowButtons extends boolean = boolean>(
-  validator: Predicate<AllowButtons, Options> | { deps: AnyValidator[]; validator: Predicate<AllowButtons, Options> },
+export function createValidator<Options extends any[] = []>(
+  validator: Predicate<Options> | { deps: Validator[]; validator: Predicate<Options> },
 ) {
   if (typeof validator === "function") {
     return _createValidator(validator)
@@ -56,10 +49,10 @@ export function createValidator<Options extends any[] = [], AllowButtons extends
   return _createValidator(validator.validator, validator.deps)
 }
 
-export async function runValidators(validators: Validator<any>[], ctx: CommandContext<any, any, any>) {
+export async function runValidators(validators: Validator[], ctx: CommandContext<any, any, any>) {
   const validatorCache = new Map<string, boolean>()
 
-  async function runValidator(validator: Validator<any>): Promise<boolean> {
+  async function runValidator(validator: Validator): Promise<boolean> {
     const cached = validatorCache.get(validator._id)
     if (cached !== undefined) {
       return cached

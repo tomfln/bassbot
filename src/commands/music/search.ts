@@ -1,7 +1,7 @@
-import { createCommand } from "@/util/command";
+import { createCommand, buildOptions } from "@/util/command";
 import { cleanTrackTitle } from "@/util/helpers";
 import { createMessageEmbed } from "@/util/message";
-import { ActionRowBuilder, ApplicationCommandOptionType, ComponentType, StringSelectMenuBuilder, StringSelectMenuOptionBuilder } from "discord.js";
+import { ActionRowBuilder, ComponentType, StringSelectMenuBuilder, StringSelectMenuOptionBuilder } from "discord.js";
 import { LoadType } from "shoukaku";
 
 function abbreviateString(str: string, maxLen: number) {
@@ -10,14 +10,13 @@ function abbreviateString(str: string, maxLen: number) {
 
 export default createCommand({
   description: "Search for a song.",
-  options: [
-    {
+  options: buildOptions()
+    .string({
       name: "query",
       description: "The song you want to search for.",
-      type: ApplicationCommandOptionType.String,
       required: true,
-    },
-  ],
+    })
+    .build(),
 
   run: async ({ i, options, reply, bot }) => {
     const connection = bot.lava.connections.get(i.guildId)

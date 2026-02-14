@@ -37,7 +37,8 @@ export default createCommand({
       if (!cmd) return reply.error(`Command '${command}' not found.`)
       footer = "Options marked with * are required."
       title = `Command: ${cmd.name}`
-      description = cmd.description + "\n\n"
+      const desc = typeof cmd.description === "string" ? cmd.description : cmd.description["en-US"] ?? Object.values(cmd.description)[0] ?? ""
+      description = desc + "\n\n"
       cmd.options?.forEach((o) => {
         description += `${typeMap[o.type]} **${o.name}**${"required" in o ? "*" : ""}: ${o.description}\n`
         if (o.type == ApplicationCommandOptionType.Subcommand) {
@@ -57,10 +58,12 @@ export default createCommand({
       title = "Available commands"
       description = commands
         .map(
-          (cmd) =>
-            `** ${cmd.name}**  ${"\u00A0".repeat(
+          (cmd) => {
+            const desc = typeof cmd.description === "string" ? cmd.description : cmd.description["en-US"] ?? Object.values(cmd.description)[0] ?? ""
+            return `** ${cmd.name}**  ${"\u00A0".repeat(
               Math.round((maxlen - 1.4 * pixelWidth(cmd.name, { bold: true, font: "arial" })) / pixelWidth("-")) + 3,
-            )}  ${cmd.description}`,
+            )}  ${desc}`
+          },
         )
         .join("\n")
       footer = "Type /help <command> to get more information about a specific command."

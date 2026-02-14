@@ -48,7 +48,7 @@ export class BassBot extends Client<true> {
       deaf: true,
     }) as PlayerWithQueue
     
-    player.init(this, i)
+    await player.init(this, i)
     return player
   }
   
@@ -84,16 +84,16 @@ export class BassBot extends Client<true> {
       logger.warn(`Command ${commandId} not found.`)
       return
     }
-    if (i.isButton() && !command.allowButtons) {
+    if (i.isButton() && !command.sources?.button) {
       logger.warn(`Button interaction for ${command.name} is not allowed.`)
       return
     }
 
-    const ctx: CommandContext<boolean, any, any> = {
+    const ctx: CommandContext<any, any, any> = {
       i,
       bot: this,
       reply: isCommand ? createReplyHelper(i) : mockReplyHelper(i),
-      options: isCommand ? parseOptions(i) : {},
+      options: isCommand ? parseOptions(i) : undefined,
       data: {},
     }
 

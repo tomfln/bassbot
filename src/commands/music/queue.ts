@@ -8,7 +8,7 @@ import { ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags, type Intera
 
 export default createCommand({
   description: "View a list of songs in the queue",
-  allowButtons: true,
+  sources: { command: true, button: true },
   options: buildOptions()
     .integer({
       name: "page",
@@ -21,7 +21,7 @@ export default createCommand({
   run: async ({ i, options, reply, data: { player } }) => {
     const page = i.isButton()
       ? parseInt(i.customId.split(":")[1] ?? "1")
-      : options.page ?? 1
+      : options?.page ?? 1
     const isFromQueueMessage = i.isButton() && i.customId.startsWith("queue:")
 
     await showQueue(i, reply, player, page, isFromQueueMessage)

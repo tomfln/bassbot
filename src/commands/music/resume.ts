@@ -3,7 +3,7 @@ import { createCommand } from "@/util/command";
 
 export default createCommand({
   description: "Resume the current song",
-  allowButtons: true,
+  sources: { command: true, button: true },
 
   middleware: m => m.use(requirePlayer),
 

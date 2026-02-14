@@ -3,7 +3,7 @@ import { createCommand, buildOptions } from "@/util/command"
 
 export default createCommand({
   description: "Plays the next song in the queue",
-  allowButtons: true,
+  sources: { command: true, button: true },
 
   options: buildOptions()
     .integer({
@@ -16,7 +16,7 @@ export default createCommand({
   middleware: m => m.use(requirePlayer),
 
   run: async ({ options, reply, data: { player } }) => {
-    await player.next(options.position)
+    await player.next(options?.position)
     return reply("Playing next song.")
   },
 })
