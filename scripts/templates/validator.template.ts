@@ -1,4 +1,4 @@
-import { createValidator } from "@/util/validator"
+import { createValidator } from "@bot/validator"
 
 export default createValidator(async ctx => {
   

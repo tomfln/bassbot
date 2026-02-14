@@ -1,8 +1,9 @@
 import type { ChatInputCommandInteraction, GuildTextBasedChannel } from "discord.js"
 import { Constants, Player, type Track } from "shoukaku"
-import { createMessageEmbed, EmbedColor, nowPlayingButtons, nowPlayingMessage } from "./util/message"
+import { createMessageEmbed, EmbedColor } from "@bot/message"
+import { nowPlayingButtons, nowPlayingMessage } from "./util/message"
 import type { BassBot } from "./bot"
-import logger from "./util/logger"
+import logger from "@bot/logger"
 import { Queue } from "./queue"
 
 export const LoopMode = {

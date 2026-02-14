@@ -1,4 +1,4 @@
-import { createValidator } from "@/util/validator"
+import { createValidator } from "@bot/validator"
 
 /** Checks if the command was run in a guild */
 export default createValidator(async ctx => {

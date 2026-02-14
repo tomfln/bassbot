@@ -1,5 +1,5 @@
 import requireQueue from "@/middlewares/requireQueue"
-import { createCommand, buildOptions } from "@/util/command"
+import { createCommand, buildOptions } from "@bot/command"
 
 export default createCommand({
   description: "Move a track in the queue to a different position",

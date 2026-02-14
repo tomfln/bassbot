@@ -3,53 +3,15 @@ import {
   ButtonBuilder,
   ButtonStyle,
   EmbedBuilder,
-  type APIEmbed,
-  type InteractionReplyOptions,
   type MessageCreateOptions,
 } from "discord.js"
 import { type Track } from "shoukaku"
 import { cleanTrackTitle } from "./helpers"
 import { AppEmoji } from "@/constants/emojis"
+import { EmbedColor } from "@bot/message"
 
-export const EmbedColor = {
-  Error: 0xe25d50,
-  Warn: 0xff8f30,
-  Success: 0x43b581,
-  Info: 0x7289da,
-  White90: 0xe6e6e6,
-} as const
-
-export function code(msg: unknown) {
-  return `\`\`\`${msg}\`\`\``
-}
-
-export interface EmbedOpts {
-  title?: string
-  color?: number
-  timestamp?: boolean
-  fields?: { name: string; value: string; inline?: boolean }[]
-  footer?: { text: string; icon_url?: string }
-  flags?: InteractionReplyOptions["flags"]
-}
-
-export function createMessageEmbed(msg: string, opts?: EmbedOpts) {
-  const embed: APIEmbed = {
-    title: opts?.title,
-    color: opts?.color,
-    description: msg,
-    timestamp: opts?.timestamp ? new Date().toISOString() : undefined,
-
-    fields: opts?.fields ?? [],
-    footer: opts?.footer,
-  }
-  return embed
-}
-
-export function embedMsg(msg: string, opts?: EmbedOpts) {
-  return {
-    embeds: [createMessageEmbed(msg, opts)],
-  }
-}
+// Re-export generic message helpers for convenience
+export { EmbedColor, code, createMessageEmbed, embedMsg, type EmbedOpts } from "@bot/message"
 
 export function nowPlayingButtons(paused: boolean) {
   return new ActionRowBuilder<ButtonBuilder>().addComponents(

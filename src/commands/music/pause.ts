@@ -1,5 +1,5 @@
 import requirePlayer from "@/middlewares/requirePlayer"
-import { createCommand } from "@/util/command"
+import { createCommand } from "@bot/command"
 
 export default createCommand({
   description: "Pauses the player",

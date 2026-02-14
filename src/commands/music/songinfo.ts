@@ -1,5 +1,5 @@
 import requirePlayer from "@/middlewares/requirePlayer"
-import { createCommand, buildOptions } from "@/util/command"
+import { createCommand, buildOptions } from "@bot/command"
 import { cleanTrackTitle } from "@/util/helpers"
 import { duration } from "@/util/time"
 import isBoundChannel from "@/validators/isBoundChannel"

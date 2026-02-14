@@ -1,7 +1,7 @@
 import type { Track } from "shoukaku"
 import { type GuildOptions } from "./db"
 import type { z } from "zod"
-import { Result } from "./result"
+import { Result } from "@bot/result"
 
 /** Checks if a channel id is an allowed channel based on the guild's options */
 export function isAllowedChannel(guildOpts: GuildOptions | null, channelId: string): guildOpts is null {

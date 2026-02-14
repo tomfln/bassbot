@@ -1,4 +1,4 @@
-import { createCommand, buildOptions } from "@/util/command"
+import { createCommand, buildOptions } from "@bot/command"
 import { fetchAndParse } from "@/util/helpers"
 import { z } from "zod"
 

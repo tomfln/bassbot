@@ -1,4 +1,4 @@
-import { createValidator } from "@/util/validator"
+import { createValidator } from "@bot/validator"
 import type { PermissionResolvable } from "discord.js"
 
 export default createValidator<[permissions: PermissionResolvable, checkAdmin?: boolean]>(

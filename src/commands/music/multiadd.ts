@@ -1,12 +1,12 @@
-import { createCommand, buildOptions } from "@/util/command"
+import { createCommand, buildOptions } from "@bot/command"
 import { cleanTrackTitle } from "@/util/helpers"
 import isBoundChannel from "@/validators/isBoundChannel"
 import isInBoundVC from "@/validators/isInBoundVC"
 import { resolveSong, type ResolvedPlaylist, type ResolvedTrack } from "@/util/song-search"
 import { MultiaddModal } from "@/modals/Multiadd.modal"
 import isInGuild from "@/validators/isInGuild"
-import { createMessageEmbed } from "@/util/message"
-import { createReplyHelper } from "@/util/reply"
+import { createMessageEmbed } from "@bot/message"
+import { createReplyHelper } from "@bot/reply"
 
 export default createCommand({
   description: "Add multiple songs to the queue from a list",

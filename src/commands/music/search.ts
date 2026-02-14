@@ -1,6 +1,6 @@
-import { createCommand, buildOptions } from "@/util/command";
+import { createCommand, buildOptions } from "@bot/command";
 import { cleanTrackTitle } from "@/util/helpers";
-import { createMessageEmbed } from "@/util/message";
+import { createMessageEmbed } from "@bot/message";
 import { ActionRowBuilder, ComponentType, StringSelectMenuBuilder, StringSelectMenuOptionBuilder } from "discord.js";
 import { LoadType } from "shoukaku";
 

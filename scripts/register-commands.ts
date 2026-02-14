@@ -17,7 +17,8 @@ const success = (msg: string) => console.log("\x1b[32m" + msg + "\x1b[0m")
 import { REST, Routes } from "discord.js"
 import readline from "node:readline"
 import env from "../src/env"
-import { loadCommands } from "../src/util/command"
+import { loadCommandFiles, type LoadedCommand } from "@bot/command"
+import path from "node:path"
 
 // Setup user confirmation prompt
 const rl = readline.createInterface({
@@ -42,7 +43,7 @@ const ROUTE = guildId
   ? Routes.applicationGuildCommands(env.CLIENT_ID, guildId)
   : Routes.applicationCommands(env.CLIENT_ID)
 
-function register(commands: Awaited<ReturnType<typeof loadCommands>>) {
+function register(commands: Map<string, LoadedCommand>) {
   const data = [...commands.values()].map((cmd) => ({
     name: cmd.name,
     description: cmd.description,
@@ -68,5 +69,6 @@ if (clear) {
     }
   )
 } else {
-  register(await loadCommands())
+  const commandDir = path.join(import.meta.dir, "..", "src", "commands")
+  register(await loadCommandFiles(commandDir, { depth: 2 }))
 }

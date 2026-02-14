@@ -1,6 +1,6 @@
 import type { Track } from "shoukaku"
 import db from "./util/db"
-import logger from "./util/logger"
+import logger from "@bot/logger"
 
 const QUEUE_MAX_AGE_MS = 4 * 60 * 60 * 1000 // 4 hours
 

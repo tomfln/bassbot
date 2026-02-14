@@ -1,4 +1,4 @@
-import { createMiddleware } from "@/util/middleware"
+import { createMiddleware } from "@bot/middleware"
 
 export default createMiddleware(async ({ i, bot }, abort) => {
   const player = bot.getPlayer(i.guildId)

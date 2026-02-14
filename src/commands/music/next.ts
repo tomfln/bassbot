@@ -1,5 +1,5 @@
 import requirePlayer from "@/middlewares/requirePlayer"
-import { createCommand, buildOptions } from "@/util/command"
+import { createCommand, buildOptions } from "@bot/command"
 
 export default createCommand({
   description: "Plays the next song in the queue",

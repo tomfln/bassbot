@@ -1,6 +1,6 @@
-import { Result } from "@/util/result"
+import { Result } from "@bot/result"
 import { LoadType, type Track, type Node } from "shoukaku"
-import logger from "@/util/logger"
+import logger from "@bot/logger"
 
 export interface ResolvedTrack {
   type: "track"

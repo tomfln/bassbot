@@ -1,4 +1,3 @@
-import type { BassBot } from "@/bot"
 import {
   type ApplicationCommandOption,
   ApplicationCommandOptionType,
@@ -13,17 +12,32 @@ import {
 import fs from "node:fs"
 import path from "node:path"
 import type { ResolveOptions } from "./option-resolver"
-import logger from "../logger"
 import type { ReplyHelper } from "../reply"
 import type { Validator } from "../validator"
 import type { MiddlewareFn } from "../middleware"
 import type { Flatten } from "../types"
+import type { Bot } from "../bot"
+import logger from "../logger"
+
+/**
+ * Module augmentation interface for registering a custom bot type.
+ * Augment this interface in your app code to get typed `ctx.bot`:
+ * ```ts
+ * declare module "@bot/command" {
+ *   interface Register { bot: MyBot }
+ * }
+ * ```
+ */
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface Register {}
+
+type RegisteredBot = Register extends { bot: infer B extends Bot<any> } ? B : Bot<any>
 
 export interface AutocompleteContext<
   Options extends ApplicationCommandOption[] = [],
 > {
     i: AutocompleteInteraction<"cached">
-    bot: BassBot
+    bot: RegisteredBot
     options: Partial<ResolveOptions<Options>>
     getFocused: <Full extends boolean = false>(full?: Full) => Full extends true
       ? ExtractAutocompleteOptions<Options>
@@ -52,7 +66,7 @@ export interface CommandContext<
   i: (Sources["command"] extends true ? ChatInputCommandInteraction<"cached"> : never)
     | (Sources["button"] extends true ? ButtonInteraction<"cached"> : never)
     | (Sources["contextMenu"] extends true ? ContextMenuCommandInteraction<"cached"> : never) 
-  bot: BassBot
+  bot: RegisteredBot
   reply: ReplyHelper
   data: Data,
   options: Sources["command"] extends true 
@@ -62,7 +76,7 @@ export interface CommandContext<
     : undefined
 }
 
-type Locales =
+export type Locales =
   | "da"
   | "de"
   | "en-GB"
@@ -168,30 +182,42 @@ export interface LoadedCommand {
   contexts?: { guild?: boolean; botDm?: boolean; privateChannel?: boolean }
 }
 
-
-export async function loadCommands() {
-  const dir = path.join(import.meta.dir, "..", "..", "commands")
+/**
+ * Load command files from a directory. Returns a Map of command name → LoadedCommand.
+ * With depth=2 (default), expects category/command.ts structure.
+ * With depth=1, expects flat command.ts structure.
+ */
+export async function loadCommandFiles(dir: string, opts?: { depth?: 1 | 2 }): Promise<Map<string, LoadedCommand>> {
   const commands = new Map<string, LoadedCommand>()
-  
-  await Promise.allSettled(
-    fs.readdirSync(dir).map(category =>
-      fs.readdirSync(`${dir}/${category}`).map(async file => {
-        const module = await import(`${dir}/${category}/${file}`)
-        const cmd = module.default as CommandConfig<any, any, any>
-        const name = file.split(".")[0]!
-        const valid = !!cmd.description
+  const depth = opts?.depth ?? 2
 
-        if (!valid) return logger.warn(`${category}/${name} is invalid. Missing description.`)
-        if (commands.has(name)) return logger.warn(`Command ${category}/${file} is already registered.`)
-
-        commands.set(name, {
-          name,
-          category,
-          ...cmd,
+  if (depth === 2) {
+    await Promise.allSettled(
+      fs.readdirSync(dir).map(category =>
+        fs.readdirSync(`${dir}/${category}`).map(async file => {
+          await registerCommandFile(commands, `${dir}/${category}/${file}`, category)
         })
+      ).flat()
+    )
+  } else {
+    await Promise.allSettled(
+      fs.readdirSync(dir).map(async file => {
+        await registerCommandFile(commands, `${dir}/${file}`, "general")
       })
-    ).flat()
-  )
+    )
+  }
 
   return commands
+}
+
+async function registerCommandFile(commands: Map<string, LoadedCommand>, filePath: string, category: string) {
+  const module = await import(filePath) as { default: CommandConfig<any, any, any> }
+  const cmd = module.default
+  const name = path.basename(filePath).split(".")[0]!
+  const valid = !!cmd.description
+
+  if (!valid) return logger.warn(`${category}/${name} is invalid. Missing description.`)
+  if (commands.has(name)) return logger.warn(`Command ${category}/${name} is already registered.`)
+
+  commands.set(name, { name, category, ...cmd })
 }

@@ -1,5 +1,5 @@
 import requireQueue from "@/middlewares/requireQueue"
-import { createCommand } from "@/util/command"
+import { createCommand } from "@bot/command"
 
 export default createCommand({
   description: "Shuffles the queue",

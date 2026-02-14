@@ -1,5 +1,5 @@
 import requirePlayer from "@/middlewares/requirePlayer"
-import { createCommand, buildOptions } from "@/util/command"
+import { createCommand, buildOptions } from "@bot/command"
 import { Timestamp } from "@/util/time"
 
 export default createCommand({

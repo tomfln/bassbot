@@ -1,6 +1,6 @@
 import db from "@/util/db"
 import { isAllowedChannel } from "@/util/helpers"
-import { createValidator } from "@/util/validator"
+import { createValidator } from "@bot/validator"
 import isInGuild from "./isInGuild"
 
 /** Checks if the text channel is bound */

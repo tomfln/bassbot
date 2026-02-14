@@ -1,4 +1,4 @@
-import { createValidator } from "@/util/validator"
+import { createValidator } from "@bot/validator"
 import isInGuild from "./isInGuild"
 
 export default createValidator({

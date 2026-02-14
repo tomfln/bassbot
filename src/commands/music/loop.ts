@@ -1,6 +1,6 @@
 import requirePlayer from "@/middlewares/requirePlayer"
 import { LoopMode } from "@/player"
-import { createCommand, buildOptions } from "@/util/command"
+import { createCommand, buildOptions } from "@bot/command"
 import { z } from "zod"
 
 const isValidLoopMode = (mode: string): mode is LoopMode => {

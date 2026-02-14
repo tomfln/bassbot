@@ -1,7 +1,7 @@
 import env from "@/env"
 import { BassBot } from "@/bot"
 import { setupLavalinkEvents } from "./events/lavalink-events"
-import logger from "./util/logger"
+import logger from "@bot/logger"
 
 const bot = new BassBot()
 

@@ -1,4 +1,4 @@
-import { createMiddleware } from "@/util/middleware"
+import { createMiddleware } from "@bot/middleware"
 import db from "@/util/db"
 
 export default createMiddleware(async ({ i }) => {

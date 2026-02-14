@@ -6,9 +6,9 @@
  */
 
 import type { ButtonInteraction, ChatInputCommandInteraction, ContextMenuCommandInteraction } from "discord.js"
-import { createCommand, buildOptions } from "@/util/command"
-import { createMiddleware } from "@/util/middleware"
-import { createValidator } from "@/util/validator"
+import { createCommand, buildOptions } from "@bot/command"
+import { createMiddleware } from "@bot/middleware"
+import { createValidator } from "@bot/validator"
 
 // ─── Type assertion helpers ──────────────────────────────────────────────────
 

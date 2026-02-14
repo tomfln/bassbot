@@ -1,4 +1,4 @@
-import { createValidator } from "@/util/validator"
+import { createValidator } from "@bot/validator"
 import isInGuild from "./isInGuild"
 
 /** Checks if the use is in a voice channel */

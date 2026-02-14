@@ -1,5 +1,5 @@
 import z from "zod"
-import { initEnv } from "@/util/init-env"
+import { initEnv } from "@bot/init-env"
 import { resolve } from "node:path"
 
 const envSchema = z.object({

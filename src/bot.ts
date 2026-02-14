@@ -1,13 +1,18 @@
-import { ActivityType, ChatInputCommandInteraction, Client, type Interaction } from "discord.js"
+import { ActivityType, ChatInputCommandInteraction } from "discord.js"
 import { Connectors, Shoukaku } from "shoukaku"
-import { loadCommands, MiddlewareBuilder, parseOptions, type CommandContext } from "./util/command"
+import { Bot } from "@bot/bot"
 import { PlayerWithQueue } from "./player"
-import logger from "./util/logger"
-import { createAbortHelper, createReplyHelper, mockAbortHelper, mockReplyHelper, replyError } from "./util/reply"
 import nodes from "./nodes"
-import { runValidators } from "./util/validator"
+import path from "node:path"
 
-export class BassBot extends Client<true> {
+// Register BassBot as the bot type for typed ctx.bot in commands
+declare module "@bot/command" {
+  interface Register {
+    bot: BassBot
+  }
+}
+
+export class BassBot extends Bot<BassBot> {
   public lava = new Shoukaku(new Connectors.DiscordJS(this), nodes, {
     userAgent: BassBot.name,
     structures: {
@@ -16,17 +21,14 @@ export class BassBot extends Client<true> {
     reconnectTries: 9,
     reconnectInterval: 10,
   })
-  public commands!: Awaited<ReturnType<typeof loadCommands>>
 
   constructor() {
     super({ intents: 32767 })
   }
 
   private async init() {
-    this.commands = await loadCommands()
-    logger.info(`Loaded ${this.commands.size} commands`)
-
-    this.on("interactionCreate", this.interactionCreate.bind(this))
+    const commandDir = path.join(import.meta.dir, "commands")
+    await this.loadCommands(commandDir, { depth: 2 })
 
     setInterval(() => this.randomActivity(), 1000 * 15)
   }
@@ -72,64 +74,5 @@ export class BassBot extends Client<true> {
     ]
     const activity = activities[Math.floor(Math.random() * activities.length)]
     this.user.setActivity(activity) 
-  }
-
-  private async interactionCreate(i: Interaction) {
-    const isCommand = i.isChatInputCommand()
-    if (!(isCommand || i.isButton()) || !i.inCachedGuild()) return
-
-    const commandId = isCommand ? i.commandName : i.customId.split(":")[0]!
-    const command = this.commands.get(commandId)
-    if (!command) {
-      logger.warn(`Command ${commandId} not found.`)
-      return
-    }
-    if (i.isButton() && !command.sources?.button) {
-      logger.warn(`Button interaction for ${command.name} is not allowed.`)
-      return
-    }
-
-    const ctx: CommandContext<any, any, any> = {
-      i,
-      bot: this,
-      reply: isCommand ? createReplyHelper(i) : mockReplyHelper(i),
-      options: isCommand ? parseOptions(i) : undefined,
-      data: {},
-    }
-
-    try {
-      if (command.validators && !await runValidators(command.validators, ctx)) {
-        if (!ctx.i.replied) {
-          await ctx.reply.error("You cannot use this command.")
-        }
-        return
-      }
-
-      let aborted = false
-      if (command.middleware) {
-        const middlewares = command.middleware(new MiddlewareBuilder()).middlewares
-        const onAbort = () => (aborted = true)
-        
-        for (const fn of middlewares) {
-          const newData = await fn(ctx, isCommand ? createAbortHelper(i, onAbort) : mockAbortHelper(i, onAbort))
-          if (aborted) {
-            if (!ctx.i.replied) {
-              await ctx.reply.error("You cannot use this commmand.")
-            }
-            return
-          }
-          if (newData) ctx.data = { ...ctx.data, ...newData }
-        }
-      }
-
-      await command.run(ctx)
-
-    } catch (e) {
-      logger.error("command runner", "Unhandled Exception in command:")
-      logger.debug(e)
-
-      if (isCommand)
-        await replyError(i, "An internal error occured. Please contact <@339719840363184138> if the issue persists.")
-    }
   }
 }
