@@ -8,6 +8,7 @@ const envSchema = z.object({
   W2G_KEY: z.string().min(1),
   DATA_DIR: z.string().default("./")
     .transform(dir => resolve(import.meta.dir, "..", dir)),
+  API_PORT: z.coerce.number().default(3001),
 })
 
 export default initEnv(envSchema)
