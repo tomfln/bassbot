@@ -32,7 +32,7 @@ interface SerializedCommand {
 }
 
 /** Convert a LoadedCommand to the Discord REST API format */
-function serializeCommand(cmd: LoadedCommand): SerializedCommand {
+export function serializeCommand(cmd: LoadedCommand): SerializedCommand {
   let description: string
   let description_localizations: Partial<Record<string, string>> | undefined
 
@@ -83,7 +83,7 @@ function fingerprintOptions(parts: string[], options: any[] | undefined, depth: 
   }
 }
 
-function commandsMatch(
+export function commandsMatch(
   local: SerializedCommand[],
   remote: { name: string; description: string; options?: any[] }[],
 ): boolean {

@@ -1,5 +1,5 @@
 import { Client, type ClientOptions, type Interaction } from "discord.js"
-import { MiddlewareBuilder, parseOptions, loadCommandFiles, type CommandContext, type LoadedCommand } from "./command"
+import { MiddlewareBuilder, parseOptions, loadCommandFiles, type AutocompleteContext, type CommandContext, type LoadedCommand } from "./command"
 import { createAbortHelper, createReplyHelper, mockAbortHelper, mockReplyHelper, replyError } from "./reply"
 import { runValidators } from "./validator"
 import { syncCommands, type SyncCommandsOptions } from "./register"
@@ -47,6 +47,27 @@ export class Bot<_TThis extends Bot<any> = any> extends Client<true> {
   }
 
   private async handleInteraction(i: Interaction) {
+    // ─── Autocomplete ────────────────────────────────────────────────
+    if (i.isAutocomplete() && i.inCachedGuild()) {
+      const command = this.commands.get(i.commandName)
+      if (!command?.autocomplete) return
+
+      try {
+        const focused = i.options.getFocused(true)
+        const ctx: AutocompleteContext<any> = {
+          i,
+          bot: this as unknown as AutocompleteContext<any>["bot"],
+          options: parseOptions(i as any),
+          getFocused: ((full?: boolean) => full ? focused : focused.name) as AutocompleteContext<any>["getFocused"],
+        }
+        await command.autocomplete(ctx)
+      } catch (e) {
+        logger.error("autocomplete", `Error in ${command.name}: ${String(e)}`)
+      }
+      return
+    }
+
+    // ─── Commands & Buttons ──────────────────────────────────────────
     const isCommand = i.isChatInputCommand()
     if (!(isCommand || i.isButton()) || !i.inCachedGuild()) return
 
