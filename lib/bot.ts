@@ -27,21 +27,23 @@ export class Bot<_TThis extends Bot<any> = any> extends Client<true> {
    * With depth=2 (default), expects category/command.ts structure.
    * With depth=1, expects flat command.ts structure.
    */
-  public async loadCommands(dir: string, opts?: LoadCommandsOptions): Promise<void> {
+  public async loadCommands(dir: string, opts?: LoadCommandsOptions & { silent?: boolean }): Promise<void> {
     this.commands = await loadCommandFiles(dir, opts)
-    logger.info(`Loaded ${this.commands.size} commands`)
+    if (!opts?.silent) logger.info(`Loaded ${this.commands.size} commands`)
   }
 
   /**
    * Sync loaded commands with Discord. Only pushes when local commands
    * differ from what Discord already has, avoiding unnecessary rate limits.
    */
-  public async syncCommands(opts: SyncCommandsOptions) {
+  public async syncCommands(opts: SyncCommandsOptions & { silent?: boolean }) {
     const result = await syncCommands(this.commands, opts)
-    if (result.synced) {
-      logger.info(`Synced ${result.commandCount} commands with Discord`)
-    } else {
-      logger.info(`Commands up to date (${result.commandCount} commands)`)
+    if (!opts.silent) {
+      if (result.synced) {
+        logger.info(`Synced ${result.commandCount} commands with Discord`)
+      } else {
+        logger.info(`Commands up to date (${result.commandCount} commands)`)
+      }
     }
     return result
   }

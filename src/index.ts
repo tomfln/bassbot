@@ -7,8 +7,7 @@ import { Events } from "discord.js"
 const bot = new BassBot()
 
 bot.on(Events.ClientReady, ({ user }) => {
-  logger.info("Logged in as " + user.displayName)
-
+  bot.printBanner(user.displayName)
   setupLavalinkEvents(bot)
 })
 
