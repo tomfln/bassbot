@@ -2,6 +2,7 @@ import { Client, type ClientOptions, type Interaction } from "discord.js"
 import { MiddlewareBuilder, parseOptions, loadCommandFiles, type CommandContext, type LoadedCommand } from "./command"
 import { createAbortHelper, createReplyHelper, mockAbortHelper, mockReplyHelper, replyError } from "./reply"
 import { runValidators } from "./validator"
+import { syncCommands, type SyncCommandsOptions } from "./register"
 import logger from "./logger"
 
 export interface LoadCommandsOptions {
@@ -29,6 +30,20 @@ export class Bot<_TThis extends Bot<any> = any> extends Client<true> {
   public async loadCommands(dir: string, opts?: LoadCommandsOptions): Promise<void> {
     this.commands = await loadCommandFiles(dir, opts)
     logger.info(`Loaded ${this.commands.size} commands`)
+  }
+
+  /**
+   * Sync loaded commands with Discord. Only pushes when local commands
+   * differ from what Discord already has, avoiding unnecessary rate limits.
+   */
+  public async syncCommands(opts: SyncCommandsOptions) {
+    const result = await syncCommands(this.commands, opts)
+    if (result.synced) {
+      logger.info(`Synced ${result.commandCount} commands with Discord`)
+    } else {
+      logger.info(`Commands up to date (${result.commandCount} commands)`)
+    }
+    return result
   }
 
   private async handleInteraction(i: Interaction) {

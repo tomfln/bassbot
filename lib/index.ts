@@ -35,6 +35,9 @@ export { createModal, type Modal, type ModalConfig } from "./modal"
 // Bot base class
 export { Bot, type LoadCommandsOptions } from "./bot"
 
+// Command registration
+export { syncCommands, registerCommands, clearCommands, type SyncCommandsOptions, type SyncResult } from "./register"
+
 // Utilities
 export { Result } from "./result"
 export type { Result as ResultType } from "./result"

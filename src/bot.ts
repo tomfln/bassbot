@@ -3,6 +3,7 @@ import { Connectors, Shoukaku } from "shoukaku"
 import { Bot } from "@bot/bot"
 import { PlayerWithQueue } from "./player"
 import nodes from "./nodes"
+import env from "./env"
 import path from "node:path"
 
 // Register BassBot as the bot type for typed ctx.bot in commands
@@ -29,6 +30,9 @@ export class BassBot extends Bot<BassBot> {
   private async init() {
     const commandDir = path.join(import.meta.dir, "commands")
     await this.loadCommands(commandDir, { depth: 2 })
+
+    // Auto-sync commands with Discord (only pushes when changed)
+    await this.syncCommands({ token: env.TOKEN, clientId: env.CLIENT_ID })
 
     setInterval(() => this.randomActivity(), 1000 * 15)
   }
