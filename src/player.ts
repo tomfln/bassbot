@@ -1,4 +1,4 @@
-import type { ChatInputCommandInteraction, GuildTextBasedChannel } from "discord.js"
+import { Events, type ChatInputCommandInteraction, type GuildTextBasedChannel } from "discord.js"
 import { Constants, Player, type Track } from "shoukaku"
 import { createMessageEmbed, EmbedColor } from "@bot/message"
 import { nowPlayingButtons, nowPlayingMessage } from "./util/message"
@@ -24,6 +24,7 @@ export class PlayerWithQueue extends Player {
   private _disconnect: ReturnType<typeof setTimeout> | null = null
   private loopMode: LoopMode = LoopMode.None
   private _playing = false
+  private _historySaved = false
 
   async init(bot: BassBot, i: ChatInputCommandInteraction<"cached">) {
     this.bot = bot
@@ -85,7 +86,7 @@ export class PlayerWithQueue extends Player {
       await this.disconnect()
     })
 
-    this.bot.on("voiceStateUpdate", (prev, next) => {
+    this.bot.on(Events.VoiceStateUpdate, (prev, next) => {
       const currentVC = this.bot.guilds.cache.get(this.guildId)?.members.me?.voice.channel
       if (!currentVC) return
 
@@ -191,6 +192,11 @@ export class PlayerWithQueue extends Player {
   public async disconnect() {
     // Save the queue before disconnecting
     void this.q.save(this.guildId)
+    // Save to history only once per session
+    if (!this._historySaved) {
+      this._historySaved = true
+      void this.q.saveToHistory(this.guildId)
+    }
     await this.destroy()
     await this.bot.leaveVC(this.guildId)
   }

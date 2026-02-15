@@ -16,6 +16,14 @@ const models = {
       savedAt: z.number(),
     }),
   }),
+  queueHistory: z.object({
+    guildId: z.string(),
+    queue: z.object({
+      tracks: z.array(z.any()),
+      position: z.number(),
+      savedAt: z.number(),
+    }),
+  }),
 }
 
 export type GuildOptions = DocType<typeof models.guildOptions>

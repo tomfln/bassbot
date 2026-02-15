@@ -2,7 +2,8 @@ import type { Track } from "shoukaku"
 import db from "./util/db"
 import logger from "@bot/logger"
 
-const QUEUE_MAX_AGE_MS = 4 * 60 * 60 * 1000 // 4 hours
+const QUEUE_MAX_AGE_MS = 10 * 60 * 1000 // 10 minutes
+const HISTORY_MAX_ENTRIES = 10 // max history entries per guild
 
 export interface SerializedQueue {
   tracks: Track[]
@@ -226,6 +227,43 @@ export class Queue {
       if (saved) await db.savedQueues.deleteById(saved._id)
     } catch (e) {
       logger.warn(`Failed to delete saved queue for guild ${guildId}: ${String(e)}`)
+    }
+  }
+
+  // ─── History ────────────────────────────────────────────────────────────
+
+  /** Save the current queue to history (for the /history command) */
+  public async saveToHistory(guildId: string): Promise<void> {
+    // Don't save empty queues to history
+    if (this.totalLength === 0) return
+
+    try {
+      const data = this.serialize()
+      await db.queueHistory.create({ guildId, queue: data })
+
+      // Prune old history entries, keep only the last N
+      const allEntries = await db.queueHistory.findMany({ guildId })
+      if (allEntries.length > HISTORY_MAX_ENTRIES) {
+        const toDelete = allEntries
+          .sort((a, b) => a.queue.savedAt - b.queue.savedAt)
+          .slice(0, allEntries.length - HISTORY_MAX_ENTRIES)
+        for (const entry of toDelete) {
+          await db.queueHistory.deleteById(entry._id)
+        }
+      }
+    } catch (e) {
+      logger.warn(`Failed to save queue history for guild ${guildId}: ${String(e)}`)
+    }
+  }
+
+  /** Get queue history for a guild, sorted by most recent first */
+  public static async getHistory(guildId: string) {
+    try {
+      const entries = await db.queueHistory.findMany({ guildId })
+      return entries.sort((a, b) => b.queue.savedAt - a.queue.savedAt)
+    } catch (e) {
+      logger.warn(`Failed to load queue history for guild ${guildId}: ${String(e)}`)
+      return []
     }
   }
 }
