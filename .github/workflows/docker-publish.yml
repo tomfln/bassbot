@@ -2,7 +2,7 @@ name: CI — Build & publish Docker image
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -10,89 +10,69 @@ permissions:
   packages: write
 
 env:
-  IMAGE_NAME: bassbot
-  REGISTRY: ghcr.io
-  OWNER: ${{ github.repository_owner }}
+  IMAGE: ghcr.io/${{ github.repository_owner }}/bassbot
 
 jobs:
-  check-version:
+  check:
     runs-on: ubuntu-latest
     outputs:
-      version_bumped: ${{ steps.check.outputs.version_bumped }}
-
+      publish: ${{ steps.decide.outputs.publish }}
+      version: ${{ steps.decide.outputs.version }}
     steps:
-      - name: Checkout repository (fetch previous commit)
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 2
-
-      - name: Determine if package.json version changed
-        id: check
+      - uses: actions/checkout@v4
+      - name: Decide whether to publish
+        id: decide
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          cur=$(grep -Po '"version"\s*:\s*"\K[^"]+' package.json || echo "0.0.0")
-          prev=$(git show HEAD^:package.json 2>/dev/null | grep -Po '"version"\s*:\s*"\K[^"]+' || echo "")
-          echo "current_package_version=$cur"
-          echo "previous_package_version=$prev"
-          if [ -z "$prev" ]; then
-            echo "version_bumped=true" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-          if [ "$cur" != "$prev" ]; then
-            echo "version_bumped=true" >> $GITHUB_OUTPUT
-          else
-            echo "version_bumped=false" >> $GITHUB_OUTPUT
+          version=$(grep -Po '"version"\s*:\s*"\K[^"]+' package.json || echo "0.0.0")
+          echo "version=$version" >> $GITHUB_OUTPUT
+
+          # Skip if commit message contains [no-publish]
+          if git log -1 --format=%B | grep -qF '[no-publish]'; then
+            echo "publish=false" >> $GITHUB_OUTPUT && exit 0
           fi
 
-  build-and-push:
-    needs: check-version
-    if: needs.check-version.outputs.version_bumped == 'true' || github.event_name == 'workflow_dispatch'
+          # Check if this version is already in the registry
+          owner=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          token=$(curl -sf -u "${{ github.actor }}:${GH_TOKEN}" \
+            "https://ghcr.io/token?scope=repository:${owner}/bassbot:pull" \
+            | jq -r '.token // empty' || echo "")
+
+          if [ -z "$token" ]; then
+            echo "publish=true" >> $GITHUB_OUTPUT && exit 0
+          fi
+
+          status=$(curl -sf -o /dev/null -w "%{http_code}" \
+            -H "Authorization: Bearer $token" \
+            "https://ghcr.io/v2/${owner}/bassbot/manifests/${version}" || echo "000")
+
+          [ "$status" = "200" ] \
+            && echo "publish=false" >> $GITHUB_OUTPUT \
+            || echo "publish=true" >> $GITHUB_OUTPUT
+
+  build:
+    needs: check
+    if: needs.check.outputs.publish == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: 'latest'
-
-      - name: Read package version & short SHA
-        id: meta
-        run: |
-          # use bun to read package.json version; fallback to 0.0.0 if missing
-          echo "version=$(bun -e 'try{console.log(require("./package.json").version||"0.0.0")}catch(e){console.log("0.0.0") }')" >> $GITHUB_OUTPUT
-          echo "short_sha=${GITHUB_SHA::8}" >> $GITHUB_OUTPUT
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v2
+      - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v2
+      - uses: docker/setup-buildx-action@v2
+      - uses: docker/login-action@v2
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push Docker image
+      - name: Build & push
         uses: docker/build-push-action@v4
         with:
           context: .
-          file: ./Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ghcr.io/${{ env.OWNER }}/${{ env.IMAGE_NAME }}:latest
-            ghcr.io/${{ env.OWNER }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
-            ghcr.io/${{ env.OWNER }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.short_sha }}
-
-      - name: Output pushed image names
-        run: |
-          echo "Images pushed:"
-          echo "  ghcr.io/${{ env.OWNER }}/${{ env.IMAGE_NAME }}:latest"
-          echo "  ghcr.io/${{ env.OWNER }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}"
-          echo "  ghcr.io/${{ env.OWNER }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.short_sha }}"
+            ${{ env.IMAGE }}:latest
+            ${{ env.IMAGE }}:${{ needs.check.outputs.version }}
+            ${{ env.IMAGE }}:${{ github.sha }}
