@@ -1,0 +1,16 @@
+{
+  "token": "your_bot_token_here",
+  "clientId": "your_client_id_here",
+  "w2gKey": "your_w2g_api_key_here",
+
+  "apiPort": 3001,
+  "dashboardEnabled": true,
+
+  "nodes": [
+    {
+      "name": "node1",
+      "url": "lavalink:2333",
+      "auth": "youshallnotpass"
+    }
+  ]
+}

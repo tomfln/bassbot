@@ -2,8 +2,7 @@ import { ActivityType, ChatInputCommandInteraction } from "discord.js"
 import { Connectors, Shoukaku } from "shoukaku"
 import { Bot } from "@bot/bot"
 import { PlayerWithQueue } from "./player"
-import nodes from "./nodes"
-import env from "./env"
+import config from "./config"
 import path from "node:path"
 import chalk from "chalk"
 
@@ -17,7 +16,7 @@ declare module "@bot/command" {
 }
 
 export class BassBot extends Bot<BassBot> {
-  public lava = new Shoukaku(new Connectors.DiscordJS(this), nodes, {
+  public lava = new Shoukaku(new Connectors.DiscordJS(this), config.nodes, {
     userAgent: BassBot.name,
     structures: {
       player: PlayerWithQueue as any,
@@ -35,7 +34,7 @@ export class BassBot extends Bot<BassBot> {
   private async init() {
     const commandDir = path.join(import.meta.dir, "commands")
     await this.loadCommands(commandDir, { depth: 2, silent: true })
-    this._syncResult = await this.syncCommands({ token: env.TOKEN, clientId: env.CLIENT_ID, silent: true })
+    this._syncResult = await this.syncCommands({ token: config.token, clientId: config.clientId, silent: true })
 
     setInterval(() => this.randomActivity(), 1000 * 15)
   }
@@ -86,7 +85,7 @@ export class BassBot extends Bot<BassBot> {
     const val = chalk.greenBright
     const sep = dim("─".repeat(42))
 
-    const lavalinkNodes = nodes.map((n) => n.name).join(", ")
+    const lavalinkNodes = config.nodes.map((n) => n.name).join(", ")
     const commandsSynced = sync.synced
       ? chalk.yellowBright(`synced ${sync.commandCount} commands`)
       : val(`${sync.commandCount} commands (up to date)`)

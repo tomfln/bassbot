@@ -1,4 +1,4 @@
-import env from "@/env"
+import config from "@/config"
 import { z } from "zod"
 
 const createRoomResponseSchema = z.object({
@@ -14,7 +14,7 @@ export async function createRoom(vid_url: string | null) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        w2g_api_key: env.W2G_KEY,
+        w2g_api_key: config.w2gKey,
         share: vid_url ?? "",
         bg_color: "#404040",
         bg_opacity: "100",

@@ -17,7 +17,7 @@ const success = (msg: string) => console.log("\x1b[32m" + msg + "\x1b[0m")
 
 import readline from "node:readline"
 import path from "node:path"
-import env from "@/env"
+import config from "@/config"
 import { loadCommandFiles } from "@bot/command"
 import { syncCommands, clearCommands } from "@bot/register"
 
@@ -39,8 +39,8 @@ if (guildId === "clear" || guildId === "sync") {
 }
 
 const opts = {
-  token: env.TOKEN,
-  clientId: env.CLIENT_ID,
+  token: config.token,
+  clientId: config.clientId,
   ...(guildId && { guildId }),
 }
 

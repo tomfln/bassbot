@@ -32,5 +32,5 @@ export default tseslint.config(
       "@typescript-eslint/no-unsafe-argument": "off",
     },
   },
-  { ignores: ["**/*.template.ts", "dashboard/**"] },
+  { ignores: ["**/*.template.ts", "dashboard/**", "drizzle.config.ts"] },
 )

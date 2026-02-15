@@ -1,5 +1,13 @@
-# Sample docker-compose file to run the bot together with lavalink.
-version: "3.9"
+# Docker Compose for BassBot + Lavalink
+#
+# Quick start:
+#   1. Create data directories:  mkdir bassbot-data lavalink
+#   2. Fetch sample configs:
+#        curl -o bassbot-data/config.json https://raw.githubusercontent.com/TomFln/bassbot/main/config.example.json
+#        curl -o lavalink/application.yml https://raw.githubusercontent.com/TomFln/bassbot/main/lavalink/application.yml
+#   3. Edit bassbot-data/config.json — fill in your bot token, client ID, etc.
+#   4. (Optional) Set up YouTube OAuth — see README for instructions.
+#   5. Start:  docker compose up -d
 
 services:
   bassbot:
@@ -9,25 +17,25 @@ services:
     networks:
       - lavalink
     volumes:
-      - /path/to/bassbot-data:/data # Persist bot data (e.g., database, config) on the host
+      - ./bassbot-data:/data
     environment:
-      CLIENT_ID: your_client_id_here # Replace with your Discord application client ID
-      TOKEN: your_token_here # Replace with your Discord bot token
-      W2G_KEY: your_w2g_key_here # Replace with your Watch2Gether API key
+      DATA_DIR: /data
+      # All config is read from /data/config.json
+      # You can override individual values via env vars:
+      # TOKEN: override_token_here
+      # CLIENT_ID: override_client_id_here
 
   lavalink:
     image: ghcr.io/lavalink-devs/lavalink:latest
     container_name: lavalink
     restart: unless-stopped
     environment:
-      - _JAVA_OPTIONS=-Xmx4G # Adjust memory allocation as needed
+      - _JAVA_OPTIONS=-Xmx4G
     volumes:
-      - /path/to/lavalink/application.yml:/opt/Lavalink/application.yml # Persist lavalink config on the host
-      - /path/to/lavalink/plugins:/opt/Lavalink/plugins # Persist lavalink plugins on the host
+      - ./lavalink/application.yml:/opt/Lavalink/application.yml
+      - ./lavalink/plugins:/opt/Lavalink/plugins
     expose:
       - 2333
-    ports:
-      - "2333:2333"
     networks:
       - lavalink
 

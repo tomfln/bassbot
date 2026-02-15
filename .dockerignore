@@ -1,0 +1,8 @@
+node_modules
+data
+bassbot-data
+lavalink
+.git
+.idea
+.env
+*.md

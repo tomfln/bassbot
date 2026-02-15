@@ -174,10 +174,8 @@ dist
 # Finder (MacOS) folder config
 .DS_Store
 
-# Database
-db.json
+# Bot config (contains secrets)
+config.json
 
-# Lavalink nodes definition
-nodes.json
-
-lavalink
+# Default data directories
+data
