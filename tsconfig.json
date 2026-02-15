@@ -29,5 +29,5 @@
       "@bot/*": ["./lib/*"]
     }
   },
-  "include": ["./src/**/*", "./lib/**/*", "./scripts/**/*", "eslint.config.ts", "prettier.config.js"]
+  "include": ["./src/**/*", "./lib/**/*", "eslint.config.ts", "prettier.config.js"]
 }

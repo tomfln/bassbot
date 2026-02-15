@@ -17,7 +17,7 @@ const success = (msg: string) => console.log("\x1b[32m" + msg + "\x1b[0m")
 
 import readline from "node:readline"
 import path from "node:path"
-import env from "../src/env"
+import env from "@/env"
 import { loadCommandFiles } from "@bot/command"
 import { syncCommands, clearCommands } from "@bot/register"
 
@@ -44,7 +44,7 @@ const opts = {
   ...(guildId && { guildId }),
 }
 
-const commandDir = path.join(import.meta.dir, "..", "src", "commands")
+const commandDir = path.join(import.meta.dir, "..", "..", "src", "commands")
 
 if (mode === "clear") {
   rl.question(
