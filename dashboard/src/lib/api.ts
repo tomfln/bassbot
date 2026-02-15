@@ -57,6 +57,7 @@ export interface ActivityEntry {
   guildName: string
   userId: string
   userName: string
+  userAvatar?: string
   action: string
   detail: string
 }

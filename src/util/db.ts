@@ -1,47 +1,48 @@
 import env from "@/env"
-import StormDB, { FileSaveLocation, JsonFile, type DocType } from "@nlfmt/stormdb"
+import { drizzle } from "drizzle-orm/bun-sqlite"
+import { Database } from "bun:sqlite"
 import { join } from "node:path"
-import { z } from "zod"
+import * as schema from "./schema"
 
-const models = {
-  guildOptions: z.object({
-    guildId: z.string(),
-    channels: z.array(z.string()).default([]),
-  }),
-  savedQueues: z.object({
-    guildId: z.string(),
-    queue: z.object({
-      tracks: z.array(z.any()),
-      position: z.number(),
-      savedAt: z.number(),
-    }),
-  }),
-  queueHistory: z.object({
-    guildId: z.string(),
-    queue: z.object({
-      tracks: z.array(z.any()),
-      position: z.number(),
-      savedAt: z.number(),
-    }),
-  }),
-  activityLog: z.object({
-    timestamp: z.number(),
-    guildId: z.string(),
-    guildName: z.string(),
-    userId: z.string(),
-    userName: z.string(),
-    action: z.string(),
-    detail: z.string(),
-  }),
-}
+const dbPath = join(env.DATA_DIR, "data.db")
+const sqlite = new Database(dbPath, { create: true })
 
-export type GuildOptions = DocType<typeof models.guildOptions>
+// Enable WAL mode for better concurrency
+sqlite.exec("PRAGMA journal_mode = WAL;")
 
-const dbFile = join(env.DATA_DIR, "db.json")
-const storage = new JsonFile(
-  new FileSaveLocation(dbFile, {
-    createIfNotExists: true,
-  })
-)
+const db = drizzle(sqlite, { schema })
 
-export default StormDB(models, { storage })
+// Create tables if they don't exist
+sqlite.exec(`
+  CREATE TABLE IF NOT EXISTS guild_options (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    guild_id TEXT NOT NULL UNIQUE,
+    channels TEXT NOT NULL DEFAULT '[]'
+  );
+  CREATE TABLE IF NOT EXISTS saved_queues (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    guild_id TEXT NOT NULL UNIQUE,
+    queue TEXT NOT NULL
+  );
+  CREATE TABLE IF NOT EXISTS queue_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    guild_id TEXT NOT NULL,
+    queue TEXT NOT NULL
+  );
+  CREATE TABLE IF NOT EXISTS activity_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    timestamp INTEGER NOT NULL,
+    guild_id TEXT NOT NULL,
+    guild_name TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    user_name TEXT NOT NULL,
+    user_avatar TEXT NOT NULL DEFAULT '',
+    action TEXT NOT NULL,
+    detail TEXT NOT NULL
+  );
+`)
+
+export type GuildOptions = typeof schema.guildOptions.$inferSelect
+export { schema }
+
+export default db

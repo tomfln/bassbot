@@ -20,7 +20,7 @@ export default createCommand({
   validators: [isBoundChannel(), isInGuild()],
 
   run: async ({ i, options, reply }) => {
-    const entries = await Queue.getHistory(i.guildId)
+    const entries = Queue.getHistory(i.guildId)
 
     if (entries.length === 0) {
       return reply("No recent queues found.")

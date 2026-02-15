@@ -1,4 +1,5 @@
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import type { ActivityEntry } from "@/lib/api"
 import {
   Play,
@@ -33,6 +34,23 @@ const ACTION_ICONS: Record<string, typeof Play> = {
   loadqueue: ListPlus,
 }
 
+const ACTION_COLORS: Record<string, string> = {
+  play: "text-green-400",
+  skip: "text-blue-400",
+  prev: "text-blue-400",
+  pause: "text-yellow-400",
+  resume: "text-green-400",
+  stop: "text-red-400",
+  clear: "text-red-400",
+  remove: "text-red-400",
+  shuffle: "text-purple-400",
+  volume: "text-orange-400",
+  loop: "text-cyan-400",
+  seek: "text-amber-400",
+  move: "text-indigo-400",
+  loadqueue: "text-teal-400",
+}
+
 function formatRelativeTime(timestamp: number): string {
   const diff = Date.now() - timestamp
   const seconds = Math.floor(diff / 1000)
@@ -55,7 +73,7 @@ export function ActivityLog({
   showGuild?: boolean
   maxHeight?: string
 }) {
-  if (entries.length === 0) {
+  if (!Array.isArray(entries) || entries.length === 0) {
     return (
       <p className="text-sm text-muted-foreground text-center py-6">
         No activity yet
@@ -64,18 +82,25 @@ export function ActivityLog({
   }
 
   return (
-    <ScrollArea className="overflow-hidden" style={{ height: maxHeight }}>
+    <ScrollArea className="overflow-hidden" style={{ maxHeight }}>
       <div className="space-y-0.5 pr-3">
         {entries.map((entry, i) => {
           const Icon = ACTION_ICONS[entry.action] ?? Play
+          const iconColor = ACTION_COLORS[entry.action] ?? "text-primary"
           return (
             <div
               key={`${entry.timestamp}-${i}`}
               className="flex items-start gap-2.5 px-2 py-1.5 rounded-md hover:bg-accent/30 transition-colors"
             >
-              <div className="mt-0.5 shrink-0 h-5 w-5 rounded bg-primary/10 flex items-center justify-center">
-                <Icon className="h-3 w-3 text-primary" />
+              <div className="mt-0.5 shrink-0 h-6 w-6 rounded-md bg-accent/50 flex items-center justify-center">
+                <Icon className={`h-3.5 w-3.5 ${iconColor}`} />
               </div>
+              <Avatar className="h-6 w-6 shrink-0 mt-0.5">
+                <AvatarImage src={entry.userAvatar} />
+                <AvatarFallback className="text-[10px]">
+                  {entry.userName.slice(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
               <div className="flex-1 min-w-0">
                 <p className="text-sm leading-tight">
                   <span className="font-medium">{entry.userName}</span>{" "}

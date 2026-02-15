@@ -1,5 +1,7 @@
 import type { Track } from "shoukaku"
 import db from "./util/db"
+import { schema } from "./util/db"
+import { eq } from "drizzle-orm"
 import logger from "@bot/logger"
 
 const QUEUE_MAX_AGE_MS = 10 * 60 * 1000 // 10 minutes
@@ -186,30 +188,35 @@ export class Queue {
   }
 
   /** Save the queue to the database for a guild */
-  public async save(guildId: string): Promise<void> {
+  public save(guildId: string): void {
     try {
-      const existing = await db.savedQueues.find({ guildId })
       const data = this.serialize()
-      if (existing) {
-        await db.savedQueues.updateById(existing._id, { 
-          queue: data,
+      db.insert(schema.savedQueues)
+        .values({ guildId, queue: data })
+        .onConflictDoUpdate({
+          target: schema.savedQueues.guildId,
+          set: { queue: data },
         })
-      } else {
-        await db.savedQueues.create({ guildId, queue: data })
-      }
+        .run()
     } catch (e) {
       logger.warn(`Failed to save queue for guild ${guildId}: ${String(e)}`)
     }
   }
 
   /** Load a saved queue for a guild, returns null if expired or not found */
-  public static async load(guildId: string): Promise<Queue | null> {
+  public static load(guildId: string): Queue | null {
     try {
-      const saved = await db.savedQueues.find({ guildId })
+      const saved = db
+        .select()
+        .from(schema.savedQueues)
+        .where(eq(schema.savedQueues.guildId, guildId))
+        .get()
       if (!saved) return null
 
       if (!Queue.isValid(saved.queue)) {
-        await db.savedQueues.deleteById(saved._id)
+        db.delete(schema.savedQueues)
+          .where(eq(schema.savedQueues.guildId, guildId))
+          .run()
         return null
       }
 
@@ -221,10 +228,11 @@ export class Queue {
   }
 
   /** Delete saved queue for a guild */
-  public static async deleteSaved(guildId: string): Promise<void> {
+  public static deleteSaved(guildId: string): void {
     try {
-      const saved = await db.savedQueues.find({ guildId })
-      if (saved) await db.savedQueues.deleteById(saved._id)
+      db.delete(schema.savedQueues)
+        .where(eq(schema.savedQueues.guildId, guildId))
+        .run()
     } catch (e) {
       logger.warn(`Failed to delete saved queue for guild ${guildId}: ${String(e)}`)
     }
@@ -233,22 +241,28 @@ export class Queue {
   // ─── History ────────────────────────────────────────────────────────────
 
   /** Save the current queue to history (for the /history command) */
-  public async saveToHistory(guildId: string): Promise<void> {
+  public saveToHistory(guildId: string): void {
     // Don't save empty queues to history
     if (this.totalLength === 0) return
 
     try {
       const data = this.serialize()
-      await db.queueHistory.create({ guildId, queue: data })
+      db.insert(schema.queueHistory).values({ guildId, queue: data }).run()
 
       // Prune old history entries, keep only the last N
-      const allEntries = await db.queueHistory.findMany({ guildId })
+      const allEntries = db
+        .select()
+        .from(schema.queueHistory)
+        .where(eq(schema.queueHistory.guildId, guildId))
+        .all()
       if (allEntries.length > HISTORY_MAX_ENTRIES) {
         const toDelete = allEntries
-          .sort((a, b) => a.queue.savedAt - b.queue.savedAt)
+          .sort((a, b) => (a.queue as any).savedAt - (b.queue as any).savedAt)
           .slice(0, allEntries.length - HISTORY_MAX_ENTRIES)
         for (const entry of toDelete) {
-          await db.queueHistory.deleteById(entry._id)
+          db.delete(schema.queueHistory)
+            .where(eq(schema.queueHistory.id, entry.id))
+            .run()
         }
       }
     } catch (e) {
@@ -257,10 +271,14 @@ export class Queue {
   }
 
   /** Get queue history for a guild, sorted by most recent first */
-  public static async getHistory(guildId: string) {
+  public static getHistory(guildId: string) {
     try {
-      const entries = await db.queueHistory.findMany({ guildId })
-      return entries.sort((a, b) => b.queue.savedAt - a.queue.savedAt)
+      const entries = db
+        .select()
+        .from(schema.queueHistory)
+        .where(eq(schema.queueHistory.guildId, guildId))
+        .all()
+      return entries.sort((a, b) => (b.queue as any).savedAt - (a.queue as any).savedAt)
     } catch (e) {
       logger.warn(`Failed to load queue history for guild ${guildId}: ${String(e)}`)
       return []

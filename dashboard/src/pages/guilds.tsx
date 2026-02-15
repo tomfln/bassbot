@@ -37,11 +37,11 @@ export function GuildsPage() {
             .map((guild) => {
               const content = (
                 <Card
-                  className={
+                  className={`py-0 gap-0 ${
                     guild.hasPlayer
                       ? "hover:bg-accent/50 transition-colors cursor-pointer"
                       : "opacity-75"
-                  }
+                  }`}
                 >
                   <CardContent className="p-4">
                     <div className="flex items-center gap-3">

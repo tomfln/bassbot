@@ -57,7 +57,7 @@ export class BassBot extends Bot<BassBot> {
       deaf: true,
     }) as PlayerWithQueue
     
-    await player.init(this, i)
+    player.init(this, i)
     return player
   }
   

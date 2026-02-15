@@ -1,8 +1,9 @@
 import { buildOptions, createCommand } from "@bot/command"
 import { PermissionFlagsBits } from "discord.js"
 import db from "@/util/db"
+import { schema } from "@/util/db"
+import { eq } from "drizzle-orm"
 import logger from "@bot/logger"
-import { $push } from "@nlfmt/stormdb"
 import hasPermissions from "@/validators/hasPermissions"
 import getOrCreateGuildOpts from "@/middlewares/getOrCreateGuildOpts"
 
@@ -45,14 +46,15 @@ export default createCommand({
   middleware: m => m.use(getOrCreateGuildOpts),
 
   run: async ({ i, options, reply, data: { guildOpts } }) => {
-    const { _id: id, channels } = guildOpts
+    const { id, channels } = guildOpts
 
     switch (options.__cmd) {
       case "add":
         if (channels.includes(options.channel.id)) return reply.warn("This channel is already bound.")
-        await db.guildOptions.updateById(id, {
-          channels: $push(options.channel.id),
-        })
+        db.update(schema.guildOptions)
+          .set({ channels: [...channels, options.channel.id] })
+          .where(eq(schema.guildOptions.id, id))
+          .run()
         logger.info(`Binding channel ${options.channel.id} in guild '${i.guild.name}'`)
         return reply(`Successfully bound to channel <#${options.channel.id}>.`, {
           flags: "Ephemeral",
@@ -60,9 +62,10 @@ export default createCommand({
         })
 
       case "remove":
-        await db.guildOptions.updateById(id, {
-          channels: (channels) => channels.filter((c) => c !== options.channel.id),
-        })
+        db.update(schema.guildOptions)
+          .set({ channels: channels.filter((c) => c !== options.channel.id) })
+          .where(eq(schema.guildOptions.id, id))
+          .run()
         logger.info(`Unbinding channel ${options.channel.id} in guild '${i.member.guild.name}'`)
         return reply(`Successfully unbound channel <#${options.channel.id}>.`, {
           flags: "Ephemeral",
@@ -71,9 +74,10 @@ export default createCommand({
 
       case "clear":
         logger.info(`Clearing bound channels in guild '${i.member.guild.name}'`)
-        await db.guildOptions.updateById(id, {
-          channels: [],
-        })
+        db.update(schema.guildOptions)
+          .set({ channels: [] })
+          .where(eq(schema.guildOptions.id, id))
+          .run()
         return reply("Successfully cleared channels.", {
           flags: "Ephemeral",
           color: 0x22ff22,

@@ -1,4 +1,6 @@
 import db from "./db"
+import { schema } from "./db"
+import { eq, asc, desc, inArray } from "drizzle-orm"
 import type { ButtonInteraction, ChatInputCommandInteraction } from "discord.js"
 
 export interface ActivityEntry {
@@ -7,6 +9,7 @@ export interface ActivityEntry {
   guildName: string
   userId: string
   userName: string
+  userAvatar: string
   action: string
   detail: string
 }
@@ -17,50 +20,62 @@ const MAX_GLOBAL = 200
 /**
  * Log an activity entry. Persists to the DB and maintains size limits.
  */
-export async function logActivity(entry: Omit<ActivityEntry, "timestamp">) {
+export function logActivity(entry: Omit<ActivityEntry, "timestamp">) {
   const full: ActivityEntry = { ...entry, timestamp: Date.now() }
 
-  // Save guild-specific log
-  const guildLog = await db.activityLog.findMany({ guildId: entry.guildId })
-  if (guildLog.length >= MAX_PER_GUILD) {
-    const sorted = guildLog.sort((a, b) => a.timestamp - b.timestamp)
-    const toRemove = sorted.slice(0, guildLog.length - MAX_PER_GUILD + 1)
-    for (const old of toRemove) {
-      await db.activityLog.deleteById(old._id)
-    }
+  db.insert(schema.activityLog).values(full).run()
+
+  // Prune guild-specific log
+  const guildLog = db
+    .select({ id: schema.activityLog.id })
+    .from(schema.activityLog)
+    .where(eq(schema.activityLog.guildId, entry.guildId))
+    .orderBy(asc(schema.activityLog.timestamp))
+    .all()
+  if (guildLog.length > MAX_PER_GUILD) {
+    const toRemove = guildLog.slice(0, guildLog.length - MAX_PER_GUILD)
+    db.delete(schema.activityLog)
+      .where(inArray(schema.activityLog.id, toRemove.map(r => r.id)))
+      .run()
   }
 
-  await db.activityLog.create(full)
-
   // Enforce global limit
-  const all = await db.activityLog.findMany({})
-  if (all.length > MAX_GLOBAL) {
-    const sorted = all.sort((a, b) => a.timestamp - b.timestamp)
-    const toRemove = sorted.slice(0, all.length - MAX_GLOBAL)
-    for (const old of toRemove) {
-      await db.activityLog.deleteById(old._id)
-    }
+  const allIds = db
+    .select({ id: schema.activityLog.id })
+    .from(schema.activityLog)
+    .orderBy(asc(schema.activityLog.timestamp))
+    .all()
+  if (allIds.length > MAX_GLOBAL) {
+    const toRemove = allIds.slice(0, allIds.length - MAX_GLOBAL)
+    db.delete(schema.activityLog)
+      .where(inArray(schema.activityLog.id, toRemove.map(r => r.id)))
+      .run()
   }
 }
 
 /**
  * Get activity log for a specific guild, newest first.
  */
-export async function getGuildLog(guildId: string, limit = 50): Promise<ActivityEntry[]> {
-  const entries = await db.activityLog.findMany({ guildId })
-  return entries
-    .sort((a: ActivityEntry, b: ActivityEntry) => b.timestamp - a.timestamp)
-    .slice(0, limit)
+export function getGuildLog(guildId: string, limit = 50): ActivityEntry[] {
+  return db
+    .select()
+    .from(schema.activityLog)
+    .where(eq(schema.activityLog.guildId, guildId))
+    .orderBy(desc(schema.activityLog.timestamp))
+    .limit(limit)
+    .all()
 }
 
 /**
  * Get global activity log, newest first.
  */
-export async function getGlobalLog(limit = 50): Promise<ActivityEntry[]> {
-  const entries = await db.activityLog.findMany({})
-  return entries
-    .sort((a: ActivityEntry, b: ActivityEntry) => b.timestamp - a.timestamp)
-    .slice(0, limit)
+export function getGlobalLog(limit = 50): ActivityEntry[] {
+  return db
+    .select()
+    .from(schema.activityLog)
+    .orderBy(desc(schema.activityLog.timestamp))
+    .limit(limit)
+    .all()
 }
 
 type LoggableInteraction =
@@ -75,11 +90,12 @@ export function log(
   action: string,
   detail: string,
 ) {
-  void logActivity({
+  logActivity({
     guildId: i.guildId,
     guildName: i.guild.name,
     userId: i.user.id,
     userName: i.member.displayName,
+    userAvatar: i.user.displayAvatarURL({ size: 64 }),
     action,
     detail,
   })

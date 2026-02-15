@@ -23,20 +23,20 @@ function StatCard({
   value,
   icon,
   description,
-  glow,
+  color,
 }: {
   title: string
   value: string | number
   icon: ReactNode
   description?: string
-  glow?: string
+  color?: string
 }) {
   return (
-    <Card className={`relative overflow-hidden ${glow ? "border-transparent" : ""}`}>
-      {glow && (
+    <Card className="relative overflow-hidden">
+      {color && (
         <div
-          className="absolute -inset-px rounded-xl opacity-30 blur-sm"
-          style={{ background: glow }}
+          className="absolute -top-6 -right-6 h-24 w-24 rounded-full opacity-15 blur-2xl"
+          style={{ background: color }}
         />
       )}
       <div className="relative">
@@ -44,7 +44,9 @@ function StatCard({
           <CardTitle className="text-sm font-medium text-muted-foreground">
             {title}
           </CardTitle>
-          <div className="text-muted-foreground">{icon}</div>
+          <div style={color ? { color } : undefined} className={color ? "" : "text-muted-foreground"}>
+            {icon}
+          </div>
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{value}</div>
@@ -92,26 +94,26 @@ export function OverviewPage() {
             title="Guilds"
             value={stats.guildCount}
             icon={<Server className="h-4 w-4" />}
-            glow="linear-gradient(135deg, oklch(0.77 0.20 131), oklch(0.65 0.18 132))"
+            color="oklch(0.77 0.20 131)"
           />
           <StatCard
             title="Users"
             value={stats.userCount.toLocaleString()}
             icon={<Users className="h-4 w-4" />}
-            glow="linear-gradient(135deg, oklch(0.85 0.21 129), oklch(0.65 0.18 155))"
+            color="oklch(0.72 0.19 155)"
           />
           <StatCard
             title="Active Players"
             value={`${stats.activePlayers} / ${stats.totalPlayers}`}
             icon={<Music className="h-4 w-4" />}
-            glow="linear-gradient(135deg, oklch(0.90 0.18 127), oklch(0.77 0.20 131))"
+            color="oklch(0.80 0.18 85)"
           />
           <StatCard
             title="Uptime"
             value={formatUptime(stats.uptime)}
             icon={<Clock className="h-4 w-4" />}
             description={`${stats.lavalinkNodes} Lavalink node${stats.lavalinkNodes !== 1 ? "s" : ""}`}
-            glow="linear-gradient(135deg, oklch(0.65 0.18 132), oklch(0.53 0.14 132))"
+            color="oklch(0.70 0.15 250)"
           />
         </div>
       )}
@@ -130,7 +132,7 @@ export function OverviewPage() {
             ))}
           </div>
         ) : !players?.length ? (
-          <Card>
+          <Card className="py-0 gap-0">
             <CardContent className="p-6 text-center text-muted-foreground">
               <Radio className="h-8 w-8 mx-auto mb-2 opacity-50" />
               <p>No active players</p>
@@ -144,7 +146,7 @@ export function OverviewPage() {
                 to={`/players/${player.guildId}`}
                 className="block"
               >
-                <Card className="hover:bg-accent/50 transition-colors cursor-pointer">
+                <Card className="hover:bg-accent/50 transition-colors cursor-pointer py-0 gap-0">
                   <CardContent className="p-4">
                     <div className="flex items-start gap-3">
                       <Avatar className="h-10 w-10 rounded-lg">
@@ -208,7 +210,7 @@ export function OverviewPage() {
           <Activity className="h-4 w-4" />
           Recent Activity
         </h2>
-        <Card>
+        <Card className="py-0 gap-0">
           <CardContent className="p-2">
             <ActivityLog
               entries={logs ?? []}

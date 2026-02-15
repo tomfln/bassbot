@@ -1,9 +1,7 @@
 import { useParams, Link } from "react-router-dom"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Progress } from "@/components/ui/progress"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { usePlayer, useGuildLogs } from "@/hooks/use-api"
@@ -32,11 +30,11 @@ function TrackRow({
 }) {
   return (
     <div
-      className={`flex items-center gap-3 px-3 py-1.5 rounded-md ${
+      className={`flex items-center gap-2 pl-1 pr-2 py-1.5 rounded-md ${
         active ? "bg-primary/10" : "hover:bg-accent/50"
       }`}
     >
-      <span className="text-xs text-muted-foreground w-5 text-right shrink-0">
+      <span className="text-xs text-muted-foreground w-4 text-right shrink-0">
         {index + 1}
       </span>
       {track.artworkUrl ? (
@@ -87,8 +85,8 @@ export function PlayerDetailPage() {
           <ArrowLeft className="h-4 w-4" />
           Back to players
         </Link>
-        <Card>
-          <CardContent className="p-8 text-center text-muted-foreground">
+        <Card className="py-0 gap-0">
+          <CardContent className="p-6 text-center text-muted-foreground">
             <p className="text-lg font-medium">Player not found</p>
             <p className="text-sm mt-1">This guild may not have an active player</p>
           </CardContent>
@@ -130,7 +128,7 @@ export function PlayerDetailPage() {
         {/* Left column — Now playing + Queue */}
         <div className="space-y-6">
           {/* Now playing */}
-          <Card className="overflow-hidden relative">
+          <Card className="overflow-hidden relative py-0 gap-0">
             {/* Background blur artwork */}
             {player.current?.artworkUrl && (
               <div
@@ -140,50 +138,54 @@ export function PlayerDetailPage() {
             )}
             <CardContent className="p-4 relative">
               {player.current ? (
-                <div className="flex gap-4">
-                  {player.current.artworkUrl ? (
-                    <img
-                      src={player.current.artworkUrl}
-                      alt=""
-                      className="h-20 w-20 rounded-lg object-cover shrink-0 shadow-lg"
-                    />
-                  ) : (
-                    <div className="h-20 w-20 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                      <Music className="h-8 w-8 text-muted-foreground" />
+                <div className="space-y-3">
+                  <div className="flex gap-4">
+                    {player.current.artworkUrl ? (
+                      <img
+                        src={player.current.artworkUrl}
+                        alt=""
+                        className="h-20 w-20 rounded-lg object-cover shrink-0 shadow-lg"
+                      />
+                    ) : (
+                      <div className="h-20 w-20 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                        <Music className="h-8 w-8 text-muted-foreground" />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold truncate">
+                        {player.current.title}
+                      </h3>
+                      <p className="text-sm text-muted-foreground truncate">
+                        {player.current.author}
+                      </p>
                     </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <Badge
-                        variant={player.paused ? "secondary" : "default"}
-                        className="text-xs"
-                      >
-                        {player.paused ? (
-                          <Pause className="h-3 w-3 mr-1" />
-                        ) : (
-                          <Play className="h-3 w-3 mr-1" />
-                        )}
-                        {player.paused ? "Paused" : "Playing"}
-                      </Badge>
-                      <Badge variant="outline" className="text-xs">
-                        {player.current.sourceName}
-                      </Badge>
+                    {/* Play/Pause icon */}
+                    <div className="shrink-0 relative flex items-center justify-center w-6 h-6">
+                      <div
+                        className="absolute inset-0 rounded-full blur-md opacity-40"
+                        style={{ background: player.paused ? "transparent" : "oklch(0.77 0.20 131)" }}
+                      />
+                      {player.paused ? (
+                        <Pause className="h-6 w-6 text-muted-foreground relative" />
+                      ) : (
+                        <Play className="h-6 w-6 text-primary relative" />
+                      )}
                     </div>
-                    <h3 className="font-semibold truncate mt-1.5">
-                      {player.current.title}
-                    </h3>
-                    <p className="text-sm text-muted-foreground truncate">
-                      {player.current.author}
-                    </p>
-                    <div className="flex items-center gap-2 mt-2">
-                      <span className="text-xs text-muted-foreground w-10 text-right">
-                        {formatDuration(player.position)}
-                      </span>
-                      <Progress value={progress} className="h-1.5 flex-1" />
-                      <span className="text-xs text-muted-foreground w-10">
-                        {formatDuration(player.current.length)}
-                      </span>
+                  </div>
+                  {/* Progress bar below all content */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground shrink-0">
+                      {formatDuration(player.position)}
+                    </span>
+                    <div className="flex-1 h-1.5 rounded-full bg-black/50 overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-primary transition-all duration-300"
+                        style={{ width: `${progress}%` }}
+                      />
                     </div>
+                    <span className="text-xs text-muted-foreground shrink-0">
+                      {formatDuration(player.current.length)}
+                    </span>
                   </div>
                 </div>
               ) : (
@@ -196,29 +198,29 @@ export function PlayerDetailPage() {
 
           {/* Queue / History / Logs tabs */}
           <Tabs defaultValue="queue">
-            <TabsList>
-              <TabsTrigger value="queue" className="gap-1.5">
+            <TabsList className="h-10 p-1">
+              <TabsTrigger value="queue" className="gap-1.5 text-xs">
                 <ListMusic className="h-3.5 w-3.5" />
                 Queue ({player.queue.length})
               </TabsTrigger>
-              <TabsTrigger value="history" className="gap-1.5">
+              <TabsTrigger value="history" className="gap-1.5 text-xs">
                 <History className="h-3.5 w-3.5" />
                 History ({player.history.length})
               </TabsTrigger>
-              <TabsTrigger value="logs" className="gap-1.5">
+              <TabsTrigger value="logs" className="gap-1.5 text-xs">
                 <Activity className="h-3.5 w-3.5" />
                 Logs
               </TabsTrigger>
             </TabsList>
             <TabsContent value="queue">
-              <Card>
-                <CardContent className="p-1">
+              <Card className="py-0 gap-0">
+                <CardContent className="p-2">
                   {player.queue.length === 0 ? (
                     <p className="text-sm text-muted-foreground text-center py-4">
                       Queue is empty
                     </p>
                   ) : (
-                    <ScrollArea className="h-[400px] overflow-hidden">
+                    <ScrollArea className="max-h-[400px] overflow-hidden">
                       <div>
                         {player.queue.map((track, i) => (
                           <TrackRow key={i} track={track} index={i} />
@@ -230,14 +232,14 @@ export function PlayerDetailPage() {
               </Card>
             </TabsContent>
             <TabsContent value="history">
-              <Card>
-                <CardContent className="p-1">
+              <Card className="py-0 gap-0">
+                <CardContent className="p-2">
                   {player.history.length === 0 ? (
                     <p className="text-sm text-muted-foreground text-center py-4">
                       No history
                     </p>
                   ) : (
-                    <ScrollArea className="h-[400px] overflow-hidden">
+                    <ScrollArea className="max-h-[400px] overflow-hidden">
                       <div>
                         {player.history.map((track, i) => (
                           <TrackRow key={i} track={track} index={i} />
@@ -249,7 +251,7 @@ export function PlayerDetailPage() {
               </Card>
             </TabsContent>
             <TabsContent value="logs">
-              <Card>
+              <Card className="py-0 gap-0">
                 <CardContent className="p-2">
                   <ActivityLog
                     entries={guildLogs ?? []}
@@ -263,14 +265,14 @@ export function PlayerDetailPage() {
 
         {/* Right column — Voice Channel members */}
         <div>
-          <Card>
-            <CardHeader className="pb-3">
+          <Card className="py-0 gap-0">
+            <CardHeader className="px-4 pt-4 pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <Headphones className="h-4 w-4" />
                 Voice Channel
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-4 pb-4">
               {player.voiceChannel ? (
                 <div className="space-y-3">
                   <p className="text-sm font-medium">{player.voiceChannel.name}</p>

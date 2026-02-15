@@ -33,7 +33,7 @@ export function PlayersPage() {
           ))}
         </div>
       ) : !players?.length ? (
-        <Card>
+        <Card className="py-0 gap-0">
           <CardContent className="p-8 text-center text-muted-foreground">
             <Radio className="h-10 w-10 mx-auto mb-3 opacity-50" />
             <p className="text-lg font-medium">No active players</p>
@@ -48,7 +48,7 @@ export function PlayersPage() {
               to={`/players/${player.guildId}`}
               className="block"
             >
-              <Card className="hover:bg-accent/50 transition-colors cursor-pointer">
+              <Card className="hover:bg-accent/50 transition-colors cursor-pointer py-0 gap-0">
                 <CardContent className="p-4">
                   <div className="flex items-center gap-4">
                     {/* Guild avatar */}

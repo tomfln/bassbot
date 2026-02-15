@@ -26,12 +26,12 @@ export class PlayerWithQueue extends Player {
   private _playing = false
   private _historySaved = false
 
-  async init(bot: BassBot, i: ChatInputCommandInteraction<"cached">) {
+  init(bot: BassBot, i: ChatInputCommandInteraction<"cached">) {
     this.bot = bot
     this.textChannel = i.channel
 
     // Try to restore a saved queue
-    const savedQueue = await Queue.load(i.guildId)
+    const savedQueue = Queue.load(i.guildId)
     if (savedQueue) {
       this.q = savedQueue
       logger.info(`Restored saved queue for guild ${i.guild.name} (${this.q.totalLength} tracks)`)
