@@ -2,8 +2,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { useStats, usePlayers } from "@/hooks/use-api"
+import { useStats, usePlayers, useGlobalLogs } from "@/hooks/use-api"
 import { formatUptime, formatDuration } from "@/lib/format"
+import { ActivityLog } from "@/components/activity-log"
 import { Link } from "react-router-dom"
 import {
   Server,
@@ -13,6 +14,7 @@ import {
   Radio,
   Pause,
   Play,
+  Activity,
 } from "lucide-react"
 import type { ReactNode } from "react"
 
@@ -21,26 +23,36 @@ function StatCard({
   value,
   icon,
   description,
+  glow,
 }: {
   title: string
   value: string | number
   icon: ReactNode
   description?: string
+  glow?: string
 }) {
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">
-          {title}
-        </CardTitle>
-        <div className="text-muted-foreground">{icon}</div>
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
-        {description && (
-          <p className="text-xs text-muted-foreground mt-1">{description}</p>
-        )}
-      </CardContent>
+    <Card className={`relative overflow-hidden ${glow ? "border-transparent" : ""}`}>
+      {glow && (
+        <div
+          className="absolute -inset-px rounded-xl opacity-30 blur-sm"
+          style={{ background: glow }}
+        />
+      )}
+      <div className="relative">
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="text-sm font-medium text-muted-foreground">
+            {title}
+          </CardTitle>
+          <div className="text-muted-foreground">{icon}</div>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{value}</div>
+          {description && (
+            <p className="text-xs text-muted-foreground mt-1">{description}</p>
+          )}
+        </CardContent>
+      </div>
     </Card>
   )
 }
@@ -65,6 +77,7 @@ function StatsSkeleton() {
 export function OverviewPage() {
   const { data: stats, isLoading: statsLoading } = useStats()
   const { data: players, isLoading: playersLoading } = usePlayers()
+  const { data: logs } = useGlobalLogs(30)
 
   return (
     <div className="space-y-6">
@@ -79,22 +92,26 @@ export function OverviewPage() {
             title="Guilds"
             value={stats.guildCount}
             icon={<Server className="h-4 w-4" />}
+            glow="linear-gradient(135deg, oklch(0.77 0.20 131), oklch(0.65 0.18 132))"
           />
           <StatCard
             title="Users"
             value={stats.userCount.toLocaleString()}
             icon={<Users className="h-4 w-4" />}
+            glow="linear-gradient(135deg, oklch(0.85 0.21 129), oklch(0.65 0.18 155))"
           />
           <StatCard
             title="Active Players"
             value={`${stats.activePlayers} / ${stats.totalPlayers}`}
             icon={<Music className="h-4 w-4" />}
+            glow="linear-gradient(135deg, oklch(0.90 0.18 127), oklch(0.77 0.20 131))"
           />
           <StatCard
             title="Uptime"
             value={formatUptime(stats.uptime)}
             icon={<Clock className="h-4 w-4" />}
             description={`${stats.lavalinkNodes} Lavalink node${stats.lavalinkNodes !== 1 ? "s" : ""}`}
+            glow="linear-gradient(135deg, oklch(0.65 0.18 132), oklch(0.53 0.14 132))"
           />
         </div>
       )}
@@ -183,6 +200,23 @@ export function OverviewPage() {
             ))}
           </div>
         )}
+      </div>
+
+      {/* Activity Log */}
+      <div className="space-y-3">
+        <h2 className="text-lg font-semibold flex items-center gap-2">
+          <Activity className="h-4 w-4" />
+          Recent Activity
+        </h2>
+        <Card>
+          <CardContent className="p-2">
+            <ActivityLog
+              entries={logs ?? []}
+              showGuild
+              maxHeight="350px"
+            />
+          </CardContent>
+        </Card>
       </div>
     </div>
   )

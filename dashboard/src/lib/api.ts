@@ -51,6 +51,16 @@ export interface GuildInfo {
   hasPlayer: boolean
 }
 
+export interface ActivityEntry {
+  timestamp: number
+  guildId: string
+  guildName: string
+  userId: string
+  userName: string
+  action: string
+  detail: string
+}
+
 // ─── Fetcher ────────────────────────────────────────────────────────────────
 
 const BASE = "/api"
@@ -66,4 +76,7 @@ export const api = {
   players: () => fetcher<PlayerInfo[]>("/players"),
   player: (guildId: string) => fetcher<PlayerInfo>(`/players/${guildId}`),
   guilds: () => fetcher<GuildInfo[]>("/guilds"),
+  globalLogs: (limit = 50) => fetcher<ActivityEntry[]>(`/logs?limit=${limit}`),
+  guildLogs: (guildId: string, limit = 50) =>
+    fetcher<ActivityEntry[]>(`/logs/${guildId}?limit=${limit}`),
 }

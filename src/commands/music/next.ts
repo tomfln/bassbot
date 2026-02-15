@@ -1,5 +1,6 @@
 import requirePlayer from "@/middlewares/requirePlayer"
 import { createCommand, buildOptions } from "@bot/command"
+import { log } from "@/util/activity-log"
 
 export default createCommand({
   description: "Plays the next song in the queue",
@@ -15,8 +16,9 @@ export default createCommand({
 
   middleware: m => m.use(requirePlayer),
 
-  run: async ({ options, reply, data: { player } }) => {
+  run: async ({ i, options, reply, data: { player } }) => {
     await player.next(options?.position)
+    log(i, "skip", options?.position ? `to position ${options.position}` : "next song")
     return reply("Playing next song.")
   },
 })

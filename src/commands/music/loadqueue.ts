@@ -6,6 +6,7 @@ import isBoundChannel from "@/validators/isBoundChannel"
 import isInGuild from "@/validators/isInGuild"
 import isInVC from "@/validators/isInVC"
 import { createMessageEmbed, EmbedColor } from "@bot/message"
+import { log } from "@/util/activity-log"
 import {
   ActionRowBuilder,
   ButtonBuilder,
@@ -104,6 +105,7 @@ export default createCommand({
       if (!hasQueue) {
         const loadPlayer = player ?? (await bot.joinVC(i))
         await loadPlayer.addTracks(q.tracks)
+        log(i, "loadqueue", `loaded ${trackCount} tracks`)
 
         await selectInteraction.update({
           embeds: [
@@ -169,6 +171,7 @@ export default createCommand({
       }
 
       await player.addTracks(tracks)
+      log(i, "loadqueue", `${replace ? "replaced queue with" : "appended"} ${tracks.length} tracks`)
 
       await buttonInteraction.update({
         embeds: [

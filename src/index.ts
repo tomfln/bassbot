@@ -10,7 +10,9 @@ const bot = new BassBot()
 bot.on(Events.ClientReady, ({ user }) => {
   bot.printBanner(user.displayName)
   setupLavalinkEvents(bot)
-  startApiServer(bot, env.API_PORT)
+  if (env.DASHBOARD_ENABLED) {
+    startApiServer(bot, env.API_PORT)
+  }
 })
 
 void bot.login(env.TOKEN)

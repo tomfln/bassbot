@@ -1,6 +1,6 @@
 import useSWR from "swr"
 import { api } from "@/lib/api"
-import type { Stats, PlayerInfo, GuildInfo } from "@/lib/api"
+import type { Stats, PlayerInfo, GuildInfo, ActivityEntry } from "@/lib/api"
 
 const REFRESH_INTERVAL = 5000
 
@@ -28,4 +28,18 @@ export function useGuilds() {
   return useSWR<GuildInfo[]>("guilds", () => api.guilds(), {
     refreshInterval: REFRESH_INTERVAL,
   })
+}
+
+export function useGlobalLogs(limit = 50) {
+  return useSWR<ActivityEntry[]>("global-logs", () => api.globalLogs(limit), {
+    refreshInterval: REFRESH_INTERVAL,
+  })
+}
+
+export function useGuildLogs(guildId: string | undefined, limit = 50) {
+  return useSWR<ActivityEntry[]>(
+    guildId ? `guild-logs-${guildId}` : null,
+    () => api.guildLogs(guildId!, limit),
+    { refreshInterval: REFRESH_INTERVAL },
+  )
 }

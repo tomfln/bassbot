@@ -1,6 +1,7 @@
 import requirePlayer from "@/middlewares/requirePlayer"
 import { createCommand, buildOptions } from "@bot/command"
 import { Timestamp } from "@/util/time"
+import { log } from "@/util/activity-log"
 
 export default createCommand({
   description: "Seek to the specified time in the current song",
@@ -14,7 +15,7 @@ export default createCommand({
 
   middleware: m => m.use(requirePlayer),
 
-  run: async ({ options, reply, data: { player } }) => {
+  run: async ({ i, options, reply, data: { player } }) => {
     const info = player.current?.info
     if (!info?.isSeekable) return reply.warn("This track is not seekable")
 
@@ -26,6 +27,7 @@ export default createCommand({
     }
 
     await player.seekTo(duration.asMillis())
+    log(i, "seek", `seeked to ${duration}`)
 
     return reply(`Seeked to ${duration}`)
   },

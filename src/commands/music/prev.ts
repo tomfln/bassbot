@@ -1,6 +1,7 @@
 import requireHistory from "@/middlewares/requireHistory"
 import { createCommand } from "@bot/command"
 import isInGuild from "@/validators/isInGuild"
+import { log } from "@/util/activity-log"
 
 export default createCommand({
   description: "Plays the previous song in the queue",
@@ -9,8 +10,9 @@ export default createCommand({
   validators: [isInGuild()],
   middleware: m => m.use(requireHistory),
   
-  run: async ({ reply, data: { player } }) => {
+  run: async ({ i, reply, data: { player } }) => {
     await player.prev()
+    log(i, "prev", "previous song")
     return reply("Playing previous song.")
   },
 })

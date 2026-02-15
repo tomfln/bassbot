@@ -3,6 +3,7 @@ import { cleanTrackTitle } from "@/util/helpers"
 import isBoundChannel from "@/validators/isBoundChannel"
 import isInBoundVC from "@/validators/isInBoundVC"
 import { resolveSong } from "@/util/song-search"
+import { log } from "@/util/activity-log"
 
 export default createCommand({
   description: "Play a song.",
@@ -37,10 +38,12 @@ export default createCommand({
     switch (music.type) {
       case "track":
         await player.addTrack(music.track, options.next ?? false)
+        log(i, "play", cleanTrackTitle(music.track))
         return reply(`Queued **${cleanTrackTitle(music.track)}** by **${music.track.info.author}**`)
 
       case "playlist":
         await player.addTracks(music.tracks, options.next ?? false)
+        log(i, "play", `${music.tracks.length} songs from ${music.info.name}`)
         return reply(
           `Added **${music.tracks.length}** songs from **[${music.info.name}](${options.song})** to the queue`,
         )

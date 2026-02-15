@@ -1,5 +1,6 @@
 import requirePlayer from "@/middlewares/requirePlayer";
 import { createCommand } from "@bot/command";
+import { log } from "@/util/activity-log";
 
 export default createCommand({
   description: "Resume the current song",
@@ -7,9 +8,10 @@ export default createCommand({
 
   middleware: m => m.use(requirePlayer),
 
-  run: async ({ reply, data: { player } }) => {
+  run: async ({ i, reply, data: { player } }) => {
     if (player.paused) {
       await player.setPaused(false)
+      log(i, "resume", "resumed playback")
       return reply("Resumed.")
     } else {
       return reply("Already playing.")

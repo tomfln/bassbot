@@ -4,7 +4,9 @@
   "module": "src/index.ts",
   "type": "module",
   "scripts": {
-    "dev": "bun --watch src/index.ts",
+    "dev": "bun lib/scripts/dev.ts",
+    "dev:bot": "bun --watch src/index.ts",
+    "dev:dash": "cd dashboard && bun run dev",
     "register": "bun lib/scripts/register-commands.ts",
     "start": "bun run src/index.ts",
     "eslint": "eslint .",

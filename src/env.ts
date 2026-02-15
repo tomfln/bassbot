@@ -9,6 +9,8 @@ const envSchema = z.object({
   DATA_DIR: z.string().default("./")
     .transform(dir => resolve(import.meta.dir, "..", dir)),
   API_PORT: z.coerce.number().default(3001),
+  DASHBOARD_ENABLED: z.string().default("true")
+    .transform(v => v === "true" || v === "1"),
 })
 
 export default initEnv(envSchema)

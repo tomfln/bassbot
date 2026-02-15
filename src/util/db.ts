@@ -24,6 +24,15 @@ const models = {
       savedAt: z.number(),
     }),
   }),
+  activityLog: z.object({
+    timestamp: z.number(),
+    guildId: z.string(),
+    guildName: z.string(),
+    userId: z.string(),
+    userName: z.string(),
+    action: z.string(),
+    detail: z.string(),
+  }),
 }
 
 export type GuildOptions = DocType<typeof models.guildOptions>

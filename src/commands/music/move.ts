@@ -1,5 +1,6 @@
 import requireQueue from "@/middlewares/requireQueue"
 import { createCommand, buildOptions } from "@bot/command"
+import { log } from "@/util/activity-log"
 
 export default createCommand({
   description: "Move a track in the queue to a different position",
@@ -20,9 +21,10 @@ export default createCommand({
 
   middleware: m => m.use(requireQueue),
 
-  run: async ({ options, reply, data: { player } }) => {
+  run: async ({ i, options, reply, data: { player } }) => {
     const moved = player.moveTrack(options.from - 1, options.to - 1)
     if (!moved) return reply.warn("Invalid queue position")
+    log(i, "move", `moved ${moved.info.title} from #${options.from} to #${options.to}`)
     return reply(`Moved track **${moved.info.title}** from position **${options.from}** to **${options.to}**`)
   },
 })

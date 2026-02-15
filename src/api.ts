@@ -1,6 +1,9 @@
 import type { BassBot } from "./bot"
 import type { PlayerWithQueue } from "./player"
+import { getGlobalLog, getGuildLog } from "./util/activity-log"
 import logger from "@bot/logger"
+import { join } from "node:path"
+import { existsSync } from "node:fs"
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -67,9 +70,18 @@ function getPlayerInfo(player: PlayerWithQueue, bot: BassBot) {
 }
 
 export function startApiServer(bot: BassBot, port: number) {
+  // Resolve dashboard static files directory
+  const dashboardDir = join(import.meta.dir, "..", "dashboard", "dist")
+  const hasDashboard = existsSync(dashboardDir)
+  const indexHtml = hasDashboard ? join(dashboardDir, "index.html") : null
+
+  if (hasDashboard) {
+    logger.info("Serving dashboard from " + dashboardDir)
+  }
+
   const server = Bun.serve({
     port,
-    fetch(req) {
+    async fetch(req) {
       const url = new URL(req.url)
 
       // Handle CORS preflight
@@ -118,6 +130,31 @@ export function startApiServer(bot: BassBot, port: number) {
           hasPlayer: bot.lava.players.has(g.id),
         }))
         return json(guilds)
+      }
+
+      // GET /api/logs — global activity log
+      if (url.pathname === "/api/logs") {
+        const limit = parseInt(url.searchParams.get("limit") ?? "50")
+        return json(getGlobalLog(limit))
+      }
+
+      // GET /api/logs/:guildId — guild-specific activity log
+      const logMatch = /^\/api\/logs\/(\d+)$/.exec(url.pathname)
+      if (logMatch) {
+        const limit = parseInt(url.searchParams.get("limit") ?? "50")
+        return json(getGuildLog(logMatch[1]!, limit))
+      }
+
+      // ─── Dashboard static files (prod) ───────────────────────────────
+      if (hasDashboard && !url.pathname.startsWith("/api")) {
+        // Try to serve the exact file
+        const filePath = join(dashboardDir, url.pathname)
+        const file = Bun.file(filePath)
+        if (await file.exists()) {
+          return new Response(file)
+        }
+        // SPA fallback: serve index.html for all non-file routes
+        return new Response(Bun.file(indexHtml!))
       }
 
       return json({ error: "Not found" }, 404)
