@@ -32,8 +32,7 @@ services:
     environment:
       - _JAVA_OPTIONS=-Xmx4G
     volumes:
-      - ./lavalink/application.yml:/opt/Lavalink/application.yml
-      - ./lavalink/plugins:/opt/Lavalink/plugins
+      - ./bassbot-data/application.yml:/opt/Lavalink/application.yml
     expose:
       - 2333
     networks:

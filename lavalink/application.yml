@@ -62,7 +62,7 @@ plugins:
       - "ytsearch:%QUERY%"
       - "scsearch:%QUERY%"
     sources:
-      spotify: true
+      spotify: false # enable if you have spotify credentials
       applemusic: false
       deezer: false
       yandexmusic: false

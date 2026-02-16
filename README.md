@@ -53,12 +53,17 @@ Open `bassbot-data/config.json` and fill in your values:
 
 ### 4. (Optional) Configure Spotify
 
-To enable Spotify link support, edit `lavalink/application.yml` and set your Spotify API credentials under `plugins.lavasrc.spotify`:
+To enable Spotify link support, edit `lavalink/application.yml`, enable the spotify source and set your Spotify API credentials under `plugins.lavasrc.spotify`:
 
 ```yaml
-spotify:
-  clientId: "your_spotify_client_id"
-  clientSecret: "your_spotify_client_secret"
+lavasrc:
+  # ...
+  sources:
+    spotify: true
+  # ...
+  spotify:
+    clientId: "your_spotify_client_id"
+    clientSecret: "your_spotify_client_secret"
 ```
 
 You can create these at the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard).
