@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query"
 import { api } from "@/lib/api"
-import type { Stats, PlayerInfo, GuildInfo, ActivityEntry } from "@/lib/api"
+import type { Stats, PlayerInfo, GuildInfo, GuildDetail, ActivityEntry } from "@/lib/api"
 
 const REFETCH_INTERVAL = 5000
 
@@ -39,6 +39,15 @@ export function useGuilds() {
   return useQuery<GuildInfo[]>({
     queryKey: ["guilds"],
     queryFn: () => unwrap(api.api.guilds.get()),
+    refetchInterval: REFETCH_INTERVAL,
+  })
+}
+
+export function useGuild(guildId: string | undefined) {
+  return useQuery<GuildDetail>({
+    queryKey: ["guild", guildId],
+    queryFn: () => unwrap(api.api.guilds({ guildId: guildId! }).get()),
+    enabled: !!guildId,
     refetchInterval: REFETCH_INTERVAL,
   })
 }

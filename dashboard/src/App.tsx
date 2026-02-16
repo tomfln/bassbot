@@ -6,6 +6,8 @@ import { OverviewPage } from "@/pages/overview"
 import { GuildsPage } from "@/pages/guilds"
 import { PlayersPage } from "@/pages/players"
 import { PlayerDetailPage } from "@/pages/player-detail"
+import { GuildDetailPage } from "@/pages/guild-detail"
+import { LogsPage } from "@/pages/logs"
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -27,6 +29,8 @@ export function App() {
               <Route path="guilds" element={<GuildsPage />} />
               <Route path="players" element={<PlayersPage />} />
               <Route path="players/:guildId" element={<PlayerDetailPage />} />
+              <Route path="guilds/:guildId" element={<GuildDetailPage />} />
+              <Route path="logs" element={<LogsPage />} />
             </Route>
           </Routes>
         </BrowserRouter>

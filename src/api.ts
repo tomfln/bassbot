@@ -56,6 +56,16 @@ function playerInfo(player: PlayerWithQueue, bot: BassBot) {
         }
       : null,
     node: player.node.name,
+    nodeStats: player.node.stats
+      ? {
+          players: player.node.stats.players,
+          playingPlayers: player.node.stats.playingPlayers,
+          uptime: player.node.stats.uptime,
+          memory: player.node.stats.memory,
+          cpu: player.node.stats.cpu,
+          frameStats: player.node.stats.frameStats,
+        }
+      : null,
   }
 }
 
@@ -91,6 +101,40 @@ function createApi(bot: BassBot) {
         hasPlayer: bot.lava.players.has(g.id),
       })),
     )
+    .get("/api/guilds/:guildId", ({ params }) => {
+      const guild = bot.guilds.cache.get(params.guildId)
+      if (!guild) return status(404, { error: "Guild not found" })
+
+      const owner = guild.members.cache.get(guild.ownerId)
+      const members = guild.members.cache.map((m) => ({
+        id: m.id,
+        displayName: m.displayName,
+        username: m.user.username,
+        avatar: m.user.displayAvatarURL({ size: 32 }),
+        isBot: m.user.bot,
+        isOwner: m.id === guild.ownerId,
+        joinedAt: m.joinedTimestamp,
+      }))
+
+      return {
+        id: guild.id,
+        name: guild.name,
+        icon: guild.iconURL({ size: 128 }),
+        banner: guild.bannerURL({ size: 512 }),
+        memberCount: guild.memberCount,
+        createdAt: guild.createdTimestamp,
+        owner: owner
+          ? {
+              id: owner.id,
+              displayName: owner.displayName,
+              username: owner.user.username,
+              avatar: owner.user.displayAvatarURL({ size: 64 }),
+            }
+          : null,
+        hasPlayer: bot.lava.players.has(guild.id),
+        members,
+      }
+    })
     .get("/api/logs", ({ query }) => {
       const limit = parseInt(query.limit ?? "50")
       return getGlobalLog(limit)

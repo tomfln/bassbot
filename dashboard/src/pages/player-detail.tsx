@@ -1,12 +1,13 @@
 import { useParams, Link } from "react-router-dom"
+import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { usePlayer, useGuildLogs } from "@/hooks/use-api"
-import { formatDuration } from "@/lib/format"
+import { formatDuration, formatUptime } from "@/lib/format"
 import { ActivityLog } from "@/components/activity-log"
+import { useOptimisticPosition } from "@/hooks/use-optimistic-position"
 import {
   ArrowLeft,
   Pause,
@@ -16,8 +17,14 @@ import {
   ListMusic,
   History,
   Activity,
+  Cpu,
+  MemoryStick,
+  ChevronDown,
 } from "lucide-react"
 import type { Track } from "@/lib/api"
+
+const INITIAL_ITEMS = 10
+const LOAD_MORE_COUNT = 10
 
 function TrackRow({
   track,
@@ -30,11 +37,13 @@ function TrackRow({
 }) {
   return (
     <div
-      className={`flex items-center gap-2 pl-1 pr-2 py-1.5 rounded-md ${
-        active ? "bg-primary/10" : "hover:bg-accent/50"
+      className={`flex items-center gap-2 px-2.5 py-2 rounded-lg border ${
+        active
+          ? "bg-primary/10 border-primary/20"
+          : "bg-card border-border hover:bg-accent/50"
       }`}
     >
-      <span className="text-xs text-muted-foreground w-4 text-right shrink-0">
+      <span className="text-xs text-muted-foreground w-4 text-center shrink-0">
         {index + 1}
       </span>
       {track.artworkUrl ? (
@@ -61,10 +70,45 @@ function TrackRow({
   )
 }
 
+function TrackList({
+  tracks,
+  activeIndex,
+}: {
+  tracks: Track[]
+  activeIndex?: number
+}) {
+  const [showCount, setShowCount] = useState(INITIAL_ITEMS)
+  const displayed = tracks.slice(0, showCount)
+  const remaining = tracks.length - showCount
+
+  return (
+    <div className="space-y-1.5">
+      {displayed.map((track, i) => (
+        <TrackRow key={i} track={track} index={i} active={i === activeIndex} />
+      ))}
+      {remaining > 0 && (
+        <button
+          onClick={() => setShowCount((c) => c + LOAD_MORE_COUNT)}
+          className="flex items-center justify-center gap-1.5 w-full text-sm text-muted-foreground hover:text-foreground transition-colors py-2"
+        >
+          <ChevronDown className="h-3.5 w-3.5" />
+          Show more ({remaining} remaining)
+        </button>
+      )}
+    </div>
+  )
+}
+
 export function PlayerDetailPage() {
   const { guildId } = useParams<{ guildId: string }>()
   const { data: player, isLoading, error } = usePlayer(guildId)
   const { data: guildLogs } = useGuildLogs(guildId)
+
+  const optimisticPosition = useOptimisticPosition(
+    player?.position ?? 0,
+    player?.current?.length ?? 0,
+    player?.paused ?? true,
+  )
 
   if (isLoading) {
     return (
@@ -97,7 +141,7 @@ export function PlayerDetailPage() {
 
   const progress =
     player.current && player.current.length > 0
-      ? (player.position / player.current.length) * 100
+      ? (optimisticPosition / player.current.length) * 100
       : 0
 
   return (
@@ -126,7 +170,7 @@ export function PlayerDetailPage() {
 
       <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
         {/* Left column — Now playing + Queue */}
-        <div className="space-y-6 min-w-0">
+        <div className="space-y-4 min-w-0">
           {/* Now playing */}
           <Card className="overflow-hidden relative py-0 gap-0">
             {/* Background blur artwork */}
@@ -175,7 +219,7 @@ export function PlayerDetailPage() {
                   {/* Progress bar below all content */}
                   <div className="flex items-center gap-1.5">
                     <span className="text-xs text-muted-foreground tabular-nums">
-                      {formatDuration(player.position)}
+                      {formatDuration(optimisticPosition)}
                     </span>
                     <div className="flex-1 h-1.5 rounded-full bg-black/50 overflow-hidden">
                       <div
@@ -199,72 +243,50 @@ export function PlayerDetailPage() {
           {/* Queue / History / Logs tabs */}
           <Tabs defaultValue="queue">
             <TabsList className="h-10 p-1">
-              <TabsTrigger value="queue" className="gap-1.5 text-xs">
+              <TabsTrigger value="queue" className="gap-1.5 text-xs px-3 py-1.5">
                 <ListMusic className="h-3.5 w-3.5" />
                 Queue ({player.queue.length})
               </TabsTrigger>
-              <TabsTrigger value="history" className="gap-1.5 text-xs">
+              <TabsTrigger value="history" className="gap-1.5 text-xs px-3 py-1.5">
                 <History className="h-3.5 w-3.5" />
                 History ({player.history.length})
               </TabsTrigger>
-              <TabsTrigger value="logs" className="gap-1.5 text-xs">
+              <TabsTrigger value="logs" className="gap-1.5 text-xs px-3 py-1.5">
                 <Activity className="h-3.5 w-3.5" />
                 Logs
               </TabsTrigger>
             </TabsList>
             <TabsContent value="queue">
-              <Card className="py-0 gap-0">
-                <CardContent className="p-2">
-                  {player.queue.length === 0 ? (
-                    <p className="text-sm text-muted-foreground text-center py-4">
-                      Queue is empty
-                    </p>
-                  ) : (
-                    <ScrollArea className="max-h-[400px] overflow-hidden">
-                      <div>
-                        {player.queue.map((track, i) => (
-                          <TrackRow key={i} track={track} index={i} />
-                        ))}
-                      </div>
-                    </ScrollArea>
-                  )}
-                </CardContent>
-              </Card>
+              {player.queue.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  Queue is empty
+                </p>
+              ) : (
+                <TrackList tracks={player.queue} />
+              )}
             </TabsContent>
             <TabsContent value="history">
-              <Card className="py-0 gap-0">
-                <CardContent className="p-2">
-                  {player.history.length === 0 ? (
-                    <p className="text-sm text-muted-foreground text-center py-4">
-                      No history
-                    </p>
-                  ) : (
-                    <ScrollArea className="max-h-[400px] overflow-hidden">
-                      <div>
-                        {player.history.map((track, i) => (
-                          <TrackRow key={i} track={track} index={i} />
-                        ))}
-                      </div>
-                    </ScrollArea>
-                  )}
-                </CardContent>
-              </Card>
+              {player.history.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  No history
+                </p>
+              ) : (
+                <TrackList tracks={player.history} />
+              )}
             </TabsContent>
             <TabsContent value="logs">
-              <Card className="py-0 gap-0">
-                <CardContent className="p-2">
-                  <ActivityLog
-                    entries={guildLogs ?? []}
-                    maxHeight="400px"
-                  />
-                </CardContent>
-              </Card>
+              <ActivityLog
+                entries={guildLogs ?? []}
+                maxHeight="400px"
+                limit={10}
+                seeAllHref={`/logs?guild=${guildId}`}
+              />
             </TabsContent>
           </Tabs>
         </div>
 
-        {/* Right column (bottom on mobile) — Voice Channel members */}
-        <div className="order-last">
+        {/* Right column (bottom on mobile) — Voice Channel members + Node stats */}
+        <div className="order-last space-y-4">
           <Card className="py-0 gap-0">
             <CardHeader className="px-4 pt-4 pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
@@ -299,6 +321,119 @@ export function PlayerDetailPage() {
               ) : (
                 <p className="text-sm text-muted-foreground text-center py-4">
                   Not in a voice channel
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Lavalink Node Stats */}
+          <Card className="py-0 gap-0">
+            <CardHeader className="px-4 pt-4 pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <Activity className="h-4 w-4" />
+                Node: {player.node}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="px-4 pb-4">
+              {player.nodeStats ? (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Players</p>
+                      <p className="text-sm font-medium">
+                        {player.nodeStats.playingPlayers} / {player.nodeStats.players}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Uptime</p>
+                      <p className="text-sm font-medium">
+                        {formatUptime(player.nodeStats.uptime / 1000)}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center gap-1.5 mb-1.5">
+                      <Cpu className="h-3 w-3 text-muted-foreground" />
+                      <p className="text-xs text-muted-foreground">CPU</p>
+                      <span className="text-[11px] text-muted-foreground opacity-50">
+                        ({player.nodeStats.cpu.cores} core{player.nodeStats.cpu.cores !== 1 ? "s" : ""})
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <p className="text-[11px] text-muted-foreground">System</p>
+                        <p className="text-sm font-medium tabular-nums">
+                          {(player.nodeStats.cpu.systemLoad * 100).toFixed(1)}%
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[11px] text-muted-foreground">Lavalink</p>
+                        <p className="text-sm font-medium tabular-nums">
+                          {(player.nodeStats.cpu.lavalinkLoad * 100).toFixed(1)}%
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center gap-1.5 mb-1.5">
+                      <MemoryStick className="h-3 w-3 text-muted-foreground" />
+                      <p className="text-xs text-muted-foreground">Memory</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <p className="text-[11px] text-muted-foreground">Used</p>
+                        <p className="text-sm font-medium tabular-nums">
+                          {(player.nodeStats.memory.used / 1024 / 1024).toFixed(0)} MB
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[11px] text-muted-foreground">Allocated</p>
+                        <p className="text-sm font-medium tabular-nums">
+                          {(player.nodeStats.memory.allocated / 1024 / 1024).toFixed(0)} MB
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-1.5 h-1.5 rounded-full bg-muted overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-primary transition-all"
+                        style={{
+                          width: `${Math.min(100, (player.nodeStats.memory.used / player.nodeStats.memory.allocated) * 100)}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {player.nodeStats.frameStats && (
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1.5">Frames</p>
+                      <div className="grid grid-cols-3 gap-2">
+                        <div>
+                          <p className="text-[11px] text-muted-foreground">Sent</p>
+                          <p className="text-sm font-medium tabular-nums">
+                            {player.nodeStats.frameStats.sent}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-[11px] text-muted-foreground">Nulled</p>
+                          <p className="text-sm font-medium tabular-nums">
+                            {player.nodeStats.frameStats.nulled}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-[11px] text-muted-foreground">Deficit</p>
+                          <p className="text-sm font-medium tabular-nums">
+                            {player.nodeStats.frameStats.deficit}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  No stats available
                 </p>
               )}
             </CardContent>

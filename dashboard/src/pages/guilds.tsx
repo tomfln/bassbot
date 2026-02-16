@@ -34,15 +34,9 @@ export function GuildsPage() {
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {guilds
             ?.sort((a, b) => (a.hasPlayer === b.hasPlayer ? 0 : a.hasPlayer ? -1 : 1))
-            .map((guild) => {
-              const content = (
-                <Card
-                  className={`py-0 gap-0 ${
-                    guild.hasPlayer
-                      ? "hover:bg-accent/50 transition-colors cursor-pointer"
-                      : "opacity-75"
-                  }`}
-                >
+            .map((guild) => (
+              <Link key={guild.id} to={`/guilds/${guild.id}`} className="block">
+                <Card className="py-0 gap-0 hover:bg-accent/50 transition-colors cursor-pointer">
                   <CardContent className="p-4">
                     <div className="flex items-center gap-3">
                       <Avatar className="h-10 w-10 rounded-lg">
@@ -61,24 +55,22 @@ export function GuildsPage() {
                         </div>
                       </div>
                       {guild.hasPlayer && (
-                        <Badge variant="default" className="shrink-0">
-                          <Music className="h-3 w-3 mr-1" />
-                          Active
-                        </Badge>
+                        <Link
+                          to={`/players/${guild.id}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="shrink-0"
+                        >
+                          <Badge variant="default" className="hover:bg-primary/80">
+                            <Music className="h-3 w-3 mr-1" />
+                            Active
+                          </Badge>
+                        </Link>
                       )}
                     </div>
                   </CardContent>
                 </Card>
-              )
-
-              return guild.hasPlayer ? (
-                <Link key={guild.id} to={`/players/${guild.id}`} className="block">
-                  {content}
-                </Link>
-              ) : (
-                <div key={guild.id}>{content}</div>
-              )
-            })}
+              </Link>
+            ))}
         </div>
       )}
     </div>

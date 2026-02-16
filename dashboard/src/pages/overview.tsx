@@ -1,19 +1,15 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useStats, usePlayers, useGlobalLogs } from "@/hooks/use-api"
-import { formatUptime, formatDuration } from "@/lib/format"
+import { formatUptime } from "@/lib/format"
 import { ActivityLog } from "@/components/activity-log"
-import { Link } from "react-router-dom"
+import { PlayerCard } from "@/components/player-card"
 import {
   Server,
   Users,
   Music,
   Clock,
   Radio,
-  Pause,
-  Play,
   Activity,
 } from "lucide-react"
 import type { ReactNode } from "react"
@@ -139,66 +135,9 @@ export function OverviewPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {players.filter(p => p.current).map((player) => (
-              <Link
-                key={player.guildId}
-                to={`/players/${player.guildId}`}
-                className="block"
-              >
-                <Card className="hover:bg-accent/50 transition-colors cursor-pointer py-0 gap-0">
-                  <CardContent className="p-4">
-                    <div className="flex items-start gap-3">
-                      <Avatar className="h-10 w-10 rounded-lg">
-                        <AvatarImage src={player.guildIcon ?? undefined} />
-                        <AvatarFallback className="rounded-lg text-xs">
-                          {player.guildName.slice(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium text-sm truncate">
-                            {player.guildName}
-                          </span>
-                          <Badge
-                            variant={player.paused ? "secondary" : "default"}
-                            className="shrink-0 text-xs"
-                          >
-                            {player.paused ? (
-                              <Pause className="h-3 w-3 mr-1" />
-                            ) : (
-                              <Play className="h-3 w-3 mr-1" />
-                            )}
-                            {player.paused ? "Paused" : "Playing"}
-                          </Badge>
-                        </div>
-                        {player.current && (
-                          <div className="mt-1">
-                            <p className="text-sm truncate">
-                              {player.current.title}
-                            </p>
-                            <p className="text-xs text-muted-foreground truncate">
-                              {player.current.author} &middot;{" "}
-                              {formatDuration(player.current.length)}
-                            </p>
-                          </div>
-                        )}
-                        <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-                          <span>{player.queue.length} in queue</span>
-                          {player.voiceChannel && (
-                            <>
-                              <span>&middot;</span>
-                              <span>
-                                {player.voiceChannel.members.length} listener{player.voiceChannel.members.length !== 1 ? "s" : ""}
-                              </span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
+              <PlayerCard key={player.guildId} player={player} />
             ))}
           </div>
         )}
@@ -210,15 +149,13 @@ export function OverviewPage() {
           <Activity className="h-4 w-4" />
           Recent Activity
         </h2>
-        <Card className="py-0 gap-0">
-          <CardContent className="p-2">
-            <ActivityLog
-              entries={logs ?? []}
-              showGuild
-              maxHeight="350px"
-            />
-          </CardContent>
-        </Card>
+        <ActivityLog
+          entries={logs ?? []}
+          showGuild
+          maxHeight="350px"
+          limit={10}
+          seeAllHref="/logs"
+        />
       </div>
     </div>
   )

@@ -1,5 +1,6 @@
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Link } from "react-router-dom"
 import type { ActivityEntry } from "@/lib/api"
 import {
   Play,
@@ -15,6 +16,7 @@ import {
   ArrowUpDown,
   ListPlus,
   PlayCircle,
+  ArrowRight,
 } from "lucide-react"
 
 const ACTION_ICONS: Record<string, typeof Play> = {
@@ -34,21 +36,21 @@ const ACTION_ICONS: Record<string, typeof Play> = {
   loadqueue: ListPlus,
 }
 
-const ACTION_COLORS: Record<string, string> = {
-  play: "text-green-400",
-  skip: "text-blue-400",
-  prev: "text-blue-400",
-  pause: "text-yellow-400",
-  resume: "text-green-400",
-  stop: "text-red-400",
-  clear: "text-red-400",
-  remove: "text-red-400",
-  shuffle: "text-purple-400",
-  volume: "text-orange-400",
-  loop: "text-cyan-400",
-  seek: "text-amber-400",
-  move: "text-indigo-400",
-  loadqueue: "text-teal-400",
+const ACTION_BG_COLORS: Record<string, string> = {
+  play: "bg-green-500",
+  skip: "bg-blue-500",
+  prev: "bg-blue-500",
+  pause: "bg-yellow-500",
+  resume: "bg-green-500",
+  stop: "bg-red-500",
+  clear: "bg-red-500",
+  remove: "bg-red-500",
+  shuffle: "bg-purple-500",
+  volume: "bg-orange-500",
+  loop: "bg-cyan-500",
+  seek: "bg-amber-500",
+  move: "bg-indigo-500",
+  loadqueue: "bg-teal-500",
 }
 
 function formatRelativeTime(timestamp: number): string {
@@ -68,10 +70,14 @@ export function ActivityLog({
   entries,
   showGuild = false,
   maxHeight = "400px",
+  limit,
+  seeAllHref,
 }: {
   entries: ActivityEntry[]
   showGuild?: boolean
   maxHeight?: string
+  limit?: number
+  seeAllHref?: string
 }) {
   if (!Array.isArray(entries) || entries.length === 0) {
     return (
@@ -81,45 +87,71 @@ export function ActivityLog({
     )
   }
 
-  return (
-    <ScrollArea className="overflow-hidden" style={{ maxHeight }}>
-      <div className="space-y-0.5 pr-3">
-        {entries.map((entry, i) => {
-          const Icon = ACTION_ICONS[entry.action] ?? Play
-          const iconColor = ACTION_COLORS[entry.action] ?? "text-primary"
-          return (
-            <div
-              key={`${entry.timestamp}-${i}`}
-              className="flex items-start gap-2.5 px-2 py-1.5 rounded-md hover:bg-accent/30 transition-colors"
-            >
-              <div className="mt-0.5 shrink-0 h-6 w-6 rounded-md bg-accent/50 flex items-center justify-center">
-                <Icon className={`h-3.5 w-3.5 ${iconColor}`} />
-              </div>
-              <Avatar className="h-6 w-6 shrink-0 mt-0.5">
+  const displayed = limit ? entries.slice(0, limit) : entries
+
+  const items = (
+    <div className="space-y-1.5">
+      {displayed.map((entry, i) => {
+        const Icon = ACTION_ICONS[entry.action] ?? Play
+        const iconBg = ACTION_BG_COLORS[entry.action] ?? "bg-primary"
+        return (
+          <div
+            key={`${entry.timestamp}-${i}`}
+            className="flex items-start gap-2.5 px-2.5 py-2 rounded-lg border border-border bg-card hover:bg-accent/30 transition-colors"
+          >
+            {/* User avatar with action icon overlay */}
+            <div className="relative shrink-0">
+              <Avatar className="h-9 w-9">
                 <AvatarImage src={entry.userAvatar} />
-                <AvatarFallback className="text-[10px]">
+                <AvatarFallback className="text-xs">
                   {entry.userName.slice(0, 2).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm leading-tight">
-                  <span className="font-medium">{entry.userName}</span>{" "}
-                  <span className="text-muted-foreground">{entry.detail}</span>
-                </p>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-                  <span>{formatRelativeTime(entry.timestamp)}</span>
-                  {showGuild && (
-                    <>
-                      <span>&middot;</span>
-                      <span className="truncate">{entry.guildName}</span>
-                    </>
-                  )}
-                </div>
+              <div
+                className={`absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full ${iconBg} border-2 border-card flex items-center justify-center`}
+              >
+                <Icon className="h-2 w-2 text-white dark:text-black" />
               </div>
             </div>
-          )
-        })}
-      </div>
-    </ScrollArea>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm leading-tight">
+                <span className="font-medium">{entry.userName}</span>{" "}
+                <span className="text-muted-foreground">{entry.detail}</span>
+              </p>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+                <span>{formatRelativeTime(entry.timestamp)}</span>
+                {showGuild && (
+                  <>
+                    <span>&middot;</span>
+                    <span className="truncate">{entry.guildName}</span>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+
+  return (
+    <div>
+      {limit ? (
+        items
+      ) : (
+        <ScrollArea style={{ maxHeight }}>
+          {items}
+        </ScrollArea>
+      )}
+      {seeAllHref && (
+        <Link
+          to={seeAllHref}
+          className="flex items-center justify-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors pt-3"
+        >
+          See all logs
+          <ArrowRight className="h-3.5 w-3.5" />
+        </Link>
+      )}
+    </div>
   )
 }
