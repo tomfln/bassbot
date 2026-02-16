@@ -6,7 +6,7 @@ import type { PlayerWithQueue } from "./player"
 import { getGlobalLog, getGuildLog } from "./util/activity-log"
 import logger from "@bot/logger"
 import { join } from "node:path"
-import { existsSync } from "node:fs"
+import { existsSync, readFileSync } from "node:fs"
 
 function playerInfo(player: PlayerWithQueue, bot: BassBot) {
   const guild = bot.guilds.cache.get(player.guildId)
@@ -114,9 +114,30 @@ export function startApiServer(bot: BassBot, port: number) {
   const app = createApi(bot)
 
   if (hasDashboard) {
+    // Read index.html as string to avoid Bun's HTML module resolution
+    const indexHtml = readFileSync(join(dashboardDir, "index.html"), "utf-8")
+
+    const serveHtml = () =>
+      new Response(indexHtml, {
+        headers: { "content-type": "text/html; charset=utf-8" },
+      })
+
     app
-      .use(staticPlugin({ assets: dashboardDir, prefix: "/" }))
-      .get("/*", () => Bun.file(join(dashboardDir, "index.html")))
+      .use(
+        staticPlugin({
+          assets: dashboardDir,
+          prefix: "/",
+          indexHTML: true,
+          ignorePatterns: ["*.html"],
+        }),
+      )
+      .get("/", () => serveHtml())
+      .onError(({ code, path }) => {
+        // SPA fallback: serve index.html for non-API 404s
+        if (code === "NOT_FOUND" && !path.startsWith("/api")) {
+          return serveHtml()
+        }
+      })
   }
 
   app.listen(port)
