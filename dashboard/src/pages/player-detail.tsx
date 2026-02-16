@@ -126,7 +126,7 @@ export function PlayerDetailPage() {
 
       <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
         {/* Left column — Now playing + Queue */}
-        <div className="space-y-6">
+        <div className="space-y-6 min-w-0">
           {/* Now playing */}
           <Card className="overflow-hidden relative py-0 gap-0">
             {/* Background blur artwork */}
@@ -173,8 +173,8 @@ export function PlayerDetailPage() {
                     </div>
                   </div>
                   {/* Progress bar below all content */}
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground shrink-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs text-muted-foreground tabular-nums">
                       {formatDuration(player.position)}
                     </span>
                     <div className="flex-1 h-1.5 rounded-full bg-black/50 overflow-hidden">
@@ -183,7 +183,7 @@ export function PlayerDetailPage() {
                         style={{ width: `${progress}%` }}
                       />
                     </div>
-                    <span className="text-xs text-muted-foreground shrink-0">
+                    <span className="text-xs text-muted-foreground tabular-nums">
                       {formatDuration(player.current.length)}
                     </span>
                   </div>
@@ -263,8 +263,8 @@ export function PlayerDetailPage() {
           </Tabs>
         </div>
 
-        {/* Right column — Voice Channel members */}
-        <div>
+        {/* Right column (bottom on mobile) — Voice Channel members */}
+        <div className="order-last">
           <Card className="py-0 gap-0">
             <CardHeader className="px-4 pt-4 pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">

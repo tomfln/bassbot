@@ -86,8 +86,8 @@ export function PlayersPage() {
                           <p className="text-xs text-muted-foreground truncate">
                             {player.current.author}
                           </p>
-                          <div className="flex items-center gap-2 mt-2">
-                            <span className="text-xs text-muted-foreground w-10 text-right">
+                          <div className="flex items-center gap-1.5 mt-2">
+                            <span className="text-xs text-muted-foreground tabular-nums">
                               {formatDuration(player.position)}
                             </span>
                             <Progress
@@ -98,7 +98,7 @@ export function PlayersPage() {
                               }
                               className="h-1 flex-1"
                             />
-                            <span className="text-xs text-muted-foreground w-10">
+                            <span className="text-xs text-muted-foreground tabular-nums">
                               {formatDuration(player.current.length)}
                             </span>
                           </div>
