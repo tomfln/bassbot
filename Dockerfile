@@ -6,13 +6,14 @@ WORKDIR /usr/src/app
 ENV DATA_DIR=/data
 RUN mkdir -p /data && chown -R bun:bun /data
 
-# Install and cache bot dependencies
+# Copy workspace package manifests first for dependency caching
 COPY package.json bun.lock ./
+COPY dashboard/package.json dashboard/
+
+# Install all workspace dependencies
 RUN bun install --frozen-lockfile
 
-# Install and build dashboard
-COPY dashboard/package.json dashboard/bun.lock dashboard/
-RUN cd dashboard && bun install --frozen-lockfile
+# Build dashboard
 COPY dashboard/ dashboard/
 RUN cd dashboard && bun run build
 
