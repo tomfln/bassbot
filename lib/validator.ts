@@ -13,7 +13,7 @@ export interface Validator {
 }
 
 function stableHashArray(arr: any[]): string {
-  const json = JSON.stringify(arr, (key, value) =>
+  const json = JSON.stringify(arr, (_key, value) =>
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     typeof value === "function" || typeof value === "bigint" ? value.toString() : value,
   )

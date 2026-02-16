@@ -75,7 +75,7 @@ export function mockAbortHelper(i: ButtonInteraction<"cached">, onAbort: () => v
   }) as unknown as AbortHelper
 }
 
-const mockHelper = (i: ButtonInteraction<"cached">, fn: () => Awaitable<any>) => {
+const mockHelper = (_i: ButtonInteraction<"cached">, fn: () => Awaitable<any>) => {
   const mockFn = fn as { (): Awaitable<any>; error: Awaitable<any>; warn: Awaitable<any> }
   mockFn.error = fn
   mockFn.warn = fn

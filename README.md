@@ -3,24 +3,53 @@ Bass is a feature-rich discord music bot. \
 With features like the button-controlled player message, easy interop with spotify links, \
 built-in lyrics search and many more features, it offers the best listening experience.
 
-## Quick Start (Docker)
+## Features
+
+- **Multi-source playback** — YouTube, Spotify, SoundCloud, and more via Lavalink
+- **Load Playlists** — Support for YouTube and Spotify playlists and albums
+- **Interactive player message** — Button controls for play/pause, skip, previous, stop, and loop
+- **Queue management** — View, shuffle, move, remove tracks, and save/load queues across sessions
+- **Search** — Search for tracks directly from Discord with `/search`
+- **Loop modes** — Loop the current track or the entire queue
+- **History** — Restore your previous queue with `/history` and `/loadqueue`
+- **Web dashboard** — Monitor active players, guilds, and activity from a browser
+- **Lyrics** — Look up lyrics for the current song with `/lyrics`
+- **Channel binding** — Restrict bot commands to specific channels with `/bindchannel`
+
+### Key Commands
+
+| Command | Description |
+|---------|-------------|
+| `/play` | Play a song by URL or search query |
+| `/search` | Search and pick from results |
+| `/queue` | View the current queue |
+| `/shuffle` | Shuffle the queue |
+| `/lyrics` | Show lyrics for the current track |
+| `/loop` | Toggle loop (track / queue / off) |
+| `/history` | View previous queues |
+| `/loadqueue` | Restore a saved queue |
+| `/seek` | Jump to a position in the track |
+| `/volume` | Adjust playback volume |
+| `/w2g` | Create a Watch2Gether room |
+
+## Self-Host Quick Start (Docker)
 
 The easiest way to run BassBot is with Docker Compose.
 
-### 1. Create data directories
+### 1. Create data directory
 
 ```bash
-mkdir bassbot-data lavalink
+mkdir bassbot-data && cd bassbot-data
 ```
 
 ### 2. Fetch sample configs
 
 ```bash
 # Bot config
-curl -o bassbot-data/config.json https://raw.githubusercontent.com/tomfln/bassbot/main/config.example.json
+curl -o config.json https://raw.githubusercontent.com/tomfln/bassbot/main/config/config.example.json
 
-# Lavalink config
-curl -o lavalink/application.yml https://raw.githubusercontent.com/tomfln/bassbot/main/lavalink/application.yml
+# Lavalink config, can be placed anywhere
+curl -o application.yml https://raw.githubusercontent.com/tomfln/bassbot/main/config/application.yml
 ```
 
 ### 3. Edit the bot config
@@ -53,7 +82,7 @@ Open `bassbot-data/config.json` and fill in your values:
 
 ### 4. (Optional) Configure Spotify
 
-To enable Spotify link support, edit `lavalink/application.yml`, enable the spotify source and set your Spotify API credentials under `plugins.lavasrc.spotify`:
+To enable Spotify link support, edit `application.yml`, enable the spotify source and set your Spotify API credentials under `plugins.lavasrc.spotify`:
 
 ```yaml
 lavasrc:
@@ -144,14 +173,13 @@ From now on, Lavalink will use the refresh token automatically — no manual log
 1. Clone the repository
 2. Run `bun install`
 3. Create a `data/` directory with a `config.json` (see `config.example.json`)
-4. Run `bun register` to register slash commands
 5. Run `bun dev` to start the bot + dashboard in dev mode
 
 ## Technologies
 
 - **TypeScript** — Fully typed codebase with custom type-safe command framework
 - **Bun** — Fast JS runtime, no build step needed
-- **Lavalink + Shoukaku** — Reliable audio playback with Spotify/SoundCloud support
+- **Lavalink + Shoukaku** — Reliable audio playback with Spotify support
 - **Discord.js** — Discord API interaction
 - **Drizzle ORM + SQLite** — Lightweight embedded database for persistence
 - **React + Vite** — Dashboard for monitoring the bot

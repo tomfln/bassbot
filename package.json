@@ -1,8 +1,9 @@
 {
   "name": "bassbot",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "module": "src/index.ts",
   "type": "module",
+  "workspaces": ["dashboard"],
   "scripts": {
     "dev": "bun lib/scripts/dev.ts",
     "dev:bot": "bun --watch src/index.ts",
@@ -33,9 +34,12 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
+    "@elysiajs/cors": "^1.4.1",
+    "@elysiajs/static": "^1.4.7",
     "chalk": "^5.6.2",
     "discord.js": "^14.25.1",
     "drizzle-orm": "^0.45.1",
+    "elysia": "^1.4.25",
     "moment": "^2.30.1",
     "shoukaku": "^4.2.0",
     "string-pixel-width": "^1.11.0",
