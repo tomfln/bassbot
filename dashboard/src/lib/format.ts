@@ -22,12 +22,25 @@ export function formatDuration(ms: number): string {
   return `${m}:${s.toString().padStart(2, "0")}`
 }
 
-/** Get a source icon name based on the source name */
-export function getSourceIcon(source: string): string {
-  switch (source.toLowerCase()) {
-    case "youtube": return "youtube"
-    case "spotify": return "spotify"
-    case "soundcloud": return "soundcloud"
-    default: return "music"
-  }
+/** Format a timestamp into a relative string like "5m ago" */
+export function formatRelativeTime(timestamp: number): string {
+  const diff = Date.now() - timestamp
+  const seconds = Math.floor(diff / 1000)
+
+  if (seconds < 60) return "just now"
+  const minutes = Math.floor(seconds / 60)
+  if (minutes < 60) return `${minutes}m ago`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours}h ago`
+  const days = Math.floor(hours / 24)
+  return `${days}d ago`
+}
+
+/** Format a timestamp into a readable date like "January 15, 2024" */
+export function formatDate(timestamp: number): string {
+  return new Date(timestamp).toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  })
 }

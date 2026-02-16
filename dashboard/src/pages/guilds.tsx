@@ -3,15 +3,16 @@ import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useGuilds } from "@/hooks/use-api"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { Users, Music } from "lucide-react"
 
 export function GuildsPage() {
   const { data: guilds, isLoading } = useGuilds()
+  const navigate = useNavigate()
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between min-h-12">
         <h1 className="text-2xl font-bold tracking-tight">Guilds</h1>
         {guilds && (
           <span className="text-sm text-muted-foreground">
@@ -35,8 +36,12 @@ export function GuildsPage() {
           {guilds
             ?.sort((a, b) => (a.hasPlayer === b.hasPlayer ? 0 : a.hasPlayer ? -1 : 1))
             .map((guild) => (
-              <Link key={guild.id} to={`/guilds/${guild.id}`} className="block">
-                <Card className="py-0 gap-0 hover:bg-accent/50 transition-colors cursor-pointer">
+              <div
+                key={guild.id}
+                className="block cursor-pointer"
+                onClick={() => navigate(`/guilds/${guild.id}`)}
+              >
+                <Card className="py-0 gap-0 hover:bg-accent/50 transition-colors">
                   <CardContent className="p-4">
                     <div className="flex items-center gap-3">
                       <Avatar className="h-10 w-10 rounded-lg">
@@ -69,7 +74,7 @@ export function GuildsPage() {
                     </div>
                   </CardContent>
                 </Card>
-              </Link>
+              </div>
             ))}
         </div>
       )}

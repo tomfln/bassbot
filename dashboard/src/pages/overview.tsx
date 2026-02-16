@@ -78,7 +78,7 @@ export function OverviewPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
+      <h1 className="text-2xl font-bold tracking-tight min-h-12 flex items-center">Dashboard</h1>
 
       {/* Stats grid */}
       {statsLoading || !stats ? (

@@ -9,7 +9,7 @@ export function PlayersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between min-h-12">
         <h1 className="text-2xl font-bold tracking-tight">Players</h1>
         {players && (
           <span className="text-sm text-muted-foreground">
