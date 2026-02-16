@@ -13,12 +13,11 @@ COPY dashboard/package.json dashboard/
 # Install all workspace dependencies
 RUN bun install --frozen-lockfile
 
-# Build dashboard
-COPY dashboard/ dashboard/
-RUN cd dashboard && bun run build
-
-# Copy application source
+# Copy all source (needed for dashboard build due to cross-project type imports)
 COPY . .
+
+# Build dashboard
+RUN cd dashboard && bun run build
 
 # Runtime configuration
 USER bun

@@ -1,4 +1,5 @@
 node_modules
+dashboard/node_modules
 data
 bassbot-data
 lavalink
