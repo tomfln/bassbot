@@ -41,7 +41,7 @@ function playerSummary(player: PlayerWithQueue, bot: BassBot) {
   return {
     guildId: player.guildId,
     guildName: guild?.name ?? "Unknown",
-    guildIcon: guild?.iconURL({ size: 64 }),
+    guildIcon: guild?.iconURL({ size: 64 }) ?? null,
     paused: player.paused,
     position: player.position,
     current: player.current ? trackInfo(player.current) : null,
@@ -70,7 +70,7 @@ function playerDetail(
   return {
     guildId: player.guildId,
     guildName: guild?.name ?? "Unknown",
-    guildIcon: guild?.iconURL({ size: 64 }),
+    guildIcon: guild?.iconURL({ size: 64 }) ?? null,
     paused: player.paused,
     position: player.position,
     current: player.current

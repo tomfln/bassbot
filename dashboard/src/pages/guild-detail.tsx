@@ -208,7 +208,7 @@ interface MemberInfo {
   avatar: string
   isBot: boolean
   isOwner: boolean
-  joinedAt?: number | string | null
+  joinedAt?: number | null
 }
 
 function MemberList({

@@ -14,7 +14,7 @@ import type {
 
 /* ── Helpers ──────────────────────────────────────────────── */
 
-async function unwrap<T>(promise: Promise<{ data: T | null; error: unknown }>): Promise<T> {
+async function unwrap<T>(promise: Promise<{ data: unknown; error: unknown }>): Promise<T> {
   const res = await promise
   if (res.error) throw res.error
   return res.data as T

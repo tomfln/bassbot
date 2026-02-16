@@ -16,7 +16,7 @@ interface WsEvent {
 export function useWebSocket() {
   const queryClient = useQueryClient()
   const wsRef = useRef<WebSocket | null>(null)
-  const reconnectTimer = useRef<ReturnType<typeof setTimeout>>()
+  const reconnectTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   useEffect(() => {
     function connect() {
