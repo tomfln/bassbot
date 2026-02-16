@@ -1,10 +1,10 @@
-import { useState, useMemo } from "react"
+import { useState } from "react"
 import { useParams, Link } from "react-router-dom"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { useGuild, useGuildLogs } from "@/hooks/use-api"
+import { useGuild, useGuildLogs, useGuildMembers } from "@/hooks/use-api"
 import { formatDate } from "@/lib/format"
 import { ActivityLog } from "@/components/activity-log"
 import {
@@ -22,10 +22,12 @@ import {
 
 export function GuildDetailPage() {
   const { guildId } = useParams<{ guildId: string }>()
-  const { data: guild, isLoading, error } = useGuild(guildId)
-  const { data: guildLogs } = useGuildLogs(guildId)
+  const [memberLimit, setMemberLimit] = useState(20)
   const [memberSearch, setMemberSearch] = useState("")
-  const [showCount, setShowCount] = useState(20)
+  const { data: guild, isLoading, error } = useGuild(guildId, { memberLimit })
+  const { data: guildLogs } = useGuildLogs(guildId, 10)
+  // Server-side search: only active when user types a search query
+  const { data: searchResults } = useGuildMembers(guildId, 0, 200, memberSearch)
 
   if (isLoading) {
     return (
@@ -56,8 +58,13 @@ export function GuildDetailPage() {
     )
   }
 
-  const humans = guild.members.filter((m) => !m.isBot)
-  const bots = guild.members.filter((m) => m.isBot)
+  // When searching, use server-side filtered results; otherwise use guild detail members
+  const displayMembers = memberSearch
+    ? (searchResults?.items ?? [])
+    : guild.members
+  const displayTotal = memberSearch
+    ? (searchResults?.total ?? 0)
+    : guild.memberTotal
 
   return (
     <div className="space-y-6">
@@ -141,7 +148,7 @@ export function GuildDetailPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm font-semibold">{humans.length.toLocaleString()}</p>
+            <p className="text-sm font-semibold">{guild.humanCount.toLocaleString()}</p>
           </CardContent>
         </Card>
 
@@ -153,7 +160,7 @@ export function GuildDetailPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm font-semibold">{bots.length.toLocaleString()}</p>
+            <p className="text-sm font-semibold">{guild.botCount.toLocaleString()}</p>
           </CardContent>
         </Card>
       </div>
@@ -161,11 +168,17 @@ export function GuildDetailPage() {
       <div className="grid gap-6 lg:grid-cols-[1fr_350px]">
         {/* Member list */}
         <MemberList
-          members={guild.members}
+          members={displayMembers}
+          total={displayTotal}
           search={memberSearch}
           onSearchChange={setMemberSearch}
-          showCount={showCount}
-          onShowMore={() => setShowCount((c) => c + 20)}
+          onShowMore={() => {
+            if (memberSearch) {
+              // Search already fetches up to 200, no more to load
+            } else {
+              setMemberLimit((l) => l + 20)
+            }
+          }}
         />
 
         {/* Activity Log */}
@@ -188,52 +201,30 @@ export function GuildDetailPage() {
 
 /* ── Member list with search + show-more ──────────────────── */
 
-interface GuildMember {
+interface MemberInfo {
   id: string
   displayName: string
   username: string
   avatar: string
   isBot: boolean
   isOwner: boolean
-  joinedAt?: string | null
+  joinedAt?: number | string | null
 }
 
 function MemberList({
   members,
+  total,
   search,
   onSearchChange,
-  showCount,
   onShowMore,
 }: {
-  members: GuildMember[]
+  members: MemberInfo[]
+  total: number
   search: string
   onSearchChange: (v: string) => void
-  showCount: number
   onShowMore: () => void
 }) {
-  const sorted = useMemo(
-    () =>
-      [...members].sort((a, b) => {
-        if (a.isOwner) return -1
-        if (b.isOwner) return 1
-        if (a.isBot !== b.isBot) return a.isBot ? 1 : -1
-        return a.displayName.localeCompare(b.displayName)
-      }),
-    [members],
-  )
-
-  const filtered = useMemo(() => {
-    if (!search) return sorted
-    const q = search.toLowerCase()
-    return sorted.filter(
-      (m) =>
-        m.displayName.toLowerCase().includes(q) ||
-        m.username.toLowerCase().includes(q),
-    )
-  }, [sorted, search])
-
-  const visible = filtered.slice(0, showCount)
-  const remaining = filtered.length - visible.length
+  const remaining = total - members.length
 
   return (
     <Card className="py-0 gap-0">
@@ -241,7 +232,7 @@ function MemberList({
         <div className="flex items-center justify-between gap-3">
           <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2 shrink-0">
             <Users className="h-4 w-4" />
-            Members ({filtered.length})
+            Members ({total})
           </CardTitle>
           <div className="relative w-full max-w-52">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
@@ -264,13 +255,13 @@ function MemberList({
         </div>
       </CardHeader>
       <CardContent className="p-2">
-        {visible.length === 0 ? (
+        {members.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4">
             No members found
           </p>
         ) : (
           <div className="space-y-0.5">
-            {visible.map((member) => (
+            {members.map((member) => (
               <div
                 key={member.id}
                 className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-accent/50 transition-colors"

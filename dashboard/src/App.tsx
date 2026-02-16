@@ -8,6 +8,7 @@ import { PlayersPage } from "@/pages/players"
 import { PlayerDetailPage } from "@/pages/player-detail"
 import { GuildDetailPage } from "@/pages/guild-detail"
 import { LogsPage } from "@/pages/logs"
+import { useWebSocket } from "@/hooks/use-websocket"
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -18,9 +19,16 @@ const queryClient = new QueryClient({
   },
 })
 
+/** Connects the WebSocket inside the QueryClientProvider context. */
+function WebSocketBridge() {
+  useWebSocket()
+  return null
+}
+
 export function App() {
   return (
     <QueryClientProvider client={queryClient}>
+      <WebSocketBridge />
       <TooltipProvider>
         <BrowserRouter>
           <Routes>

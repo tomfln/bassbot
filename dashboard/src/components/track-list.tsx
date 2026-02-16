@@ -1,10 +1,6 @@
-import { useState } from "react"
 import { formatDuration } from "@/lib/format"
 import { Music, ChevronDown } from "lucide-react"
 import type { Track } from "@/lib/api"
-
-const INITIAL_ITEMS = 10
-const LOAD_MORE_COUNT = 10
 
 export function TrackRow({
   track,
@@ -50,25 +46,32 @@ export function TrackRow({
   )
 }
 
+/**
+ * Displays tracks with a "show more" button.
+ * When `total` is greater than `tracks.length`, `onLoadMore` is called
+ * to request additional items from the server.
+ */
 export function TrackList({
   tracks,
+  total,
+  onLoadMore,
   activeIndex,
 }: {
   tracks: Track[]
+  total?: number
+  onLoadMore?: () => void
   activeIndex?: number
 }) {
-  const [showCount, setShowCount] = useState(INITIAL_ITEMS)
-  const displayed = tracks.slice(0, showCount)
-  const remaining = tracks.length - showCount
+  const remaining = (total ?? tracks.length) - tracks.length
 
   return (
     <div className="space-y-1.5">
-      {displayed.map((track, i) => (
+      {tracks.map((track, i) => (
         <TrackRow key={i} track={track} index={i} active={i === activeIndex} />
       ))}
-      {remaining > 0 && (
+      {remaining > 0 && onLoadMore && (
         <button
-          onClick={() => setShowCount((c) => c + LOAD_MORE_COUNT)}
+          onClick={onLoadMore}
           className="flex items-center justify-center gap-1.5 w-full text-sm text-muted-foreground hover:text-foreground transition-colors py-2"
         >
           <ChevronDown className="h-3.5 w-3.5" />

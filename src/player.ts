@@ -5,6 +5,8 @@ import { nowPlayingButtons, nowPlayingMessage } from "./util/message"
 import type { BassBot } from "./bot"
 import logger from "@bot/logger"
 import { Queue } from "./queue"
+import { broadcast } from "./util/broadcast"
+import { cache } from "./util/api-cache"
 
 export const LoopMode = {
   None: "None",
@@ -25,6 +27,22 @@ export class PlayerWithQueue extends Player {
   private loopMode: LoopMode = LoopMode.None
   private _playing = false
   private _historySaved = false
+
+  /** Notify dashboard clients that this player's state changed. */
+  private broadcastUpdate() {
+    cache.invalidate(`player:${this.guildId}`)
+    cache.invalidate("players")
+    cache.invalidate("stats")
+    broadcast("player:update", { guildId: this.guildId })
+  }
+
+  /** Notify dashboard clients that this player was destroyed. */
+  private broadcastDestroy() {
+    cache.invalidate(`player:${this.guildId}`)
+    cache.invalidate("players")
+    cache.invalidate("stats")
+    broadcast("player:destroy", { guildId: this.guildId })
+  }
 
   init(bot: BassBot, i: ChatInputCommandInteraction<"cached">) {
     this.bot = bot
@@ -62,6 +80,7 @@ export class PlayerWithQueue extends Player {
     })
 
     this.on("start", async (data) => {
+      this.broadcastUpdate()
       if (!this.textChannel) return
       const msg = await this.textChannel.send(nowPlayingMessage(data.track))
       this.playerMsgId = msg.id
@@ -145,7 +164,10 @@ export class PlayerWithQueue extends Player {
     // plays before any remaining items from a restored queue
     this.q.add(tracks, next || !this._playing)
     if (!this.current) await this.next()
-    else void this.q.save(this.guildId)
+    else {
+      void this.q.save(this.guildId)
+      this.broadcastUpdate()
+    }
   }
   public addTrack(track: Track, next = false) {
     return this.addTracks([track], next)
@@ -154,22 +176,30 @@ export class PlayerWithQueue extends Player {
   public shuffle() {
     this.q.shuffle()
     void this.q.save(this.guildId)
+    this.broadcastUpdate()
   }
 
   public clear() {
     this.q.clear()
     void this.q.save(this.guildId)
+    this.broadcastUpdate()
   }
 
   public moveTrack(from: number, to: number) {
     const track = this.q.move(from, to)
-    if (track) void this.q.save(this.guildId)
+    if (track) {
+      void this.q.save(this.guildId)
+      this.broadcastUpdate()
+    }
     return track
   }
 
   public remove(from: number, to: number) {
     const count = this.q.remove(from, to)
-    if (count) void this.q.save(this.guildId)
+    if (count) {
+      void this.q.save(this.guildId)
+      this.broadcastUpdate()
+    }
     return count
   }
 
@@ -178,11 +208,14 @@ export class PlayerWithQueue extends Player {
       const msg = this.textChannel.messages.cache.get(this.playerMsgId)
       if (msg) await msg.edit({ components: [nowPlayingButtons(paused)] })
     }
-    return super.setPaused(paused)
+    const result = await super.setPaused(paused)
+    this.broadcastUpdate()
+    return result
   }
 
   public setLoopMode(mode: LoopMode) {
     this.loopMode = mode
+    this.broadcastUpdate()
   }
 
   public getQueueDuration() {
@@ -199,6 +232,7 @@ export class PlayerWithQueue extends Player {
     }
     await this.destroy()
     await this.bot.leaveVC(this.guildId)
+    this.broadcastDestroy()
   }
 
   public scheduleDisconnect(seconds = 60) {

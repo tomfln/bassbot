@@ -74,7 +74,7 @@ function StatsSkeleton() {
 export function OverviewPage() {
   const { data: stats, isLoading: statsLoading } = useStats()
   const { data: players, isLoading: playersLoading } = usePlayers()
-  const { data: logs } = useGlobalLogs(30)
+  const { data: logs } = useGlobalLogs(10)
 
   return (
     <div className="space-y-6">

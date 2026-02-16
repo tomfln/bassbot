@@ -1,41 +1,10 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Link } from "react-router-dom"
 import { Pause, Play, Music } from "lucide-react"
-import type { PlayerInfo } from "@/lib/api"
+import type { PlayerSummary } from "@/lib/api"
 
-function AvatarStack({
-  members,
-}: {
-  members: { id: string; avatar: string; displayName: string }[]
-}) {
-  const max = 4
-  const visible = members.slice(0, max)
-  const overflow = members.length - max
-
-  return (
-    <div className="flex items-center -space-x-2">
-      {visible.map((m) => (
-        <Avatar key={m.id} className="h-7 w-7 border-2 border-card">
-          <AvatarImage src={m.avatar} />
-          <AvatarFallback className="text-[10px]">
-            {m.displayName.slice(0, 2).toUpperCase()}
-          </AvatarFallback>
-        </Avatar>
-      ))}
-      {overflow > 0 && (
-        <div className="h-7 w-7 rounded-full border-2 border-card bg-muted flex items-center justify-center">
-          <span className="text-[10px] font-medium text-muted-foreground">
-            +{overflow}
-          </span>
-        </div>
-      )}
-    </div>
-  )
-}
-
-export function PlayerCard({ player }: { player: PlayerInfo }) {
+export function PlayerCard({ player }: { player: PlayerSummary }) {
   return (
     <Link to={`/players/${player.guildId}`} className="block">
       <Card className="hover:bg-accent/30 transition-colors cursor-pointer py-0 gap-0">
@@ -78,8 +47,8 @@ export function PlayerCard({ player }: { player: PlayerInfo }) {
                   variant="secondary"
                   className="text-[11px] px-2 py-0.5 shrink-0"
                 >
-                  {player.queue.length + (player.current ? 1 : 0)} song
-                  {player.queue.length + (player.current ? 1 : 0) !== 1
+                  {player.queueLength + (player.current ? 1 : 0)} song
+                  {player.queueLength + (player.current ? 1 : 0) !== 1
                     ? "s"
                     : ""}
                 </Badge>
@@ -114,14 +83,16 @@ export function PlayerCard({ player }: { player: PlayerInfo }) {
                 )}
               </div>
 
-              {/* Bottom row: guild name + node · avatar stack */}
+              {/* Bottom row: guild name + node · listener count */}
               <div className="flex items-center justify-between gap-2">
                 <span className="text-xs text-muted-foreground truncate">
                   {player.guildName} · {player.node}
                 </span>
                 {player.voiceChannel &&
-                  player.voiceChannel.members.length > 0 && (
-                    <AvatarStack members={player.voiceChannel.members} />
+                  player.voiceChannel.memberCount > 0 && (
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 shrink-0">
+                      {player.voiceChannel.memberCount} listener{player.voiceChannel.memberCount !== 1 ? "s" : ""}
+                    </Badge>
                   )}
               </div>
             </div>

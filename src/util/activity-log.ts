@@ -1,6 +1,8 @@
 import db from "./db"
 import { schema } from "./db"
 import { eq, asc, desc, inArray } from "drizzle-orm"
+import { broadcast } from "./broadcast"
+import { cache } from "./api-cache"
 import type { ButtonInteraction, ChatInputCommandInteraction } from "discord.js"
 
 export interface ActivityEntry {
@@ -18,12 +20,19 @@ const MAX_PER_GUILD = 100
 const MAX_GLOBAL = 200
 
 /**
- * Log an activity entry. Persists to the DB and maintains size limits.
+ * Log an activity entry. Persists to the DB, broadcasts via WebSocket,
+ * invalidates log caches, and maintains size limits.
  */
 export function logActivity(entry: Omit<ActivityEntry, "timestamp">) {
   const full: ActivityEntry = { ...entry, timestamp: Date.now() }
 
   db.insert(schema.activityLog).values(full).run()
+
+  // Push to all connected dashboards
+  broadcast("log:new", full)
+
+  // Invalidate cached log responses
+  cache.invalidate("logs:")
 
   // Prune guild-specific log
   const guildLog = db

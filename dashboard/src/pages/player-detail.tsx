@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { useParams, Link } from "react-router-dom"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -204,7 +205,9 @@ function NodeStatsCard({ node, nodeStats }: NodeStatsCardProps) {
 
 export function PlayerDetailPage() {
   const { guildId } = useParams<{ guildId: string }>()
-  const { data: player, isLoading, error } = usePlayer(guildId)
+  const [queueLimit, setQueueLimit] = useState(10)
+  const [historyLimit, setHistoryLimit] = useState(10)
+  const { data: player, isLoading, error } = usePlayer(guildId, { queueLimit, historyLimit })
   const { data: guildLogs } = useGuildLogs(guildId)
 
   const optimisticPosition = useOptimisticPosition(
@@ -348,11 +351,11 @@ export function PlayerDetailPage() {
             <TabsList className="h-11 p-1 max-sm:w-full max-sm:[&>*]:flex-1">
               <TabsTrigger value="queue" className="gap-1.5 text-xs px-3 py-1.5">
                 <ListMusic className="h-3.5 w-3.5" />
-                Queue ({player.queue.length})
+                Queue ({player.queueTotal})
               </TabsTrigger>
               <TabsTrigger value="history" className="gap-1.5 text-xs px-3 py-1.5">
                 <History className="h-3.5 w-3.5" />
-                History ({player.history.length})
+                History ({player.historyTotal})
               </TabsTrigger>
               <TabsTrigger value="logs" className="gap-1.5 text-xs px-3 py-1.5">
                 <Activity className="h-3.5 w-3.5" />
@@ -364,21 +367,29 @@ export function PlayerDetailPage() {
               </TabsTrigger>
             </TabsList>
             <TabsContent value="queue">
-              {player.queue.length === 0 ? (
+              {player.queueTotal === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-4">
                   Queue is empty
                 </p>
               ) : (
-                <TrackList tracks={player.queue} />
+                <TrackList
+                  tracks={player.queue}
+                  total={player.queueTotal}
+                  onLoadMore={() => setQueueLimit((l) => l + 10)}
+                />
               )}
             </TabsContent>
             <TabsContent value="history">
-              {player.history.length === 0 ? (
+              {player.historyTotal === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-4">
                   No history
                 </p>
               ) : (
-                <TrackList tracks={player.history} />
+                <TrackList
+                  tracks={player.history}
+                  total={player.historyTotal}
+                  onLoadMore={() => setHistoryLimit((l) => l + 10)}
+                />
               )}
             </TabsContent>
             <TabsContent value="logs">
