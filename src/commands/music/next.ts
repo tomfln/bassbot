@@ -18,7 +18,7 @@ export default createCommand({
 
   run: async ({ i, options, reply, data: { player } }) => {
     await player.next(options?.position)
-    log(i, "skip", options?.position ? `to position ${options.position}` : "next song")
+    log(i, "skip", options?.position ? `skipped to position ${options.position}` : "skipped to next song")
     return reply("Playing next song.")
   },
 })

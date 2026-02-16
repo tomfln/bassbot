@@ -75,6 +75,9 @@ function createApi(bot: BassBot) {
     .get("/api/stats", () => {
       const players = [...bot.lava.players.values()] as PlayerWithQueue[]
       return {
+        botName: bot.user?.displayName ?? "bassbot",
+        botAvatar: bot.user?.displayAvatarURL({ size: 64 }) ?? null,
+        botId: bot.user?.id ?? null,
         guildCount: bot.guilds.cache.size,
         userCount: bot.guilds.cache.reduce((a, g) => a + g.memberCount, 0),
         activePlayers: players.filter((p) => p.current).length,

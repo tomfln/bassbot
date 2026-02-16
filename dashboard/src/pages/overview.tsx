@@ -10,7 +10,6 @@ import {
   Music,
   Clock,
   Radio,
-  Activity,
 } from "lucide-react"
 import type { ReactNode } from "react"
 
@@ -145,8 +144,7 @@ export function OverviewPage() {
 
       {/* Activity Log */}
       <div className="space-y-3">
-        <h2 className="text-lg font-semibold flex items-center gap-2">
-          <Activity className="h-4 w-4" />
+        <h2 className="text-lg font-semibold">
           Recent Activity
         </h2>
         <ActivityLog

@@ -38,12 +38,12 @@ export default createCommand({
     switch (music.type) {
       case "track":
         await player.addTrack(music.track, options.next ?? false)
-        log(i, "play", cleanTrackTitle(music.track))
+        log(i, "play", `added ${cleanTrackTitle(music.track)} by ${music.track.info.author}`)
         return reply(`Queued **${cleanTrackTitle(music.track)}** by **${music.track.info.author}**`)
 
       case "playlist":
         await player.addTracks(music.tracks, options.next ?? false)
-        log(i, "play", `${music.tracks.length} songs from ${music.info.name}`)
+        log(i, "play", `added ${music.tracks.length} songs from ${music.info.name}`)
         return reply(
           `Added **${music.tracks.length}** songs from **[${music.info.name}](${options.song})** to the queue`,
         )

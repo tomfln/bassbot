@@ -1,6 +1,5 @@
 import { useState, useMemo } from "react"
 import { useSearchParams, Link } from "react-router-dom"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   Select,
@@ -28,8 +27,8 @@ import {
   Search,
   Server,
   Zap,
-  ScrollText,
   X,
+  ChevronDown,
 } from "lucide-react"
 
 const ACTION_ICONS: Record<string, typeof Play> = {
@@ -86,6 +85,7 @@ export function LogsPage() {
   const guildFilter = searchParams.get("guild") ?? ""
   const [search, setSearch] = useState("")
   const [actionFilter, setActionFilter] = useState<string>("all")
+  const [showCount, setShowCount] = useState(20)
 
   const { data: logs } = useGlobalLogs(200)
   const { data: guilds } = useGuilds()
@@ -108,9 +108,8 @@ export function LogsPage() {
   }, [logs, guildFilter, actionFilter, search])
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-        <ScrollText className="h-6 w-6" />
+    <div className="space-y-6">
+      <h1 className="text-2xl font-bold tracking-tight">
         Activity Logs
       </h1>
 
@@ -188,15 +187,15 @@ export function LogsPage() {
 
       </div>
 
-      {/* Log entries */}
-      <ScrollArea className="max-h-[calc(100vh-260px)]">
-        <div className="space-y-1.5">
-          {filtered.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">
-              No matching logs
-            </p>
-          ) : (
-            filtered.map((entry, i) => {
+      {/* Log entries — show more pattern */}
+      <div className="space-y-1.5">
+        {filtered.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-8">
+            No matching logs
+          </p>
+        ) : (
+          <>
+            {filtered.slice(0, showCount).map((entry, i) => {
               const Icon = ACTION_ICONS[entry.action] ?? Play
               const iconBg = ACTION_BG_COLORS[entry.action] ?? "bg-primary"
               return (
@@ -239,10 +238,19 @@ export function LogsPage() {
                   </div>
                 </div>
               )
-            })
-          )}
-        </div>
-      </ScrollArea>
+            })}
+            {filtered.length > showCount && (
+              <button
+                onClick={() => setShowCount((c) => c + 20)}
+                className="flex items-center justify-center gap-1.5 w-full text-sm text-muted-foreground hover:text-foreground transition-colors py-2"
+              >
+                <ChevronDown className="h-3.5 w-3.5" />
+                Show more ({filtered.length - showCount} remaining)
+              </button>
+            )}
+          </>
+        )}
+      </div>
     </div>
   )
 }

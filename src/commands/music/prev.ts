@@ -12,7 +12,7 @@ export default createCommand({
   
   run: async ({ i, reply, data: { player } }) => {
     await player.prev()
-    log(i, "prev", "previous song")
+    log(i, "prev", "went to previous song")
     return reply("Playing previous song.")
   },
 })
