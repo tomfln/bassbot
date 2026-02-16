@@ -10,29 +10,36 @@ export function useOptimisticPosition(
   paused: boolean,
 ): number {
   const [position, setPosition] = useState(serverPosition)
+  const [prevServer, setPrevServer] = useState(serverPosition)
   const rafRef = useRef<number>(0)
   const lastFrameRef = useRef<number>(0)
+  const tickRef = useRef<FrameRequestCallback>(() => {})
 
-  // Sync to server value whenever it changes
-  useEffect(() => {
+  // Sync to server value when it changes (React recommended pattern)
+  if (serverPosition !== prevServer) {
+    setPrevServer(serverPosition)
     setPosition(serverPosition)
-    lastFrameRef.current = 0
-  }, [serverPosition])
+  }
 
   const tick = useCallback(
     (now: number) => {
       if (lastFrameRef.current === 0) {
         lastFrameRef.current = now
-        rafRef.current = requestAnimationFrame(tick)
+        rafRef.current = requestAnimationFrame(tickRef.current)
         return
       }
       const delta = now - lastFrameRef.current
       lastFrameRef.current = now
       setPosition((prev) => Math.min(prev + delta, trackLength))
-      rafRef.current = requestAnimationFrame(tick)
+      rafRef.current = requestAnimationFrame(tickRef.current)
     },
     [trackLength],
   )
+
+  // Keep ref in sync with latest tick callback
+  useEffect(() => {
+    tickRef.current = tick
+  }, [tick])
 
   useEffect(() => {
     if (paused || trackLength <= 0) {
@@ -41,7 +48,7 @@ export function useOptimisticPosition(
       return
     }
 
-    rafRef.current = requestAnimationFrame(tick)
+    rafRef.current = requestAnimationFrame(tickRef.current)
     return () => cancelAnimationFrame(rafRef.current)
   }, [paused, trackLength, tick])
 

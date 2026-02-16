@@ -1,5 +1,5 @@
-import { useState, useEffect, type CSSProperties } from "react"
-import { NavLink, Outlet, useLocation } from "react-router-dom"
+import { useState, type CSSProperties } from "react"
+import { NavLink, Outlet } from "react-router-dom"
 import { LayoutDashboard, Server, Music, Menu, X, ScrollText, Github } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -248,12 +248,7 @@ function Footer() {
 
 export function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const location = useLocation()
   const { data: stats } = useStats()
-
-  useEffect(() => {
-    setSidebarOpen(false)
-  }, [location.pathname])
 
   return (
     <div className="min-h-dvh bg-background flex justify-center">
