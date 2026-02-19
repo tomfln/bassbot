@@ -38,7 +38,7 @@ export function GuildsPage() {
             .map((guild) => (
               <div
                 key={guild.id}
-                className="block cursor-pointer"
+                className="block cursor-pointer scope-2xl scope-hover"
                 onClick={() => navigate(`/guilds/${guild.id}`)}
               >
                 <Card className="py-0 gap-0 hover:bg-accent/50 transition-colors">

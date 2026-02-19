@@ -7,7 +7,7 @@ import type { PlayerSummary } from "@/lib/api"
 export function PlayerCard({ player }: { player: PlayerSummary }) {
   return (
     <Link to={`/players/${player.guildId}`} className="block">
-      <Card className="hover:bg-accent/30 transition-colors cursor-pointer py-0 gap-0">
+      <Card className="hover:bg-accent/30 transition-colors cursor-pointer py-0 gap-0 scope-hover scope-2xl">
         <CardContent className="p-2.5">
           <div className="flex h-24 gap-2.5">
             {/* Album art — inset rounded rect */}

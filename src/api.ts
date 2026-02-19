@@ -170,7 +170,7 @@ function createApi(bot: BassBot) {
     /* ── Player queue page ──────────────────────────────── */
     .get("/api/players/:guildId/queue", ({ params, query }) => {
       const offset = parseInt(query.offset ?? "0") || 0
-      const limit = Math.min(parseInt(query.limit ?? "20") || 20, 100)
+      const limit = Math.min(parseInt(query.limit ?? "20") || 20, 200)
       const player = bot.getPlayer(params.guildId)
       if (!player) return status(404, { error: "Player not found" })
       return {
@@ -183,7 +183,7 @@ function createApi(bot: BassBot) {
     /* ── Player history page ────────────────────────────── */
     .get("/api/players/:guildId/history", ({ params, query }) => {
       const offset = parseInt(query.offset ?? "0") || 0
-      const limit = Math.min(parseInt(query.limit ?? "20") || 20, 100)
+      const limit = Math.min(parseInt(query.limit ?? "20") || 20, 200)
       const player = bot.getPlayer(params.guildId)
       if (!player) return status(404, { error: "Player not found" })
       return {

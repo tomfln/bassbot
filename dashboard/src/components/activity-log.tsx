@@ -29,9 +29,9 @@ export function ActivityLog({
 
   const items = (
     <div className="space-y-1.5">
-      {displayed.map((entry, i) => (
+      {displayed.map((entry) => (
         <LogEntry
-          key={`${entry.timestamp}-${i}`}
+          key={`${entry.guildId}-${entry.userId}-${entry.timestamp}`}
           entry={entry}
           showGuild={showGuild}
         />

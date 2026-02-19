@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, keepPreviousData } from "@tanstack/react-query"
 import { api } from "@/lib/api"
 import type {
   Stats,
@@ -62,6 +62,7 @@ export function usePlayer(
       ),
     enabled: !!guildId,
     staleTime: Infinity,
+    placeholderData: keepPreviousData,
   })
 }
 

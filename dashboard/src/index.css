@@ -95,6 +95,65 @@
   }
 }
 
+@layer components {
+  .scope-hover {
+    position: relative;
+    --scope-radius: var(--radius);
+    
+    &:hover {
+      color: var(--primary) !important;
+    }
+
+    &::before, &::after {
+      content: '';
+      width: var(--scope-radius);
+      pointer-events: none;
+      position: absolute;
+      top: 0;
+      height: 100%;
+      @apply border-2 border-primary opacity-0;
+      --transition-fn: cubic-bezier(0.44, 1.78, 0.78, 0.94);
+      transition: opacity 0.2s var(--transition-fn), transform 0.2s var(--transition-fn);
+      transition-delay: 0.05s;
+    }
+    &:hover::before, &:hover::after {
+      @apply opacity-100;
+      transform: translateX(0);
+    }
+    &::before {
+      left: 0;
+      border-right: none;
+      border-top-left-radius: var(--scope-radius);
+      border-bottom-left-radius: var(--scope-radius);
+      transform: translateX(-50%);
+      background: linear-gradient(to left in oklab, transparent 10%, rgba(from var(--primary) r g b / 0.1));
+    }
+    &::after {
+      right: 0;
+      border-left: none;
+      border-top-right-radius: var(--scope-radius);
+      border-bottom-right-radius: var(--scope-radius);
+      transform: translateX(50%);
+      background: linear-gradient(to right in oklab, transparent 10%, rgba(from var(--primary) r g b / 0.1));
+    }
+  }
+  .scope-sm {
+    --scope-radius: var(--radius-sm);
+  }
+  .scope-lg {
+    --scope-radius: var(--radius-lg);
+  }
+  .scope-xl {
+    --scope-radius: var(--radius-xl);
+  }
+  .scope-2xl {
+    --scope-radius: var(--radius-2xl);
+  }
+  .scope-3xl {
+    --scope-radius: var(--radius-3xl);
+  }
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;

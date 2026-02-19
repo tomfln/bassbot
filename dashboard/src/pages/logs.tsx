@@ -133,9 +133,9 @@ export function LogsPage() {
           </p>
         ) : (
           <>
-            {filtered.slice(0, showCount).map((entry, i) => (
+            {filtered.slice(0, showCount).map((entry) => (
               <LogEntry
-                key={`${entry.timestamp}-${i}`}
+                key={`${entry.guildId}-${entry.userId}-${entry.timestamp}`}
                 entry={entry}
                 showGuild
                 linkGuild
