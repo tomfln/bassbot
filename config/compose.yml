@@ -30,7 +30,7 @@ services:
     container_name: lavalink
     restart: unless-stopped
     environment:
-      - _JAVA_OPTIONS=-Xmx4G
+      - _JAVA_OPTIONS=-Xmx4G -Xms1G -XX:+UseG1GC -XX:MaxGCPauseMillis=20 -XX:ParallelGCThreads=4
     volumes:
       - ./bassbot-data/application.yml:/opt/Lavalink/application.yml
     expose:

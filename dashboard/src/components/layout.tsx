@@ -22,11 +22,11 @@ const GLASS_STYLE: CSSProperties = {
 
 /* ── Shared primitives ────────────────────────────────────── */
 
-function Brand() {
+function Brand({ size = "large" }: { size?: "small" | "large" }) {
   return (
-    <div className="flex items-center gap-2">
-      <Music className="h-5 w-5 text-primary" />
-      <span className="font-semibold text-lg tracking-tight">bassbot</span>
+    <div className="relative flex items-end gap-1">
+        <p style={{ fontFamily: "Veter", transform: "translateY(10%)" }} className={`text-primary ${size === "small" ? "text-xl" : "text-3xl"}`}>bass</p>
+        <div className="absolute inset-2 bg-primary blur-lg opacity-50"></div>
     </div>
   )
 }
@@ -133,17 +133,19 @@ function DesktopSidebar({
   guildCount?: number
 }) {
   return (
-    <div className="hidden md:flex shrink-0 pt-[6rem] pb-3 pl-3 sticky top-0 self-start">
-      <aside
-        className="flex w-56 xl:w-64 flex-col rounded-xl border border-white/8 shadow-sm overflow-visible min-h-[60dvh]"
-        style={GLASS_STYLE}
-      >
-        <div className="px-4 h-14 flex items-center">
-          <Brand />
-        </div>
-        <SidebarNav />
-        <BotInfo name={botName} avatar={botAvatar} guildCount={guildCount} />
-      </aside>
+    <div className="hidden md:flex flex-col">
+      <div className="shrink-0 pb-3 pl-3 sticky top-0 self-start pt-24">
+        <aside
+          className="flex w-56 xl:w-64 flex-col rounded-xl border border-white/8 shadow-sm overflow-visible min-h-[60dvh]"
+          style={GLASS_STYLE}
+        >
+          <div className="flex items-center justify-center py-6">
+            <Brand />
+          </div>
+          <SidebarNav />
+          <BotInfo name={botName} avatar={botAvatar} guildCount={guildCount} />
+        </aside>
+      </div>
     </div>
   )
 }
@@ -179,7 +181,7 @@ function MobileSidebar({
         style={GLASS_STYLE}
       >
         <div className="flex items-center justify-between px-4 h-14">
-          <Brand />
+          <Brand size="small" />
           <button
             onClick={onClose}
             className="p-1 rounded-md hover:bg-accent transition-colors"
@@ -199,10 +201,10 @@ function MobileSidebar({
 function MobileHeader({ onOpenSidebar }: { onOpenSidebar: () => void }) {
   return (
     <header
-      className="sticky top-0 z-30 flex items-center justify-between px-4 h-14 border-b border-white/[0.08] md:hidden"
+      className="overflow-hidden sticky top-0 z-30 flex items-center justify-between px-4 h-14 border-b border-white/[0.08] md:hidden"
       style={GLASS_STYLE}
     >
-      <Brand />
+      <Brand size="small" />
       <button
         onClick={onOpenSidebar}
         className="p-1 rounded-md hover:bg-accent transition-colors"
