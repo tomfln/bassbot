@@ -24,7 +24,7 @@ jobs:
       - run: bun run eslint
       - run: bun run lint
       - name: Lint Next.js dashboard
-        run: cd next && bun install --frozen-lockfile && bun run lint
+        run: cd next && bun run lint
 
   # ── Determine which images need building / publishing ──────
   check:
