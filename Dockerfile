@@ -8,7 +8,7 @@ RUN mkdir -p /data && chown -R bun:bun /data
 
 # Copy package manifests for dependency caching
 COPY package.json bun.lock ./
-COPY next/package.json next/
+COPY web/package.json web/
 
 # Install dependencies
 RUN bun install --frozen-lockfile

@@ -1,5 +1,5 @@
 /**
- * Dev script that runs both the bot (with --watch) and the Next.js dashboard dev server concurrently.
+ * Dev script that runs both the bot (with --watch) and the web dashboard dev server concurrently.
  * Works cross-platform (Windows/Linux/Mac).
  */
 import { join } from "node:path"
@@ -12,7 +12,7 @@ const bot = Bun.spawn(["bun", "--watch", "src/index.ts"], {
 })
 
 const dash = Bun.spawn(["bun", "run", "dev"], {
-  cwd: join(root, "next"),
+  cwd: join(root, "web"),
   stdio: ["inherit", "inherit", "inherit"],
 })
 

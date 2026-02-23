@@ -174,7 +174,7 @@ From now on, Lavalink will use the refresh token automatically — no manual log
 2. Run `bun install`
 3. Create a `data/` directory with a `config.json` (see `config.example.json`)
 5. Run `bun dev` to start the bot in dev mode
-6. Run `cd next && bun dev` to start the dashboard in dev mode
+6. Run `cd web && bun dev` to start the dashboard in dev mode
 
 ## Technologies
 

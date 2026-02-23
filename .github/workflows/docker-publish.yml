@@ -1,4 +1,4 @@
-name: CI — Lint, build & publish Docker images
+name: Lint, build & publish
 
 on:
   push:
@@ -23,8 +23,8 @@ jobs:
       - run: bun install --frozen-lockfile
       - run: bun run eslint
       - run: bun run lint
-      - name: Lint Next.js dashboard
-        run: cd next && bun run lint
+      - name: Lint web dashboard
+        run: cd web && bun run lint
 
   # ── Determine which images need building / publishing ──────
   check:
@@ -44,7 +44,7 @@ jobs:
         id: versions
         run: |
           bot=$(grep -Po '"version"\s*:\s*"\K[^"]+' package.json || echo "0.0.0")
-          web=$(grep -Po '"version"\s*:\s*"\K[^"]+' next/package.json || echo "0.0.0")
+          web=$(grep -Po '"version"\s*:\s*"\K[^"]+' web/package.json || echo "0.0.0")
           echo "bot=$bot" >> $GITHUB_OUTPUT
           echo "web=$web" >> $GITHUB_OUTPUT
 
@@ -159,8 +159,8 @@ jobs:
       - name: Build & push web
         uses: docker/build-push-action@v4
         with:
-          context: ./next
-          file: ./next/Dockerfile
+          context: ./web
+          file: ./web/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: ${{ needs.check.outputs.publish_web == 'true' }}
           tags: |
