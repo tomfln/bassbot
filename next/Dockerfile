@@ -18,7 +18,7 @@ FROM base AS runner
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-RUN adduser -D -u 1001 nextjs
+RUN useradd --system --uid 1001 nextjs
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs /app/.next/static ./.next/static
