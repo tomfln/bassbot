@@ -21,8 +21,7 @@ export function useWebSocket() {
 
   useEffect(() => {
     function connect() {
-      const apiUrl = getApiUrl()
-      const wsUrl = apiUrl.replace(/^http/, "ws") + "/api/ws"
+      const wsUrl = getApiUrl().replace(/^http/, "ws") + "/api/ws"
       const ws = new WebSocket(wsUrl)
       wsRef.current = ws
 

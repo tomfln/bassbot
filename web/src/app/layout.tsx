@@ -13,10 +13,12 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const apiUrl = process.env.API_URL ?? ""
+
   return (
     <html lang="en" className="dark">
       <body className="antialiased">
-        <Providers>
+        <Providers apiUrl={apiUrl}>
           <Shell>
             {children}
           </Shell>

@@ -33,8 +33,10 @@ services:
       - lavalink
     ports:
       - "3000:3000"
-    environment:
-      NEXT_PUBLIC_API_URL: http://bassbot:3001
+    # The dashboard auto-derives the API URL from the browser's hostname.
+    # Override only if the bot API runs on a different host/port:
+    # environment:
+    #   API_URL: http://your-bot-host:3001
 
   lavalink:
     image: ghcr.io/lavalink-devs/lavalink:latest
