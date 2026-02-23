@@ -7,6 +7,7 @@ import { LayoutDashboard, Server, Music, Menu, X, ScrollText, Github, SlidersHor
 import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useStats } from "@/hooks/use-api"
+import pkg from "../../package.json"
 
 /* ── Constants ────────────────────────────────────────────── */
 
@@ -224,23 +225,22 @@ function Footer() {
   return (
     <footer className="px-6 md:px-8 pb-[max(2rem,env(safe-area-inset-bottom))] pt-10">
       <div className="mx-auto max-w-6xl flex items-center justify-between text-xs text-muted-foreground border-t border-border pt-4 px-2">
+        <span>
+          made by&nbsp;
+          <a
+            href="https://github.com/tomfln"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-foreground transition-colors"
+          >
+            tomfln
+          </a>
+        </span>
         <span className="flex gap-2">
-          <span>bassbot</span>
-          <span>•</span>
-          <span>
-            made by&nbsp;
-            <a
-              href="https://github.com/tomfln"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-foreground transition-colors"
-            >
-              tomfln
-            </a>
-          </span>
+          <span>dashboard v{pkg.version}</span>
           {stats?.version && <>
             <span>•</span>
-            <span>v{stats.version}</span>
+            <span>bot v{stats.version}</span>
           </>}
         </span>
         <a
