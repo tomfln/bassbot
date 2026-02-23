@@ -16,6 +16,8 @@ services:
     restart: unless-stopped
     networks:
       - lavalink
+    ports:
+      - "3001:3001"
     volumes:
       - ./bassbot-data:/data
     environment:
