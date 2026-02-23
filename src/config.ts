@@ -29,10 +29,10 @@ const raw = {
     process.env.API_PORT != null
       ? Number(process.env.API_PORT)
       : (file.apiPort ?? 3001),
-  dashboardEnabled:
-    process.env.DASHBOARD_ENABLED != null
-      ? process.env.DASHBOARD_ENABLED === "true" || process.env.DASHBOARD_ENABLED === "1"
-      : (file.dashboardEnabled ?? true),
+  apiEnabled:
+    process.env.API_ENABLED != null
+      ? process.env.API_ENABLED === "true" || process.env.API_ENABLED === "1"
+      : (file.apiEnabled ?? true),
   nodes: file.nodes ?? [],
 }
 
@@ -44,7 +44,7 @@ const configSchema = z.object({
   w2gKey: z.string().min(1),
   dataDir: z.string(),
   apiPort: z.number().default(3001),
-  dashboardEnabled: z.boolean().default(true),
+  apiEnabled: z.boolean().default(true),
   nodes: z
     .array(
       z.object({

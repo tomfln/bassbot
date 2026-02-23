@@ -1,6 +1,6 @@
 node_modules
-dashboard/node_modules
-dashboard/dist
+web/node_modules
+web/.next
 data
 bassbot-data
 lavalink

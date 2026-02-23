@@ -1,8 +1,8 @@
-name: CI — Build & publish Docker image
+name: Lint, build & publish
 
 on:
   push:
-    branches: [main]
+  pull_request:
   workflow_dispatch:
 
 permissions:
@@ -10,73 +10,160 @@ permissions:
   packages: write
 
 env:
-  IMAGE: ghcr.io/${{ github.repository_owner }}/bassbot
+  IMAGE_BOT: ghcr.io/${{ github.repository_owner }}/bassbot
+  IMAGE_WEB: ghcr.io/${{ github.repository_owner }}/bassbot-web
 
 jobs:
-  check:
+  # ── Always runs on every push / PR ──────────────────────────
+  lint:
     runs-on: ubuntu-latest
-    outputs:
-      publish: ${{ steps.decide.outputs.publish }}
-      version: ${{ steps.decide.outputs.version }}
     steps:
       - uses: actions/checkout@v4
-      - name: Decide whether to publish
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bun run eslint
+      - run: bun run lint
+      - name: Lint web dashboard
+        run: cd web && bun run lint
+
+  # ── Determine which images need building / publishing ──────
+  check:
+    if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    outputs:
+      bot_version: ${{ steps.versions.outputs.bot }}
+      web_version: ${{ steps.versions.outputs.web }}
+      publish_bot: ${{ steps.decide.outputs.publish_bot }}
+      publish_web: ${{ steps.decide.outputs.publish_web }}
+      build_bot: ${{ steps.decide.outputs.build_bot }}
+      build_web: ${{ steps.decide.outputs.build_web }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read versions
+        id: versions
+        run: |
+          bot=$(grep -Po '"version"\s*:\s*"\K[^"]+' package.json || echo "0.0.0")
+          web=$(grep -Po '"version"\s*:\s*"\K[^"]+' web/package.json || echo "0.0.0")
+          echo "bot=$bot" >> $GITHUB_OUTPUT
+          echo "web=$web" >> $GITHUB_OUTPUT
+
+      - name: Decide what to build / publish
         id: decide
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          version=$(grep -Po '"version"\s*:\s*"\K[^"]+' package.json || echo "0.0.0")
-          echo "version=$version" >> $GITHUB_OUTPUT
-
-          # Skip if commit message contains [no-publish]
-          if git log -1 --format=%B | grep -qF '[no-publish]'; then
-            echo "publish=false" >> $GITHUB_OUTPUT && exit 0
-          fi
-
-          # Check if this version is already in the registry
           owner=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-          token=$(curl -sf -u "${{ github.actor }}:${GH_TOKEN}" \
-            "https://ghcr.io/token?scope=repository:${owner}/bassbot:pull" \
-            | jq -r '.token // empty' || echo "")
 
-          if [ -z "$token" ]; then
-            echo "publish=true" >> $GITHUB_OUTPUT && exit 0
+          is_main="${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}"
+          is_pr="${{ github.event_name == 'pull_request' }}"
+          is_dispatch="${{ github.event_name == 'workflow_dispatch' }}"
+
+          # PRs and dispatch always build both
+          if [ "$is_pr" = "true" ] || [ "$is_dispatch" = "true" ]; then
+            echo "build_bot=true"  >> $GITHUB_OUTPUT
+            echo "build_web=true"  >> $GITHUB_OUTPUT
           fi
 
-          status=$(curl -sf -o /dev/null -w "%{http_code}" \
-            -H "Authorization: Bearer $token" \
-            "https://ghcr.io/v2/${owner}/bassbot/manifests/${version}" || echo "000")
+          # PRs never publish
+          if [ "$is_pr" = "true" ]; then
+            echo "publish_bot=false" >> $GITHUB_OUTPUT
+            echo "publish_web=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
 
-          [ "$status" = "200" ] \
-            && echo "publish=false" >> $GITHUB_OUTPUT \
-            || echo "publish=true" >> $GITHUB_OUTPUT
+          # Skip publish if commit message contains [no-publish]
+          if git log -1 --format=%B | grep -qF '[no-publish]'; then
+            echo "publish_bot=false" >> $GITHUB_OUTPUT
+            echo "publish_web=false" >> $GITHUB_OUTPUT
+            # Still build on dispatch
+            [ "$is_dispatch" = "true" ] || { echo "build_bot=false" >> $GITHUB_OUTPUT; echo "build_web=false" >> $GITHUB_OUTPUT; }
+            exit 0
+          fi
 
-  build:
-    needs: check
-    if: needs.check.outputs.publish == 'true' || github.event_name == 'workflow_dispatch'
+          # Helper: check if a version tag exists in the registry
+          check_version() {
+            local repo="$1" version="$2"
+            local token status
+            token=$(curl -sf -u "${{ github.actor }}:${GH_TOKEN}" \
+              "https://ghcr.io/token?scope=repository:${owner}/${repo}:pull" \
+              | jq -r '.token // empty' || echo "")
+            [ -z "$token" ] && echo "true" && return
+            status=$(curl -sf -o /dev/null -w "%{http_code}" \
+              -H "Authorization: Bearer $token" \
+              "https://ghcr.io/v2/${owner}/${repo}/manifests/${version}" || echo "000")
+            [ "$status" = "200" ] && echo "false" || echo "true"
+          }
+
+          pub_bot=$(check_version "bassbot"     "${{ steps.versions.outputs.bot }}")
+          pub_web=$(check_version "bassbot-web"  "${{ steps.versions.outputs.web }}")
+
+          echo "publish_bot=$pub_bot" >> $GITHUB_OUTPUT
+          echo "publish_web=$pub_web" >> $GITHUB_OUTPUT
+
+          # On main push, only build what we'll publish (or on dispatch, build all)
+          if [ "$is_main" = "true" ]; then
+            echo "build_bot=$pub_bot" >> $GITHUB_OUTPUT
+            echo "build_web=$pub_web" >> $GITHUB_OUTPUT
+          fi
+
+  # ── Build (and optionally push) bot image ───────────────────
+  build-bot:
+    needs: [lint, check]
+    if: needs.check.outputs.build_bot == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-qemu-action@v2
       - uses: docker/setup-buildx-action@v2
       - uses: docker/login-action@v2
+        if: needs.check.outputs.publish_bot == 'true'
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Short SHA
         id: sha
         run: echo "short=${GITHUB_SHA::8}" >> $GITHUB_OUTPUT
-
-      - name: Build & push
+      - name: Build & push bot
         uses: docker/build-push-action@v4
         with:
           context: .
+          file: ./Dockerfile
           platforms: linux/amd64,linux/arm64
-          push: true
+          push: ${{ needs.check.outputs.publish_bot == 'true' }}
           tags: |
-            ${{ env.IMAGE }}:latest
-            ${{ env.IMAGE }}:${{ needs.check.outputs.version }}
-            ${{ env.IMAGE }}:${{ steps.sha.outputs.short }}
+            ${{ env.IMAGE_BOT }}:latest
+            ${{ env.IMAGE_BOT }}:${{ needs.check.outputs.bot_version }}
+            ${{ env.IMAGE_BOT }}:${{ steps.sha.outputs.short }}
+
+  # ── Build (and optionally push) web image ───────────────────
+  build-web:
+    needs: [lint, check]
+    if: needs.check.outputs.build_web == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v2
+      - uses: docker/setup-buildx-action@v2
+      - uses: docker/login-action@v2
+        if: needs.check.outputs.publish_web == 'true'
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Short SHA
+        id: sha
+        run: echo "short=${GITHUB_SHA::8}" >> $GITHUB_OUTPUT
+      - name: Build & push web
+        uses: docker/build-push-action@v4
+        with:
+          context: ./web
+          file: ./web/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: ${{ needs.check.outputs.publish_web == 'true' }}
+          tags: |
+            ${{ env.IMAGE_WEB }}:latest
+            ${{ env.IMAGE_WEB }}:${{ needs.check.outputs.web_version }}
+            ${{ env.IMAGE_WEB }}:${{ steps.sha.outputs.short }}

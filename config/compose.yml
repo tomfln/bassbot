@@ -1,4 +1,4 @@
-# Docker Compose for BassBot + Lavalink
+# Docker Compose for BassBot + Dashboard + Lavalink
 #
 # Quick start:
 #   1. Create data directories:  mkdir bassbot-data lavalink
@@ -25,11 +25,23 @@ services:
       # TOKEN: override_token_here
       # CLIENT_ID: override_client_id_here
 
+  web:
+    image: ghcr.io/tomfln/bassbot-web:latest
+    container_name: bassbot-web
+    restart: unless-stopped
+    networks:
+      - lavalink
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://bassbot:3001
+
   lavalink:
     image: ghcr.io/lavalink-devs/lavalink:latest
     container_name: lavalink
     restart: unless-stopped
     environment:
+      # Change this to match your system's capabilities — see Lavalink docs for details
       - _JAVA_OPTIONS=-Xmx4G -Xms1G -XX:+UseG1GC -XX:MaxGCPauseMillis=20 -XX:ParallelGCThreads=4
     volumes:
       - ./bassbot-data/application.yml:/opt/Lavalink/application.yml

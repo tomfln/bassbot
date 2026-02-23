@@ -77,7 +77,7 @@ Open `bassbot-data/config.json` and fill in your values:
 | `clientId` | Your Discord application's client ID |
 | `w2gKey` | Your [Watch2Gether](https://w2g.tv/) API key |
 | `apiPort` | Dashboard API port (default: `3001`) |
-| `dashboardEnabled` | Enable the web dashboard (default: `true`) |
+| `apiEnabled` | Enable the REST API for the dashboard (default: `true`) |
 | `nodes` | Lavalink nodes — defaults work with the compose file |
 
 ### 4. (Optional) Configure Spotify
@@ -173,7 +173,8 @@ From now on, Lavalink will use the refresh token automatically — no manual log
 1. Clone the repository
 2. Run `bun install`
 3. Create a `data/` directory with a `config.json` (see `config.example.json`)
-5. Run `bun dev` to start the bot + dashboard in dev mode
+5. Run `bun dev` to start the bot in dev mode
+6. Run `cd web && bun dev` to start the dashboard in dev mode
 
 ## Technologies
 
@@ -182,7 +183,7 @@ From now on, Lavalink will use the refresh token automatically — no manual log
 - **Lavalink + Shoukaku** — Reliable audio playback with Spotify support
 - **Discord.js** — Discord API interaction
 - **Drizzle ORM + SQLite** — Lightweight embedded database for persistence
-- **React + Vite** — Dashboard for monitoring the bot
+- **Next.js** — Dashboard for monitoring the bot
 
 ## License
 This project is licensed under the MIT license. See the [LICENSE](LICENSE) file for more information.
