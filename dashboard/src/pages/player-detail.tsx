@@ -1,10 +1,28 @@
 import { useState } from "react"
-import { useParams, Link } from "react-router-dom"
+import { useParams, Link, useNavigate } from "react-router-dom"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { usePlayer, useGuildLogs } from "@/hooks/use-api"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { Button } from "@/components/ui/button"
+import { usePlayer, useGuildLogs, useDestroyPlayer, useClearQueue } from "@/hooks/use-api"
 import { formatDuration, formatUptime } from "@/lib/format"
 import { ActivityLog } from "@/components/activity-log"
 import { TrackList } from "@/components/track-list"
@@ -21,6 +39,9 @@ import {
   Cpu,
   MemoryStick,
   Info,
+  MoreVertical,
+  Trash2,
+  ListX,
 } from "lucide-react"
 
 /* ── Right‑column sub‑components ─────────────────────────── */
@@ -205,10 +226,15 @@ function NodeStatsCard({ node, nodeStats }: NodeStatsCardProps) {
 
 export function PlayerDetailPage() {
   const { guildId } = useParams<{ guildId: string }>()
+  const navigate = useNavigate()
   const [queueLimit, setQueueLimit] = useState(10)
   const [historyLimit, setHistoryLimit] = useState(10)
+  const [confirmDestroy, setConfirmDestroy] = useState(false)
+  const [confirmClear, setConfirmClear] = useState(false)
   const { data: player, isLoading, error } = usePlayer(guildId, { queueLimit, historyLimit })
   const { data: guildLogs } = useGuildLogs(guildId)
+  const destroyPlayer = useDestroyPlayer(guildId!)
+  const clearQueue = useClearQueue(guildId!)
 
   const optimisticPosition = useOptimisticPosition(
     player?.position ?? 0,
@@ -266,13 +292,79 @@ export function PlayerDetailPage() {
             {player.guildName.slice(0, 2).toUpperCase()}
           </AvatarFallback>
         </Avatar>
-        <div>
+        <div className="flex-1 min-w-0">
           <h1 className="text-xl font-bold tracking-tight">{player.guildName}</h1>
           <p className="text-xs text-muted-foreground">
             Node: {player.node}
           </p>
         </div>
+        {/* Action menu */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+              <MoreVertical className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem
+              className="gap-2 cursor-pointer"
+              onClick={() => setConfirmClear(true)}
+            >
+              <ListX className="h-4 w-4 text-muted-foreground" />
+              Clear Queue
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className="gap-2 cursor-pointer text-destructive focus:text-destructive"
+              onClick={() => setConfirmDestroy(true)}
+            >
+              <Trash2 className="h-4 w-4" />
+              Destroy Player
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
+
+      {/* Confirm: clear queue */}
+      <AlertDialog open={confirmClear} onOpenChange={setConfirmClear}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Clear queue?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will remove all tracks from the queue. The current track will keep playing.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => clearQueue.mutate()}
+            >
+              Clear
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Confirm: destroy player */}
+      <AlertDialog open={confirmDestroy} onOpenChange={setConfirmDestroy}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Destroy player?</AlertDialogTitle>
+            <AlertDialogDescription>
+              The bot will stop playing and leave the voice channel. The queue will be saved.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => destroyPlayer.mutate(undefined, { onSuccess: () => navigate("/players") })}
+            >
+              Destroy
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
         {/* Left column — Now playing + Queue */}

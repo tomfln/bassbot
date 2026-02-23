@@ -1,10 +1,28 @@
 import { useState } from "react"
-import { useParams, Link } from "react-router-dom"
+import { useParams, Link, useNavigate } from "react-router-dom"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { useGuild, useGuildLogs, useGuildMembers } from "@/hooks/use-api"
+import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { useGuild, useGuildLogs, useGuildMembers, useDestroyPlayer, useLeaveGuild } from "@/hooks/use-api"
 import { formatDate } from "@/lib/format"
 import { ActivityLog } from "@/components/activity-log"
 import {
@@ -18,16 +36,23 @@ import {
   Search,
   X,
   ChevronDown,
+  MoreVertical,
+  Trash2,
+  LogOut,
 } from "lucide-react"
 
 export function GuildDetailPage() {
   const { guildId } = useParams<{ guildId: string }>()
+  const navigate = useNavigate()
   const [memberLimit, setMemberLimit] = useState(20)
   const [memberSearch, setMemberSearch] = useState("")
+  const [confirmDestroyPlayer, setConfirmDestroyPlayer] = useState(false)
+  const [confirmLeave, setConfirmLeave] = useState(false)
   const { data: guild, isLoading, error } = useGuild(guildId, { memberLimit })
   const { data: guildLogs } = useGuildLogs(guildId, 10)
-  // Server-side search: only active when user types a search query
   const { data: searchResults } = useGuildMembers(guildId, 0, 200, memberSearch)
+  const destroyPlayer = useDestroyPlayer(guildId!)
+  const leaveGuild = useLeaveGuild(guildId!)
 
   if (isLoading) {
     return (
@@ -98,7 +123,78 @@ export function GuildDetailPage() {
             </Badge>
           </Link>
         )}
+        {/* Action menu */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+              <MoreVertical className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            {guild.hasPlayer && (
+              <>
+                <DropdownMenuItem
+                  className="gap-2 cursor-pointer text-destructive focus:text-destructive"
+                  onClick={() => setConfirmDestroyPlayer(true)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Destroy Player
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
+            )}
+            <DropdownMenuItem
+              className="gap-2 cursor-pointer text-destructive focus:text-destructive"
+              onClick={() => setConfirmLeave(true)}
+            >
+              <LogOut className="h-4 w-4" />
+              Leave Guild
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
+
+      {/* Confirm: destroy player */}
+      <AlertDialog open={confirmDestroyPlayer} onOpenChange={setConfirmDestroyPlayer}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Destroy player?</AlertDialogTitle>
+            <AlertDialogDescription>
+              The bot will stop playing and leave the voice channel. The queue will be saved.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => destroyPlayer.mutate()}
+            >
+              Destroy
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Confirm: leave guild */}
+      <AlertDialog open={confirmLeave} onOpenChange={setConfirmLeave}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Leave {guild.name}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              The bot will leave this server. Any active player will be stopped first.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => leaveGuild.mutate(undefined, { onSuccess: () => navigate("/guilds") })}
+            >
+              Leave
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Info cards */}
       <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">

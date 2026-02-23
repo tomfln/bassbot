@@ -1,10 +1,12 @@
-import { ActivityType, ChatInputCommandInteraction } from "discord.js"
+import { ActivityType, ChatInputCommandInteraction, type ActivityOptions } from "discord.js"
 import { Connectors, Shoukaku } from "shoukaku"
 import { Bot } from "@bot/bot"
 import { PlayerWithQueue } from "./player"
 import config from "./config"
 import path from "node:path"
 import chalk from "chalk"
+import db, { schema } from "./util/db"
+import { eq } from "drizzle-orm"
 
 const pkg = await Bun.file(path.join(import.meta.dir, "..", "package.json")).json() as { version: string }
 
@@ -31,12 +33,60 @@ export class BassBot extends Bot<BassBot> {
 
   private _syncResult: { synced: boolean; commandCount: number } | null = null
 
+  /** Default slogans used when DB has none. */
+  private static DEFAULT_SLOGANS = [
+    "vibe alert",
+    "type /play to start",
+    "music 24/7",
+    "spotify who?",
+    "the best music bot",
+    "spürst du die frequenzen?",
+  ]
+
+  /** Load bot settings from DB and apply them. */
+  private async loadSettings() {
+    let row = await db.query.botSettings.findFirst({ where: eq(schema.botSettings.id, 1) })
+    if (!row) {
+      // Insert defaults
+      await db.insert(schema.botSettings).values({ id: 1 }).onConflictDoNothing()
+      row = await db.query.botSettings.findFirst({ where: eq(schema.botSettings.id, 1) })
+    }
+    if (row) {
+      this.commandsEnabled = row.commandsEnabled
+    }
+  }
+
   private async init() {
+    await this.loadSettings()
     const commandDir = path.join(import.meta.dir, "commands")
     await this.loadCommands(commandDir, { depth: 2, silent: true })
     this._syncResult = await this.syncCommands({ token: config.token, clientId: config.clientId, silent: true })
 
     setInterval(() => this.randomActivity(), 1000 * 15)
+  }
+
+  /** Persist + apply updated settings. Called by the API. */
+  public async updateSettings(patch: Partial<{ commandsEnabled: boolean; slogans: string[] }>) {
+    // Row 1 is guaranteed to exist (created by migration + loadSettings).
+    // Using .update() instead of insert…onConflictDoUpdate avoids column-name
+    // mapping issues where drizzle passes JS property names to SQLite.
+    await db
+      .update(schema.botSettings)
+      .set(patch)
+      .where(eq(schema.botSettings.id, 1))
+
+    if (patch.commandsEnabled !== undefined) {
+      this.commandsEnabled = patch.commandsEnabled
+    }
+  }
+
+  /** Read persisted settings. */
+  public async getSettings() {
+    const row = await db.query.botSettings.findFirst({ where: eq(schema.botSettings.id, 1) })
+    return {
+      commandsEnabled: row?.commandsEnabled ?? true,
+      slogans: (row?.slogans?.length ? row.slogans : BassBot.DEFAULT_SLOGANS),
+    }
   }
 
   public async login(token?: string) {
@@ -106,13 +156,10 @@ export class BassBot extends Bot<BassBot> {
   }
 
   public randomActivity() {
-    const activities = [
-      { type: ActivityType.Listening, name: "/help" },
-      { type: ActivityType.Listening, name: "/play" },
-      { type: ActivityType.Playing, name: "music" },
-      { type: ActivityType.Playing, name: `in ${this.guilds.cache.size} servers` },
-    ]
-    const activity = activities[Math.floor(Math.random() * activities.length)]
-    this.user.setActivity(activity) 
+    void this.getSettings().then(({ slogans }) => {
+      const list = slogans.length ? slogans : BassBot.DEFAULT_SLOGANS
+      const name = list[Math.floor(Math.random() * list.length)]!
+      this.user.setActivity({ type: ActivityType.Custom, name } satisfies ActivityOptions)
+    })
   }
 }

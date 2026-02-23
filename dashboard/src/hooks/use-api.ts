@@ -1,4 +1,4 @@
-import { useQuery, keepPreviousData } from "@tanstack/react-query"
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query"
 import { api } from "@/lib/api"
 import type {
   Stats,
@@ -174,5 +174,69 @@ export function useGuildLogs(guildId: string | undefined, limit = 50) {
       unwrap(api.api.logs({ guildId: guildId! }).get({ query: { limit: String(limit) } })),
     enabled: !!guildId,
     staleTime: Infinity,
+  })
+}
+
+/* ── BotSettings ──────────────────────────────────────────── */
+
+export type BotSettings = { commandsEnabled: boolean; slogans: string[] }
+
+export function useBotSettings() {
+  return useQuery<BotSettings>({
+    queryKey: ["bot-settings"],
+    queryFn: () => unwrap(api.api.control.settings.get()),
+    staleTime: Infinity,
+  })
+}
+
+export function useUpdateBotSettings() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (patch: Partial<BotSettings>) =>
+      unwrap<BotSettings>(api.api.control.settings.patch(patch as Record<string, unknown>)),
+    onSuccess: (data) => {
+      queryClient.setQueryData<BotSettings>(["bot-settings"], data)
+    },
+  })
+}
+
+/* ── Player actions ───────────────────────────────────────── */
+
+export function useDestroyPlayer(guildId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: () =>
+      unwrap<{ ok: boolean }>(api.api.players({ guildId }).delete({})),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["players"] })
+      queryClient.removeQueries({ queryKey: ["player", guildId] })
+      queryClient.invalidateQueries({ queryKey: ["stats"] })
+    },
+  })
+}
+
+export function useClearQueue(guildId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: () =>
+      unwrap<{ ok: boolean }>(api.api.players({ guildId }).clear.post({})),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["player", guildId] })
+    },
+  })
+}
+
+/* ── Guild actions ────────────────────────────────────────── */
+
+export function useLeaveGuild(guildId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: () =>
+      unwrap<{ ok: boolean }>(api.api.guilds({ guildId }).delete({})),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["guilds"] })
+      queryClient.removeQueries({ queryKey: ["guild", guildId] })
+      queryClient.invalidateQueries({ queryKey: ["stats"] })
+    },
   })
 }

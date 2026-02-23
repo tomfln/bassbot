@@ -8,6 +8,7 @@ import { PlayersPage } from "@/pages/players"
 import { PlayerDetailPage } from "@/pages/player-detail"
 import { GuildDetailPage } from "@/pages/guild-detail"
 import { LogsPage } from "@/pages/logs"
+import { ControlPage } from "@/pages/control"
 import { useWebSocket } from "@/hooks/use-websocket"
 
 const queryClient = new QueryClient({
@@ -39,6 +40,7 @@ export function App() {
               <Route path="players/:guildId" element={<PlayerDetailPage />} />
               <Route path="guilds/:guildId" element={<GuildDetailPage />} />
               <Route path="logs" element={<LogsPage />} />
+              <Route path="control" element={<ControlPage />} />
             </Route>
           </Routes>
         </BrowserRouter>

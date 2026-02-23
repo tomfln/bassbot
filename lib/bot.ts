@@ -48,6 +48,9 @@ export class Bot<_TThis extends Bot<any> = any> extends Client<true> {
     return result
   }
 
+  /** Set to false to reject all slash commands with a maintenance reply. */
+  public commandsEnabled = true
+
   private async handleInteraction(i: Interaction) {
     // ─── Autocomplete ────────────────────────────────────────────────
     if (i.isAutocomplete() && i.inCachedGuild()) {
@@ -72,6 +75,14 @@ export class Bot<_TThis extends Bot<any> = any> extends Client<true> {
     // ─── Commands & Buttons ──────────────────────────────────────────
     const isCommand = i.isChatInputCommand()
     if (!(isCommand || i.isButton()) || !i.inCachedGuild()) return
+
+    // Global command toggle
+    if (!this.commandsEnabled) {
+      if (i.isChatInputCommand() && !i.replied && !i.deferred) {
+        await i.reply({ content: "⚠️ The bot is currently in maintenance mode. Please try again later.", flags: "Ephemeral"})
+      }
+      return
+    }
 
     const commandId = isCommand ? i.commandName : i.customId.split(":")[0]!
     const command = this.commands.get(commandId)

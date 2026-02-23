@@ -1,4 +1,4 @@
-import { Elysia, status } from "elysia"
+import { Elysia, status, t } from "elysia"
 import { cors } from "@elysiajs/cors"
 import { staticPlugin } from "@elysiajs/static"
 import type { BassBot } from "./bot"
@@ -9,6 +9,8 @@ import { addWsClient, removeWsClient } from "./util/broadcast"
 import logger from "@bot/logger"
 import { join } from "node:path"
 import { existsSync, readFileSync } from "node:fs"
+
+const pkg = JSON.parse(readFileSync(join(import.meta.dir, "..", "package.json"), "utf-8")) as { version: string }
 
 /* ── Cache TTLs (ms) ─────────────────────────────────────── */
 
@@ -137,6 +139,7 @@ function createApi(bot: BassBot) {
           botName: bot.user?.displayName ?? "bassbot",
           botAvatar: bot.user?.displayAvatarURL({ size: 64 }) ?? null,
           botId: bot.user?.id ?? null,
+          version: pkg.version,
           guildCount: bot.guilds.cache.size,
           userCount: bot.guilds.cache.reduce((a, g) => a + g.memberCount, 0),
           activePlayers: players.filter((p) => p.current).length,
@@ -312,6 +315,47 @@ function createApi(bot: BassBot) {
         () => getGuildLog(params.guildId, limit),
       )
     })
+
+    /* ── Player actions ─────────────────────────────────── */
+    .delete("/api/players/:guildId", async ({ params }) => {
+      const player = bot.getPlayer(params.guildId)
+      if (!player) return status(404, { error: "Player not found" })
+      await player.disconnect()
+      return { ok: true }
+    })
+    .post("/api/players/:guildId/clear", ({ params }) => {
+      const player = bot.getPlayer(params.guildId)
+      if (!player) return status(404, { error: "Player not found" })
+      player.clear()
+      return { ok: true }
+    })
+
+    /* ── Guild actions ──────────────────────────────────── */
+    .delete("/api/guilds/:guildId", async ({ params }) => {
+      // Gracefully stop player first
+      const player = bot.getPlayer(params.guildId)
+      if (player) await player.disconnect()
+
+      const guild = bot.guilds.cache.get(params.guildId)
+      if (!guild) return status(404, { error: "Guild not found" })
+      await guild.leave()
+      cache.invalidate(`guild:${params.guildId}`)
+      cache.invalidate("guilds")
+      cache.invalidate("stats")
+      return { ok: true }
+    })
+
+    /* ── Control settings ───────────────────────────────── */
+    .get("/api/control/settings", () => bot.getSettings())
+    .patch("/api/control/settings", async ({ body }) => {
+      await bot.updateSettings(body)
+      return bot.getSettings()
+    }, {
+      body: t.Partial(t.Object({
+        commandsEnabled: t.Boolean(),
+        slogans: t.Array(t.String()),
+      })),
+    })
 }
 
 export type App = ReturnType<typeof createApi>
@@ -319,10 +363,6 @@ export type App = ReturnType<typeof createApi>
 export function startApiServer(bot: BassBot, port: number) {
   const dashboardDir = join(import.meta.dir, "..", "dashboard", "dist")
   const hasDashboard = existsSync(dashboardDir)
-
-  if (hasDashboard) {
-    logger.info("Serving dashboard from " + dashboardDir)
-  }
 
   const app = createApi(bot)
 
@@ -353,6 +393,6 @@ export function startApiServer(bot: BassBot, port: number) {
 
   app.listen(port)
 
-  logger.info(`Dashboard running on port ${port}`)
+  logger.info(`REST API and Dashboard running on port ${port}`)
   return app
 }

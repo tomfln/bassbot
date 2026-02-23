@@ -1,6 +1,6 @@
 import { useState, type CSSProperties } from "react"
 import { NavLink, Outlet } from "react-router-dom"
-import { LayoutDashboard, Server, Music, Menu, X, ScrollText, Github } from "lucide-react"
+import { LayoutDashboard, Server, Music, Menu, X, ScrollText, Github, SlidersHorizontal } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useStats } from "@/hooks/use-api"
@@ -12,6 +12,7 @@ const NAV_ITEMS = [
   { to: "/guilds", icon: Server, label: "Guilds" },
   { to: "/players", icon: Music, label: "Players" },
   { to: "/logs", icon: ScrollText, label: "Logs" },
+  { to: "/control", icon: SlidersHorizontal, label: "Control" },
 ] as const
 
 const GLASS_STYLE: CSSProperties = {
@@ -218,19 +219,28 @@ function MobileHeader({ onOpenSidebar }: { onOpenSidebar: () => void }) {
 /* ── Footer ───────────────────────────────────────────────── */
 
 function Footer() {
+  const { data: stats } = useStats()
   return (
     <footer className="px-6 md:px-8 pb-[max(2rem,env(safe-area-inset-bottom))] pt-10">
       <div className="mx-auto max-w-6xl flex items-center justify-between text-xs text-muted-foreground border-t border-border pt-4 px-2">
-        <span>
-          bassbot &middot; made by{" "}
-          <a
-            href="https://github.com/tomfln"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-foreground transition-colors"
-          >
-            tomfln
-          </a>
+        <span className="flex gap-2">
+          <span>bassbot</span>
+          <span>•</span>
+          <span>
+            made by&nbsp;
+            <a
+              href="https://github.com/tomfln"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-foreground transition-colors"
+            >
+              tomfln
+            </a>
+          </span>
+          {stats?.version && <>
+            <span>•</span>
+            <span>v{stats.version}</span>
+          </>}
         </span>
         <a
           href="https://github.com/tomfln/bassbot"

@@ -25,6 +25,24 @@ export const queueHistory = sqliteTable("queue_history", {
     .$type<{ tracks: any[]; position: number; savedAt: number }>(),
 })
 
+/**
+ * Single-row table (id=1) for persisted bot settings.
+ * commandsEnabled: when false, all slash commands return a maintenance reply.
+ * slogans: JSON array of strings shown as rotating activity status.
+ */
+export const botSettings = sqliteTable("bot_settings", {
+  id: integer().primaryKey({ autoIncrement: true }),
+  commandsEnabled: integer("commands_enabled", { mode: "boolean" }).notNull().default(true),
+  slogans: text({ mode: "json" }).notNull().$type<string[]>().default([
+    "vibe alert",
+    "type /play to start",
+    "music 24/7",
+    "spotify who?",
+    "the best music bot",
+    "spürst du die frequenzen?",
+  ]),
+})
+
 export const activityLog = sqliteTable("activity_log", {
   id: integer().primaryKey({ autoIncrement: true }),
   timestamp: integer().notNull(),
