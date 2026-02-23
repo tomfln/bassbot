@@ -1,6 +1,5 @@
 import { Elysia, status, t } from "elysia"
 import { cors } from "@elysiajs/cors"
-import { staticPlugin } from "@elysiajs/static"
 import type { BassBot } from "./bot"
 import type { PlayerWithQueue } from "./player"
 import { getGlobalLog, getGuildLog } from "./util/activity-log"
@@ -8,7 +7,7 @@ import { cache } from "./util/api-cache"
 import { addWsClient, removeWsClient } from "./util/broadcast"
 import logger from "@bot/logger"
 import { join } from "node:path"
-import { existsSync, readFileSync } from "node:fs"
+import { readFileSync } from "node:fs"
 
 const pkg = JSON.parse(readFileSync(join(import.meta.dir, "..", "package.json"), "utf-8")) as { version: string }
 
@@ -361,38 +360,10 @@ function createApi(bot: BassBot) {
 export type App = ReturnType<typeof createApi>
 
 export function startApiServer(bot: BassBot, port: number) {
-  const dashboardDir = join(import.meta.dir, "..", "dashboard", "dist")
-  const hasDashboard = existsSync(dashboardDir)
-
   const app = createApi(bot)
-
-  if (hasDashboard) {
-    const indexHtml = readFileSync(join(dashboardDir, "index.html"), "utf-8")
-
-    const serveHtml = () =>
-      new Response(indexHtml, {
-        headers: { "content-type": "text/html; charset=utf-8" },
-      })
-
-    app
-      .use(
-        staticPlugin({
-          assets: dashboardDir,
-          prefix: "/",
-          indexHTML: true,
-          ignorePatterns: ["*.html"],
-        }),
-      )
-      .get("/", () => serveHtml())
-      .onError(({ code, path }) => {
-        if (code === "NOT_FOUND" && !path.startsWith("/api")) {
-          return serveHtml()
-        }
-      })
-  }
 
   app.listen(port)
 
-  logger.info(`REST API and Dashboard running on port ${port}`)
+  logger.info(`REST API running on port ${port}`)
   return app
 }

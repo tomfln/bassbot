@@ -6,18 +6,17 @@ WORKDIR /usr/src/app
 ENV DATA_DIR=/data
 RUN mkdir -p /data && chown -R bun:bun /data
 
-# Copy workspace package manifests first for dependency caching
+# Copy package manifests for dependency caching
 COPY package.json bun.lock ./
-COPY dashboard/package.json dashboard/
 
-# Install all workspace dependencies
+# Install dependencies
 RUN bun install --frozen-lockfile
 
-# Copy all source (needed for dashboard build due to cross-project type imports)
-COPY . .
-
-# Build dashboard
-RUN cd dashboard && bun run build
+# Copy source
+COPY lib/ lib/
+COPY src/ src/
+COPY drizzle/ drizzle/
+COPY tsconfig.json ./
 
 # Runtime configuration
 USER bun

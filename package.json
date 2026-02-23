@@ -3,11 +3,11 @@
   "version": "1.3.3",
   "module": "src/index.ts",
   "type": "module",
-  "workspaces": ["dashboard"],
+  "workspaces": ["next"],
   "scripts": {
     "dev": "bun lib/scripts/dev.ts",
     "dev:bot": "bun --watch src/index.ts",
-    "dev:dash": "cd dashboard && bun run dev",
+    "dev:dash": "cd next && bun run dev",
     "register": "bun lib/scripts/register-commands.ts",
     "start": "bun run src/index.ts",
     "eslint": "eslint .",

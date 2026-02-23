@@ -1,4 +1,4 @@
-name: CI — Build & publish Docker image
+name: CI — Build & publish Docker images
 
 on:
   push:
@@ -10,7 +10,8 @@ permissions:
   packages: write
 
 env:
-  IMAGE: ghcr.io/${{ github.repository_owner }}/bassbot
+  IMAGE_BOT: ghcr.io/${{ github.repository_owner }}/bassbot
+  IMAGE_WEB: ghcr.io/${{ github.repository_owner }}/bassbot-web
 
 jobs:
   check:
@@ -56,6 +57,15 @@ jobs:
     needs: check
     if: needs.check.outputs.publish == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - image: bot
+            context: .
+            dockerfile: ./Dockerfile
+          - image: web
+            context: ./next
+            dockerfile: ./next/Dockerfile
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-qemu-action@v2
@@ -70,13 +80,23 @@ jobs:
         id: sha
         run: echo "short=${GITHUB_SHA::8}" >> $GITHUB_OUTPUT
 
+      - name: Set image name
+        id: img
+        run: |
+          if [ "${{ matrix.image }}" = "bot" ]; then
+            echo "name=${{ env.IMAGE_BOT }}" >> $GITHUB_OUTPUT
+          else
+            echo "name=${{ env.IMAGE_WEB }}" >> $GITHUB_OUTPUT
+          fi
+
       - name: Build & push
         uses: docker/build-push-action@v4
         with:
-          context: .
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ${{ env.IMAGE }}:latest
-            ${{ env.IMAGE }}:${{ needs.check.outputs.version }}
-            ${{ env.IMAGE }}:${{ steps.sha.outputs.short }}
+            ${{ steps.img.outputs.name }}:latest
+            ${{ steps.img.outputs.name }}:${{ needs.check.outputs.version }}
+            ${{ steps.img.outputs.name }}:${{ steps.sha.outputs.short }}

@@ -4,7 +4,7 @@
   "w2gKey": "your_w2g_api_key_here",
 
   "apiPort": 3001,
-  "dashboardEnabled": true,
+  "apiEnabled": true,
 
   "nodes": [
     {
