@@ -4,7 +4,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import Link from "next/link"
 import { LogEntry } from "@/components/log-entry"
 import { ArrowRight } from "lucide-react"
-import type { ActivityEntry } from "@/lib/api"
+import type { ActivityEntry } from "@/hooks/use-api"
 
 export function ActivityLog({
   entries,

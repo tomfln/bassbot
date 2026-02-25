@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import { Pause, Play, Music } from "lucide-react"
-import type { PlayerSummary } from "@/lib/api"
+import type { PlayerSummary } from "@/hooks/use-api"
 
 export function PlayerCard({ player, basePath = "/players" }: { player: PlayerSummary; basePath?: string }) {
   return (

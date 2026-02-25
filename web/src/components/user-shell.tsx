@@ -17,13 +17,13 @@ import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { GuildIcon } from "@/components/guild-icon"
 import { useSession, signOut } from "@/lib/auth-client"
-import { usePlayers, useStats } from "@/hooks/use-api"
+import { usePlayers, useStats, useUserGuilds } from "@/hooks/use-api"
 import pkg from "../../package.json"
 
 /* ── Constants ────────────────────────────────────────────── */
 
 const NAV_ITEMS = [
-  { href: "/guilds", icon: Server, label: "My Servers", exact: true },
+  { href: "/guilds", icon: Server, label: "All Guilds", exact: true },
 ] as const
 
 const GLASS_STYLE: CSSProperties = {
@@ -142,11 +142,37 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname()
   const { data: players } = usePlayers()
   const { data: stats } = useStats()
-  const activePlayers = (players?.filter((p) => p.current) ?? []).slice(0, 6)
+  const { data: userGuildsData } = useUserGuilds()
 
   const inviteUrl = stats?.botId
     ? `https://discord.com/oauth2/authorize?client_id=${stats.botId}&permissions=36703360&scope=bot+applications.commands`
     : null
+
+  // Build player map for active guild lookup
+  const playerMap = new Map<string, { current: { title: string } | null; paused: boolean }>()
+  if (players) {
+    for (const p of players) {
+      playerMap.set(p.guildId, { current: p.current, paused: p.paused })
+    }
+  }
+
+  // All mutual guilds, playing ones first, capped at 6
+  const mutualGuilds = (userGuildsData?.guilds ?? [])
+    .filter((g) => userGuildsData?.botGuildIds.has(g.id))
+    .sort((a, b) => {
+      const aPlaying = playerMap.has(a.id) && playerMap.get(a.id)?.current ? 1 : 0
+      const bPlaying = playerMap.has(b.id) && playerMap.get(b.id)?.current ? 1 : 0
+      return bPlaying - aPlaying
+    })
+    .slice(0, 6)
+
+  // Find guild icon from players data
+  const guildIconMap = new Map<string, string | null>()
+  if (players) {
+    for (const p of players) {
+      guildIconMap.set(p.guildId, p.guildIcon)
+    }
+  }
 
   return (
     <nav className="flex-1 px-3 pb-3 space-y-1.5 overflow-y-auto">
@@ -161,18 +187,17 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
         />
       ))}
 
-      {activePlayers.length > 0 && (
-        <div className="pt-4 mt-4 space-y-1.5">
-          <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider text-center">
-            Now Playing
-          </p>
-          {activePlayers.map((p) => {
-            const href = `/guilds/${p.guildId}`
+      {mutualGuilds.length > 0 && (
+        <div className="pt-1 space-y-1.5">
+          {mutualGuilds.map((g) => {
+            const href = `/guilds/${g.id}`
             const isActive = pathname === href
+            const player = playerMap.get(g.id)
+            const icon = g.icon ?? guildIconMap.get(g.id) ?? null
 
             return (
               <Link
-                key={p.guildId}
+                key={g.id}
                 href={href}
                 onClick={onNavigate}
                 className="relative block"
@@ -200,19 +225,19 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
                   }
                 >
                   <GuildIcon
-                    name={p.guildName}
-                    icon={p.guildIcon}
+                    name={g.name}
+                    icon={icon}
                     className="h-6 w-6 text-[8px]"
                   />
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium truncate">{p.guildName}</p>
-                    {p.current && (
+                    <p className="text-xs font-medium truncate">{g.name}</p>
+                    {player?.current && (
                       <p className="text-[10px] text-muted-foreground truncate">
-                        {p.current.title}
+                        {player.current.title}
                       </p>
                     )}
                   </div>
-                  {!p.paused && (
+                  {player?.current && !player.paused && (
                     <Music className="h-3 w-3 text-primary shrink-0 animate-pulse" />
                   )}
                 </span>
@@ -224,7 +249,7 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
 
       {/* Add to guild */}
       {inviteUrl && (
-        <div className={activePlayers.length > 0 ? "pt-2" : "pt-4 mt-4 border-t border-white/6"}>
+        <div className={mutualGuilds.length > 0 ? "pt-2" : "pt-4 mt-4 border-t border-white/6"}>
           <a
             href={inviteUrl}
             target="_blank"

@@ -2,18 +2,16 @@
 
 import { useState, useCallback, use } from "react"
 import Link from "next/link"
-import Image from "next/image"
 import { GuildIcon } from "@/components/guild-icon"
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { usePlayer, useGuildLogs } from "@/hooks/use-api"
-import { formatDuration } from "@/lib/format"
-import { getApiUrl } from "@/lib/api"
+import { bot } from "@/lib/api-client"
 import { ActivityLog } from "@/components/activity-log"
 import { TrackList } from "@/components/track-list"
 import { PlayBar } from "@/components/play-bar"
+import { SongCard } from "@/components/song-card"
 import { VoiceChannelCard } from "@/components/voice-channel-card"
 import { useOptimisticPosition } from "@/hooks/use-optimistic-position"
 import {
@@ -22,49 +20,7 @@ import {
   ListMusic,
   History,
   Activity,
-  Pause,
-  Play,
 } from "lucide-react"
-
-/* ── JWT helper ───────────────────────────────────────────── */
-
-let _jwt: string | null = null
-let _jwtExpiry = 0
-
-async function getJwt(): Promise<string | null> {
-  // Return cached JWT if still valid (with 60s buffer)
-  if (_jwt && Date.now() < _jwtExpiry - 60_000) return _jwt
-
-  try {
-    const res = await fetch("/rest/jwt")
-    if (!res.ok) return null
-    const data = await res.json() as { token: string }
-    _jwt = data.token
-
-    // Parse expiry from JWT payload
-    const parts = data.token.split(".")
-    if (parts.length === 3) {
-      const payload = JSON.parse(atob(parts[1]!))
-      _jwtExpiry = (payload.exp ?? 0) * 1000
-    }
-    return _jwt
-  } catch {
-    return null
-  }
-}
-
-/** Send an authenticated request to the bot API */
-async function botFetch(path: string, init?: RequestInit): Promise<Response> {
-  const jwt = await getJwt()
-  const base = getApiUrl()
-  return fetch(`${base}${path}`, {
-    ...init,
-    headers: {
-      ...init?.headers,
-      ...(jwt ? { Authorization: `Bearer ${jwt}` } : {}),
-    },
-  })
-}
 
 /* ── Main page ────────────────────────────────────────────── */
 
@@ -100,11 +56,7 @@ export default function UserPlayerPage({
   const handleQueueReorder = useCallback(
     async (from: number, to: number) => {
       try {
-        await botFetch(`/api/players/${guildId}/queue/move`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ from, to }),
-        })
+        await bot.api.players({ guildId }).queue.move.post({ from, to })
         refetch()
       } catch {
         /* ignore */
@@ -116,11 +68,7 @@ export default function UserPlayerPage({
   const handleQueueRemove = useCallback(
     async (index: number) => {
       try {
-        await botFetch(`/api/players/${guildId}/queue/remove`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ index }),
-        })
+        await bot.api.players({ guildId }).queue.remove.post({ index })
         refetch()
       } catch {
         /* ignore */
@@ -133,11 +81,7 @@ export default function UserPlayerPage({
     async (index: number) => {
       if (index === 0) return // already first
       try {
-        await botFetch(`/api/players/${guildId}/queue/move`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ from: index, to: 0 }),
-        })
+        await bot.api.players({ guildId }).queue.move.post({ from: index, to: 0 })
         refetch()
       } catch {
         /* ignore */
@@ -198,91 +142,12 @@ export default function UserPlayerPage({
         </div>
       </div>
 
-      {/* Now Playing card — admin-style with blurred artwork */}
-      <Card className="overflow-hidden relative py-0 gap-0">
-        {player.current?.artworkUrl && (
-          <div
-            className="absolute inset-0 opacity-15 blur-2xl scale-110"
-            style={{
-              backgroundImage: `url(${player.current.artworkUrl})`,
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-            }}
-          />
-        )}
-        <CardContent className="p-4 relative">
-          {player.current ? (
-            <div className="space-y-3">
-              <div className="flex gap-4">
-                {player.current.artworkUrl ? (
-                  <Image
-                    src={player.current.artworkUrl}
-                    alt=""
-                    width={80}
-                    height={80}
-                    className="h-20 w-20 rounded-lg object-cover shrink-0 shadow-lg"
-                    unoptimized
-                  />
-                ) : (
-                  <div className="h-20 w-20 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                    <Music className="h-8 w-8 text-muted-foreground" />
-                  </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold truncate">
-                    {player.current.title}
-                  </h3>
-                  <p className="text-sm text-muted-foreground truncate">
-                    {player.current.author}
-                  </p>
-                  <div className="flex items-center gap-2 mt-2">
-                    <Badge variant={player.paused ? "outline" : "default"} className="text-xs">
-                      {player.paused ? "Paused" : "Playing"}
-                    </Badge>
-                    {player.queueTotal > 0 && (
-                      <span className="text-xs text-muted-foreground">
-                        {player.queueTotal} in queue
-                      </span>
-                    )}
-                  </div>
-                </div>
-                {/* Play/Pause icon */}
-                <div className="shrink-0 relative flex items-center justify-center w-6 h-6">
-                  <div
-                    className="absolute inset-0 rounded-full blur-md opacity-40"
-                    style={{ background: player.paused ? "transparent" : "oklch(0.77 0.20 131)" }}
-                  />
-                  {player.paused ? (
-                    <Pause className="h-6 w-6 text-muted-foreground relative" />
-                  ) : (
-                    <Play className="h-6 w-6 text-primary relative" />
-                  )}
-                </div>
-              </div>
-              {/* Progress bar */}
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs text-muted-foreground tabular-nums">
-                  {formatDuration(position)}
-                </span>
-                <div className="flex-1 h-1.5 rounded-full bg-black/50 overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-primary"
-                    style={{ width: `${progress}%` }}
-                  />
-                </div>
-                <span className="text-xs text-muted-foreground tabular-nums">
-                  {formatDuration(player.current.length)}
-                </span>
-              </div>
-            </div>
-          ) : (
-            <div className="text-center py-4 text-muted-foreground">
-              <Music className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p>Nothing playing right now</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {/* Now Playing card */}
+      <SongCard
+        current={player.current}
+        position={position}
+        progress={progress}
+      />
 
       {/* PlayBar below info card */}
       <PlayBar
@@ -290,7 +155,6 @@ export default function UserPlayerPage({
         paused={player.paused}
         loopMode={player.loopMode}
         volume={player.volume}
-        onAction={botFetch}
         onRefresh={handleRefresh}
       />
 

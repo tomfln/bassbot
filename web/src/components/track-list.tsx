@@ -3,7 +3,7 @@
 import { useMemo, useState, useEffect, useCallback } from "react"
 import { formatDuration } from "@/lib/format"
 import { Music, ChevronDown, GripVertical, MoreVertical, Trash2, ListStart } from "lucide-react"
-import type { Track } from "@/lib/api"
+import type { Track } from "@/hooks/use-api"
 import {
   DndContext,
   closestCenter,
@@ -171,6 +171,7 @@ function SortableTrack({
           <img
             src={track.artworkUrl}
             alt=""
+            loading="lazy"
             className="h-8 w-8 rounded object-cover shrink-0"
           />
         ) : (

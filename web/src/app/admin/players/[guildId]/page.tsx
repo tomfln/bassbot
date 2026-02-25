@@ -1,8 +1,7 @@
 "use client"
 
-import { useState, use } from "react"
+import { useState, useCallback, use } from "react"
 import Link from "next/link"
-import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -27,16 +26,15 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { usePlayer, useGuildLogs, useDestroyPlayer, useClearQueue } from "@/hooks/use-api"
-import { formatDuration, formatUptime } from "@/lib/format"
+import { formatUptime } from "@/lib/format"
 import { ActivityLog } from "@/components/activity-log"
 import { TrackList } from "@/components/track-list"
+import { PlayBar } from "@/components/play-bar"
+import { SongCard } from "@/components/song-card"
 import { VoiceChannelCard } from "@/components/voice-channel-card"
 import { useOptimisticPosition } from "@/hooks/use-optimistic-position"
 import {
   ArrowLeft,
-  Pause,
-  Play,
-  Music,
   ListMusic,
   History,
   Activity,
@@ -185,7 +183,7 @@ export default function AdminPlayerDetailPage({ params }: { params: Promise<{ gu
   const [historyLimit, setHistoryLimit] = useState(10)
   const [confirmDestroy, setConfirmDestroy] = useState(false)
   const [confirmClear, setConfirmClear] = useState(false)
-  const { data: player, isLoading, error } = usePlayer(guildId, { queueLimit, historyLimit })
+  const { data: player, isLoading, error, refetch } = usePlayer(guildId, { queueLimit, historyLimit })
   const { data: guildLogs } = useGuildLogs(guildId)
   const destroyPlayer = useDestroyPlayer(guildId)
   const clearQueue = useClearQueue(guildId)
@@ -195,6 +193,10 @@ export default function AdminPlayerDetailPage({ params }: { params: Promise<{ gu
     player?.current?.length ?? 0,
     player?.paused ?? true,
   )
+
+  const handleRefresh = useCallback(() => {
+    setTimeout(() => refetch(), 300)
+  }, [refetch])
 
   if (isLoading) {
     return (
@@ -319,76 +321,21 @@ export default function AdminPlayerDetailPage({ params }: { params: Promise<{ gu
         {/* Left column — Now playing + Queue */}
         <div className="space-y-4 min-w-0">
           {/* Now playing */}
-          <Card className="overflow-hidden relative py-0 gap-0">
-            {/* Background blur artwork */}
-            {player.current?.artworkUrl && (
-              <div
-                className="absolute inset-0 opacity-15 blur-2xl scale-110"
-                style={{ backgroundImage: `url(${player.current.artworkUrl})`, backgroundSize: "cover", backgroundPosition: "center" }}
-              />
-            )}
-            <CardContent className="p-4 relative">
-              {player.current ? (
-                <div className="space-y-3">
-                  <div className="flex gap-4">
-                    {player.current.artworkUrl ? (
-                      <Image
-                        src={player.current.artworkUrl}
-                        alt=""
-                        width={80}
-                        height={80}
-                        className="h-20 w-20 rounded-lg object-cover shrink-0 shadow-lg"
-                        unoptimized
-                      />
-                    ) : (
-                      <div className="h-20 w-20 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                        <Music className="h-8 w-8 text-muted-foreground" />
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold truncate">
-                        {player.current.title}
-                      </h3>
-                      <p className="text-sm text-muted-foreground truncate">
-                        {player.current.author}
-                      </p>
-                    </div>
-                    {/* Play/Pause icon */}
-                    <div className="shrink-0 relative flex items-center justify-center w-6 h-6">
-                      <div
-                        className="absolute inset-0 rounded-full blur-md opacity-40"
-                        style={{ background: player.paused ? "transparent" : "oklch(0.77 0.20 131)" }}
-                      />
-                      {player.paused ? (
-                        <Pause className="h-6 w-6 text-muted-foreground relative" />
-                      ) : (
-                        <Play className="h-6 w-6 text-primary relative" />
-                      )}
-                    </div>
-                  </div>
-                  {/* Progress bar below all content */}
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs text-muted-foreground tabular-nums">
-                      {formatDuration(optimisticPosition)}
-                    </span>
-                    <div className="flex-1 h-1.5 rounded-full bg-black/50 overflow-hidden">
-                      <div
-                        className="h-full rounded-full bg-primary"
-                        style={{ width: `${progress}%` }}
-                      />
-                    </div>
-                    <span className="text-xs text-muted-foreground tabular-nums">
-                      {formatDuration(player.current.length)}
-                    </span>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground text-center py-4">
-                  Nothing playing
-                </p>
-              )}
-            </CardContent>
-          </Card>
+          <SongCard
+            current={player.current}
+            position={optimisticPosition}
+            progress={progress}
+            emptyText="Nothing playing"
+          />
+
+          {/* PlayBar */}
+          <PlayBar
+            guildId={guildId}
+            paused={player.paused}
+            loopMode={player.loopMode}
+            volume={player.volume}
+            onRefresh={handleRefresh}
+          />
 
           {/* Queue / History / Logs tabs */}
           <Tabs defaultValue="queue">

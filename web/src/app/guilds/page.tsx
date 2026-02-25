@@ -1,12 +1,12 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useMemo } from "react"
 import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { GuildIcon } from "@/components/guild-icon"
 import { Badge } from "@/components/ui/badge"
-import { usePlayers } from "@/hooks/use-api"
+import { usePlayers, useUserGuilds } from "@/hooks/use-api"
 import {
   Server,
   Music,
@@ -15,50 +15,12 @@ import {
   Radio,
 } from "lucide-react"
 
-/* ── Types ────────────────────────────────────────────────── */
-
-interface DiscordGuild {
-  id: string
-  name: string
-  icon: string | null
-  owner: boolean
-  permissions: string
-}
-
 /* ── User guilds page ─────────────────────────────────────── */
 
 export default function UserGuildsPage() {
-  const [userGuilds, setUserGuilds] = useState<DiscordGuild[]>([])
-  const [botGuildIds, setBotGuildIds] = useState<Set<string>>(new Set())
-  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
+  const { data: userGuildsData, isLoading } = useUserGuilds()
   const { data: players } = usePlayers()
-
-  useEffect(() => {
-    async function load() {
-      try {
-        // Fetch user's guilds from our web backend (which uses stored Discord token)
-        const userRes = await fetch("/rest/my-guilds")
-        if (userRes.ok) {
-          const data = await userRes.json() as { guilds: DiscordGuild[] }
-          setUserGuilds(data.guilds)
-        }
-
-        // Fetch bot's guilds from bot API
-        const { getApiUrl } = await import("@/lib/api")
-        const botRes = await fetch(`${getApiUrl()}/api/guilds`)
-        if (botRes.ok) {
-          const guilds = await botRes.json() as { id: string }[]
-          setBotGuildIds(new Set(guilds.map(g => g.id)))
-        }
-      } catch {
-        /* ignore */
-      } finally {
-        setLoading(false)
-      }
-    }
-    load()
-  }, [])
 
   // Build player map for quick lookup
   const playerMap = useMemo(() => {
@@ -73,15 +35,16 @@ export default function UserGuildsPage() {
 
   // Mutual guilds (user is in AND bot is in)
   const mutualGuilds = useMemo(() => {
-    return userGuilds
-      .filter(g => botGuildIds.has(g.id))
+    if (!userGuildsData) return []
+    return userGuildsData.guilds
+      .filter(g => userGuildsData.botGuildIds.has(g.id))
       .filter(g =>
         !search ||
         g.name.toLowerCase().includes(search.toLowerCase()),
       )
-  }, [userGuilds, botGuildIds, search])
+  }, [userGuildsData, search])
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-8 w-48" />
@@ -100,7 +63,7 @@ export default function UserGuildsPage() {
       {/* Header */}
       <div className="min-h-12 flex items-center">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">My Servers</h1>
+          <h1 className="text-2xl font-bold tracking-tight">All Guilds</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
             Servers you share with bassbot
           </p>
@@ -152,7 +115,11 @@ export default function UserGuildsPage() {
               <Link key={guild.id} href={`/guilds/${guild.id}`}>
                 <Card className="py-0 gap-0 hover:border-white/15 transition-colors cursor-pointer group">
                   <CardContent className="p-4 flex items-center gap-3">
-                    <GuildIcon name={guild.name} icon={guild.icon} className="shrink-0" />
+                    <GuildIcon
+                      name={guild.name}
+                      icon={guild.icon}
+                      className="shrink-0"
+                    />
 
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate group-hover:text-primary transition-colors">

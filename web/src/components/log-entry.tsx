@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ACTION_ICONS, ACTION_BG_COLORS } from "@/lib/constants"
 import { formatRelativeTime } from "@/lib/format"
 import { Play } from "lucide-react"
-import type { ActivityEntry } from "@/lib/api"
+import type { ActivityEntry } from "@/hooks/use-api"
 
 export function LogEntry({
   entry,

@@ -16,10 +16,15 @@ export default function RootLayout({
 
   return (
     <html lang="en" className="dark">
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `window.__BOT_API_URL__=${JSON.stringify(apiUrl)};`,
+          }}
+        />
+      </head>
       <body className="antialiased">
-        <Providers apiUrl={apiUrl}>
-          {children}
-        </Providers>
+        <Providers>{children}</Providers>
       </body>
     </html>
   )

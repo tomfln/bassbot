@@ -16,6 +16,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { formatDuration } from "@/lib/format"
+import { bot } from "@/lib/api-client"
 import {
   Pause,
   Play,
@@ -36,7 +37,6 @@ interface PlayBarProps {
   paused: boolean
   loopMode?: string
   volume?: number
-  onAction: (path: string, init?: RequestInit) => Promise<Response>
   onRefresh: () => void
 }
 
@@ -49,7 +49,6 @@ export function PlayBar({
   paused,
   loopMode,
   volume = 50,
-  onAction,
   onRefresh,
 }: PlayBarProps) {
   const [loading, setLoading] = useState<string | null>(null)
@@ -68,14 +67,12 @@ export function PlayBar({
     setLoading(action)
     setError(null)
     try {
-      const res = await onAction(`/api/players/${guildId}/${action}`, {
-        method: "POST",
-      })
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
-        setError(
-          (data as { error?: string }).error ?? `Action failed (${res.status})`,
-        )
+      const api = bot.api.players({ guildId })
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const res = await (api as any)[action].post()
+      if (res.error) {
+        const errData = res.error as { value?: { error?: string }; status?: number }
+        setError(errData.value?.error ?? `Action failed (${errData.status ?? "unknown"})`)
       }
       onRefresh()
     } catch {
@@ -91,17 +88,13 @@ export function PlayBar({
       if (debounceRef.current) clearTimeout(debounceRef.current)
       debounceRef.current = setTimeout(async () => {
         try {
-          await onAction(`/api/players/${guildId}/volume`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ volume: vol }),
-          })
+          await bot.api.players({ guildId }).volume.post({ volume: vol })
         } catch {
           /* ignore — not critical */
         }
       }, 500)
     },
-    [guildId, onAction],
+    [guildId],
   )
 
   function handleVolumeChange(values: number[]) {
@@ -138,13 +131,10 @@ export function PlayBar({
     if (!query.trim()) return
     setSearching(true)
     try {
-      const res = await onAction(
-        `/api/players/${guildId}/search?q=${encodeURIComponent(query.trim())}`,
-        { method: "GET" },
-      )
-      if (res.ok) {
-        const data = (await res.json()) as { results: typeof results }
-        setResults(data.results ?? [])
+      const { data } = await bot.api.players({ guildId })
+        .search.get({ query: { q: query.trim() } })
+      if (data && "results" in data) {
+        setResults((data as { results: typeof results }).results ?? [])
       }
     } catch {
       /* ignore */
@@ -156,12 +146,9 @@ export function PlayBar({
   async function addTrack(uri: string, position: "next" | "end" = "end") {
     setAdding(uri)
     try {
-      const res = await onAction(`/api/players/${guildId}/queue`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ uri, position }),
-      })
-      if (res.ok) {
+      const { error } = await bot.api.players({ guildId })
+        .queue.post({ uri, position })
+      if (!error) {
         onRefresh()
         setResults((prev) => prev.filter((r) => r.uri !== uri))
       }
