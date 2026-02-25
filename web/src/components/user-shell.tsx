@@ -3,20 +3,23 @@
 import { useState, type CSSProperties, type ReactNode } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, Server, Music, Menu, X, ScrollText, Github, SlidersHorizontal } from "lucide-react"
+import {
+  Server,
+  Menu,
+  X,
+  Github,
+  LogOut,
+  Shield,
+} from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { useStats } from "@/hooks/use-api"
+import { useSession, signOut } from "@/lib/auth-client"
 import pkg from "../../package.json"
 
 /* ── Constants ────────────────────────────────────────────── */
 
 const NAV_ITEMS = [
-  { href: "/", icon: LayoutDashboard, label: "Overview" },
-  { href: "/guilds", icon: Server, label: "Guilds" },
-  { href: "/players", icon: Music, label: "Players" },
-  { href: "/logs", icon: ScrollText, label: "Logs" },
-  { href: "/control", icon: SlidersHorizontal, label: "Control" },
+  { href: "/guilds", icon: Server, label: "My Servers", exact: true },
 ] as const
 
 const GLASS_STYLE: CSSProperties = {
@@ -29,10 +32,15 @@ const GLASS_STYLE: CSSProperties = {
 
 function Brand({ size = "large" }: { size?: "small" | "large" }) {
   return (
-    <div className="relative flex items-end gap-1">
-        <p style={{ fontFamily: "Veter", transform: "translateY(10%)" }} className={`text-primary ${size === "small" ? "text-xl" : "text-3xl"}`}>bass</p>
-        <div className="absolute inset-2 bg-primary blur-lg opacity-50"></div>
-    </div>
+    <Link href="/" className="relative flex items-end gap-1">
+      <p
+        style={{ fontFamily: "Veter", transform: "translateY(10%)" }}
+        className={`text-primary ${size === "small" ? "text-xl" : "text-3xl"}`}
+      >
+        bass
+      </p>
+      <div className="absolute inset-2 bg-primary blur-lg opacity-50" />
+    </Link>
   )
 }
 
@@ -40,22 +48,20 @@ function NavItem({
   href,
   icon: Icon,
   label,
+  exact,
   onNavigate,
 }: {
   href: string
-  icon: typeof LayoutDashboard
+  icon: typeof Server
   label: string
+  exact?: boolean
   onNavigate?: () => void
 }) {
   const pathname = usePathname()
-  const isActive = href === "/" ? pathname === "/" : pathname.startsWith(href)
+  const isActive = exact ? pathname === href : pathname.startsWith(href)
 
   return (
-    <Link
-      href={href}
-      onClick={onNavigate}
-      className="relative block"
-    >
+    <Link href={href} onClick={onNavigate} className="relative block">
       {isActive && (
         <span
           className="absolute top-1/2 -translate-y-1/2 w-1 h-6 rounded-full bg-primary z-10"
@@ -85,31 +91,42 @@ function NavItem({
   )
 }
 
-function BotInfo({
-  name,
-  avatar,
-  guildCount,
-}: {
-  name?: string
-  avatar?: string | null
-  guildCount?: number
-}) {
+function UserInfo() {
+  const { data: session } = useSession()
+  if (!session) return null
+
   return (
-    <div className="px-3 pb-3 mt-4 border-t border-white/6 pt-3">
+    <div className="px-3 pb-3 border-t border-white/6 pt-3">
       <div className="flex items-center gap-2.5 px-2">
         <Avatar className="h-8 w-8 rounded-full">
-          <AvatarImage src={avatar ?? undefined} />
-          <AvatarFallback className="text-xs rounded-full">BB</AvatarFallback>
+          <AvatarImage src={session.user.image ?? undefined} />
+          <AvatarFallback className="text-xs rounded-full">
+            {session.user.name?.slice(0, 2).toUpperCase() ?? "??"}
+          </AvatarFallback>
         </Avatar>
-        <div className="min-w-0">
-          <p className="text-sm font-medium truncate">{name ?? "bassbot"}</p>
-          {guildCount !== undefined && (
-            <p className="text-[11px] text-muted-foreground">
-              {guildCount} server{guildCount !== 1 ? "s" : ""}
-            </p>
-          )}
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium truncate">{session.user.name}</p>
+          <p className="text-[11px] text-muted-foreground truncate">
+            {session.user.email}
+          </p>
         </div>
+        <button
+          onClick={() => signOut({ fetchOptions: { onSuccess: () => window.location.replace("/login") } })}
+          className="shrink-0 p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
+          title="Sign out"
+        >
+          <LogOut className="h-4 w-4" />
+        </button>
       </div>
+      {session.user.role === "admin" && (
+        <Link
+          href="/admin"
+          className="mt-2 mx-2 flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
+        >
+          <Shield className="h-3.5 w-3.5" />
+          Admin Panel
+        </Link>
+      )}
     </div>
   )
 }
@@ -117,8 +134,15 @@ function BotInfo({
 function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <nav className="flex-1 px-3 pb-3 space-y-1.5">
-      {NAV_ITEMS.map(({ href, icon, label }) => (
-        <NavItem key={href} href={href} icon={icon} label={label} onNavigate={onNavigate} />
+      {NAV_ITEMS.map(({ href, icon, label, ...rest }) => (
+        <NavItem
+          key={href}
+          href={href}
+          icon={icon}
+          label={label}
+          exact={"exact" in rest ? rest.exact : undefined}
+          onNavigate={onNavigate}
+        />
       ))}
     </nav>
   )
@@ -126,27 +150,19 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
 
 /* ── Desktop sidebar ──────────────────────────────────────── */
 
-function DesktopSidebar({
-  botName,
-  botAvatar,
-  guildCount,
-}: {
-  botName?: string
-  botAvatar?: string | null
-  guildCount?: number
-}) {
+function DesktopSidebar() {
   return (
     <div className="hidden md:flex flex-col">
       <div className="shrink-0 pb-3 pl-3 sticky top-0 self-start pt-24">
         <aside
-          className="flex w-56 xl:w-64 flex-col rounded-xl border border-white/8 shadow-sm overflow-visible min-h-[60dvh]"
+          className="flex w-56 xl:w-64 flex-col rounded-xl border border-white/8 shadow-sm overflow-visible min-h-[40dvh]"
           style={GLASS_STYLE}
         >
           <div className="flex items-center justify-center py-6">
             <Brand />
           </div>
           <SidebarNav />
-          <BotInfo name={botName} avatar={botAvatar} guildCount={guildCount} />
+          <UserInfo />
         </aside>
       </div>
     </div>
@@ -158,23 +174,14 @@ function DesktopSidebar({
 function MobileSidebar({
   open,
   onClose,
-  botName,
-  botAvatar,
-  guildCount,
 }: {
   open: boolean
   onClose: () => void
-  botName?: string
-  botAvatar?: string | null
-  guildCount?: number
 }) {
   return (
     <>
       {open && (
-        <div
-          className="fixed inset-0 z-40 bg-black/50 md:hidden"
-          onClick={onClose}
-        />
+        <div className="fixed inset-0 z-40 bg-black/50 md:hidden" onClick={onClose} />
       )}
       <aside
         className={cn(
@@ -185,15 +192,12 @@ function MobileSidebar({
       >
         <div className="flex items-center justify-between px-4 h-14">
           <Brand size="small" />
-          <button
-            onClick={onClose}
-            className="p-1 rounded-md hover:bg-accent transition-colors"
-          >
+          <button onClick={onClose} className="p-1 rounded-md hover:bg-accent transition-colors">
             <X className="h-5 w-5" />
           </button>
         </div>
         <SidebarNav onNavigate={onClose} />
-        <BotInfo name={botName} avatar={botAvatar} guildCount={guildCount} />
+        <UserInfo />
       </aside>
     </>
   )
@@ -208,10 +212,7 @@ function MobileHeader({ onOpenSidebar }: { onOpenSidebar: () => void }) {
       style={GLASS_STYLE}
     >
       <Brand size="small" />
-      <button
-        onClick={onOpenSidebar}
-        className="p-1 rounded-md hover:bg-accent transition-colors"
-      >
+      <button onClick={onOpenSidebar} className="p-1 rounded-md hover:bg-accent transition-colors">
         <Menu className="h-5 w-5" />
       </button>
     </header>
@@ -221,7 +222,6 @@ function MobileHeader({ onOpenSidebar }: { onOpenSidebar: () => void }) {
 /* ── Footer ───────────────────────────────────────────────── */
 
 function Footer() {
-  const { data: stats } = useStats()
   return (
     <footer className="px-6 md:px-8 pb-[max(2rem,env(safe-area-inset-bottom))] pt-10">
       <div className="mx-auto max-w-6xl flex items-center justify-between text-xs text-muted-foreground border-t border-border pt-4 px-2">
@@ -236,13 +236,7 @@ function Footer() {
             tomfln
           </a>
         </span>
-        <span className="flex gap-2">
-          <span>dashboard v{pkg.version}</span>
-          {stats?.version && <>
-            <span>•</span>
-            <span>bot v{stats.version}</span>
-          </>}
-        </span>
+        <span>v{pkg.version}</span>
         <a
           href="https://github.com/tomfln/bassbot"
           target="_blank"
@@ -257,34 +251,24 @@ function Footer() {
   )
 }
 
-/* ── Shell layout ─────────────────────────────────────────── */
+/* ── User Shell layout ────────────────────────────────────── */
 
-export function Shell({ children }: { children: ReactNode }) {
+export function UserShell({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const { data: stats } = useStats()
 
   return (
     <div className="min-h-dvh bg-background flex justify-center">
       <div className="flex w-full max-w-350">
-        <DesktopSidebar
-          botName={stats?.botName}
-          botAvatar={stats?.botAvatar}
-          guildCount={stats?.guildCount}
-        />
+        <DesktopSidebar />
         <MobileSidebar
           open={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
-          botName={stats?.botName}
-          botAvatar={stats?.botAvatar}
-          guildCount={stats?.guildCount}
         />
 
         <div className="flex-1 min-w-0 flex flex-col min-h-dvh bg-black/10 md:mx-6">
           <MobileHeader onOpenSidebar={() => setSidebarOpen(true)} />
           <main className="flex-1 p-4 md:p-6">
-            <div className="mx-auto w-full max-w-6xl">
-              {children}
-            </div>
+            <div className="mx-auto w-full max-w-6xl">{children}</div>
           </main>
           <Footer />
         </div>

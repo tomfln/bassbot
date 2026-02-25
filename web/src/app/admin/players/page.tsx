@@ -6,7 +6,7 @@ import { usePlayers } from "@/hooks/use-api"
 import { Radio } from "lucide-react"
 import { PlayerCard } from "@/components/player-card"
 
-export default function PlayersPage() {
+export default function AdminPlayersPage() {
   const { data: players, isLoading } = usePlayers()
 
   return (
@@ -41,7 +41,7 @@ export default function PlayersPage() {
       ) : (
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {players.map((player) => (
-            <PlayerCard key={player.guildId} player={player} />
+            <PlayerCard key={player.guildId} player={player} basePath="/admin/players" />
           ))}
         </div>
       )}

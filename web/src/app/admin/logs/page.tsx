@@ -20,7 +20,7 @@ import {
   ChevronDown,
 } from "lucide-react"
 
-function LogsContent() {
+function AdminLogsContent() {
   const searchParams = useSearchParams()
   const guildFilter = searchParams.get("guild") ?? ""
   const [search, setSearch] = useState("")
@@ -161,10 +161,10 @@ function LogsContent() {
   )
 }
 
-export default function LogsPage() {
+export default function AdminLogsPage() {
   return (
     <Suspense>
-      <LogsContent />
+      <AdminLogsContent />
     </Suspense>
   )
 }

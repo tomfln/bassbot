@@ -1,11 +1,10 @@
 import type { Metadata } from "next"
 import "./globals.css"
 import { Providers } from "@/components/providers"
-import { Shell } from "@/components/shell"
 
 export const metadata: Metadata = {
   title: "bassbot",
-  description: "bassbot dashboard",
+  description: "bassbot — Discord music bot",
 }
 
 export default function RootLayout({
@@ -19,11 +18,9 @@ export default function RootLayout({
     <html lang="en" className="dark">
       <body className="antialiased">
         <Providers apiUrl={apiUrl}>
-          <Shell>
-            {children}
-          </Shell>
+          {children}
         </Providers>
       </body>
     </html>
-  );
+  )
 }

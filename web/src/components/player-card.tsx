@@ -6,9 +6,9 @@ import Link from "next/link"
 import { Pause, Play, Music } from "lucide-react"
 import type { PlayerSummary } from "@/lib/api"
 
-export function PlayerCard({ player }: { player: PlayerSummary }) {
+export function PlayerCard({ player, basePath = "/players" }: { player: PlayerSummary; basePath?: string }) {
   return (
-    <Link href={`/players/${player.guildId}`} className="block">
+    <Link href={`${basePath}/${player.guildId}`} className="block">
       <Card className="hover:bg-accent/30 transition-colors cursor-pointer py-0 gap-0 scope-hover scope-2xl">
         <CardContent className="p-2.5">
           <div className="flex h-24 gap-2.5">

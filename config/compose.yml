@@ -22,6 +22,7 @@ services:
       - ./bassbot-data:/data
     environment:
       DATA_DIR: /data
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env for shared auth between bot and web}
       # All config is read from /data/config.json
       # You can override individual values via env vars:
       # TOKEN: override_token_here
@@ -35,10 +36,16 @@ services:
       - lavalink
     ports:
       - "3000:3000"
-    # The dashboard auto-derives the API URL from the browser's hostname.
-    # Override only if the bot API runs on a different host/port:
-    # environment:
-    #   API_URL: http://your-bot-host:3001
+    volumes:
+      - ./web-data:/app/data
+    environment:
+      API_URL: http://bassbot:3001
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env for shared auth between bot and web}
+      DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID}
+      DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET}
+      DATABASE_PATH: /app/data/web.db
+      # BETTER_AUTH_URL should match the external URL users access
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000}
 
   lavalink:
     image: ghcr.io/lavalink-devs/lavalink:latest

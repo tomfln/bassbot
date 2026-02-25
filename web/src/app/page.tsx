@@ -1,162 +1,227 @@
 "use client"
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
-import { useStats, usePlayers, useGlobalLogs } from "@/hooks/use-api"
-import { formatUptime } from "@/lib/format"
-import { ActivityLog } from "@/components/activity-log"
-import { PlayerCard } from "@/components/player-card"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { useSession } from "@/lib/auth-client"
 import {
-  Server,
-  Users,
   Music,
-  Clock,
-  Radio,
+  Headphones,
+  Zap,
+  Shield,
+  ArrowRight,
+  Github,
+  LogIn,
 } from "lucide-react"
-import type { ReactNode } from "react"
+import type { ReactNode, CSSProperties } from "react"
 
-function StatCard({
-  title,
-  value,
-  icon,
-  description,
-  color,
-}: {
-  title: string
-  value: string | number
-  icon: ReactNode
-  description?: string
-  color?: string
-}) {
-  return (
-    <Card className="relative overflow-hidden">
-      {color && (
-        <div
-          className="absolute -top-6 -right-6 h-24 w-24 rounded-full opacity-15 blur-2xl"
-          style={{ background: color }}
-        />
-      )}
-      <div className="relative">
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">
-            {title}
-          </CardTitle>
-          <div style={color ? { color } : undefined} className={color ? "" : "text-muted-foreground"}>
-            {icon}
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{value}</div>
-          {description && (
-            <p className="text-xs text-muted-foreground mt-1">{description}</p>
-          )}
-        </CardContent>
-      </div>
-    </Card>
-  )
-}
+/* ── Animated background ──────────────────────────────────── */
 
-function StatsSkeleton() {
+function HeroGlow() {
   return (
-    <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-      {Array.from({ length: 4 }).map((_, i) => (
-        <Card key={i}>
-          <CardHeader className="pb-2">
-            <Skeleton className="h-4 w-24" />
-          </CardHeader>
-          <CardContent>
-            <Skeleton className="h-8 w-16" />
-          </CardContent>
-        </Card>
-      ))}
+    <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
+      <div
+        className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-150 h-150 rounded-full blur-[120px] opacity-20"
+        style={{ background: "oklch(0.77 0.20 131)" }}
+      />
+      <div
+        className="absolute bottom-[-10%] right-[-5%] w-100 h-100 rounded-full blur-[100px] opacity-10"
+        style={{ background: "oklch(0.72 0.19 155)" }}
+      />
     </div>
   )
 }
 
-export default function OverviewPage() {
-  const { data: stats, isLoading: statsLoading } = useStats()
-  const { data: players, isLoading: playersLoading } = usePlayers()
-  const { data: logs } = useGlobalLogs(10)
+/* ── Feature card ─────────────────────────────────────────── */
+
+function FeatureCard({
+  icon,
+  title,
+  description,
+  color,
+}: {
+  icon: ReactNode
+  title: string
+  description: string
+  color: string
+}) {
+  const style: CSSProperties = {
+    background: "oklch(21% 0.005 67 / 0.5)",
+    backdropFilter: "blur(12px)",
+  }
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold tracking-tight min-h-12 flex items-center">Dashboard</h1>
+    <div
+      className="relative rounded-xl border border-white/8 p-6 transition-colors hover:border-white/15"
+      style={style}
+    >
+      <div
+        className="absolute -top-4 -right-4 h-20 w-20 rounded-full opacity-10 blur-2xl"
+        style={{ background: color }}
+      />
+      <div className="relative">
+        <div className="mb-3 inline-flex rounded-lg p-2 bg-white/5" style={{ color }}>
+          {icon}
+        </div>
+        <h3 className="text-base font-semibold mb-1">{title}</h3>
+        <p className="text-sm text-muted-foreground leading-relaxed">{description}</p>
+      </div>
+    </div>
+  )
+}
 
-      {/* Stats grid */}
-      {statsLoading || !stats ? (
-        <StatsSkeleton />
-      ) : (
-        <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-          <StatCard
-            title="Guilds"
-            value={stats.guildCount}
-            icon={<Server className="h-4 w-4" />}
+/* ── Landing page ─────────────────────────────────────────── */
+
+export default function LandingPage() {
+  const { data: session } = useSession()
+
+  return (
+    <div className="relative min-h-dvh bg-background flex flex-col">
+      <HeroGlow />
+
+      {/* Nav */}
+      <header className="relative z-10 flex items-center justify-between px-6 md:px-12 py-5 max-w-6xl mx-auto w-full">
+        <div className="flex items-end gap-1">
+          <p
+            style={{ fontFamily: "Veter", transform: "translateY(10%)" }}
+            className="text-primary text-2xl"
+          >
+            bass
+          </p>
+          <div className="absolute inset-2 bg-primary blur-lg opacity-40" />
+        </div>
+        <nav className="flex items-center gap-3">
+          {session ? (
+            <>
+              {session.user.role === "admin" && (
+                <Link href="/admin">
+                  <Button variant="ghost" size="sm" className="gap-1.5">
+                    <Shield className="h-4 w-4" />
+                    Admin
+                  </Button>
+                </Link>
+              )}
+              <Link href="/guilds">
+                <Button size="sm" className="gap-1.5">
+                  <Music className="h-4 w-4" />
+                  My Servers
+                </Button>
+              </Link>
+            </>
+          ) : (
+            <Link href="/login">
+              <Button size="sm" className="gap-1.5">
+                <LogIn className="h-4 w-4" />
+                Sign In
+              </Button>
+            </Link>
+          )}
+        </nav>
+      </header>
+
+      {/* Hero */}
+      <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 text-center -mt-16">
+        <div className="max-w-2xl mx-auto space-y-6">
+          <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-sm text-primary">
+            <Zap className="h-3.5 w-3.5" />
+            High quality music streaming
+          </div>
+
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight">
+            Your server&apos;s
+            <br />
+            <span className="text-primary">music backbone</span>
+          </h1>
+
+          <p className="text-lg text-muted-foreground max-w-lg mx-auto leading-relaxed">
+            A powerful Discord music bot with a web dashboard.
+            Search, queue, and control your music right from the browser.
+          </p>
+
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+            {session ? (
+              <Link href="/guilds">
+                <Button size="lg" className="gap-2">
+                  <Music className="h-4 w-4" />
+                  Go to Dashboard
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+            ) : (
+              <Link href="/login">
+                <Button size="lg" className="gap-2">
+                  <LogIn className="h-4 w-4" />
+                  Get Started
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+            )}
+            <a
+              href="https://github.com/tomfln/bassbot"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Button variant="outline" size="lg" className="gap-2">
+                <Github className="h-4 w-4" />
+                GitHub
+              </Button>
+            </a>
+          </div>
+        </div>
+
+        {/* Features grid */}
+        <div className="mt-20 mb-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4 max-w-5xl w-full">
+          <FeatureCard
+            icon={<Music className="h-5 w-5" />}
+            title="Rich Playback"
+            description="Play from YouTube, Spotify, SoundCloud, and more with Lavalink-powered streaming."
             color="oklch(0.77 0.20 131)"
           />
-          <StatCard
-            title="Users"
-            value={stats.userCount.toLocaleString()}
-            icon={<Users className="h-4 w-4" />}
+          <FeatureCard
+            icon={<Headphones className="h-5 w-5" />}
+            title="Web Controls"
+            description="Control playback, manage queues, and search for songs directly from your browser."
             color="oklch(0.72 0.19 155)"
           />
-          <StatCard
-            title="Active Players"
-            value={`${stats.activePlayers} / ${stats.totalPlayers}`}
-            icon={<Music className="h-4 w-4" />}
+          <FeatureCard
+            icon={<Zap className="h-5 w-5" />}
+            title="Real-time Updates"
+            description="Live player status and queue updates via WebSocket — always in sync."
             color="oklch(0.80 0.18 85)"
           />
-          <StatCard
-            title="Uptime"
-            value={formatUptime(stats.uptime)}
-            icon={<Clock className="h-4 w-4" />}
-            description={`${stats.lavalinkNodes} Lavalink node${stats.lavalinkNodes !== 1 ? "s" : ""}`}
+          <FeatureCard
+            icon={<Shield className="h-5 w-5" />}
+            title="Admin Dashboard"
+            description="Full admin panel with user management, bot settings, and server monitoring."
             color="oklch(0.70 0.15 250)"
           />
         </div>
-      )}
+      </main>
 
-      {/* Active players */}
-      <div className="space-y-3">
-        <h2 className="text-lg font-semibold">Active Players</h2>
-        {playersLoading ? (
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <Card key={i}>
-                <CardContent className="p-4">
-                  <Skeleton className="h-16 w-full" />
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : !players?.length ? (
-          <Card className="py-0 gap-0">
-            <CardContent className="p-6 text-center text-muted-foreground">
-              <Radio className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p>No active players</p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {players.filter(p => p.current).map((player) => (
-              <PlayerCard key={player.guildId} player={player} />
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Activity Log */}
-      <div className="space-y-3">
-        <h2 className="text-lg font-semibold">
-          Recent Activity
-        </h2>
-        <ActivityLog
-          entries={logs ?? []}
-          showGuild
-          maxHeight="350px"
-          limit={10}
-          seeAllHref="/logs"
-        />
-      </div>
+      {/* Footer */}
+      <footer className="relative z-10 px-6 pb-6 pt-4">
+        <div className="max-w-6xl mx-auto flex items-center justify-between text-xs text-muted-foreground border-t border-border pt-4">
+          <span>
+            made by{" "}
+            <a
+              href="https://github.com/tomfln"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-foreground transition-colors"
+            >
+              tomfln
+            </a>
+          </span>
+          <a
+            href="https://github.com/tomfln/bassbot"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 hover:text-foreground transition-colors"
+          >
+            <Github className="h-3.5 w-3.5" />
+            GitHub
+          </a>
+        </div>
+      </footer>
     </div>
   )
 }

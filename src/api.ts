@@ -1,10 +1,13 @@
 import { Elysia, status, t } from "elysia"
 import { cors } from "@elysiajs/cors"
+import { jwtVerify } from "jose"
 import type { BassBot } from "./bot"
 import type { PlayerWithQueue } from "./player"
+import { LoadType, type Track } from "shoukaku"
 import { getGlobalLog, getGuildLog } from "./util/activity-log"
 import { cache } from "./util/api-cache"
 import { addWsClient, removeWsClient } from "./util/broadcast"
+import { resolveSong } from "./util/song-search"
 import logger from "@bot/logger"
 import { join } from "node:path"
 import { readFileSync } from "node:fs"
@@ -97,6 +100,7 @@ function playerDetail(
             })),
         }
       : null,
+    loopMode: (player as any).loopMode ?? "None",
     node: player.node.name,
     nodeStats: player.node.stats
       ? {
@@ -355,6 +359,224 @@ function createApi(bot: BassBot) {
         slogans: t.Array(t.String()),
       })),
     })
+
+    /* ── User player controls (JWT-authenticated) ───────── */
+
+    // Pause / Resume
+    .post("/api/players/:guildId/pause", async ({ params, request }) => {
+      const user = await verifyUserInVC(bot, request, params.guildId)
+      if (user instanceof Response) return user
+      const player = bot.getPlayer(params.guildId)
+      if (!player) return status(404, { error: "Player not found" })
+      await player.setPaused(true)
+      return { ok: true }
+    })
+    .post("/api/players/:guildId/resume", async ({ params, request }) => {
+      const user = await verifyUserInVC(bot, request, params.guildId)
+      if (user instanceof Response) return user
+      const player = bot.getPlayer(params.guildId)
+      if (!player) return status(404, { error: "Player not found" })
+      await player.setPaused(false)
+      return { ok: true }
+    })
+
+    // Next / Previous
+    .post("/api/players/:guildId/next", async ({ params, request }) => {
+      const user = await verifyUserInVC(bot, request, params.guildId)
+      if (user instanceof Response) return user
+      const player = bot.getPlayer(params.guildId)
+      if (!player) return status(404, { error: "Player not found" })
+      await player.next()
+      return { ok: true }
+    })
+    .post("/api/players/:guildId/prev", async ({ params, request }) => {
+      const user = await verifyUserInVC(bot, request, params.guildId)
+      if (user instanceof Response) return user
+      const player = bot.getPlayer(params.guildId)
+      if (!player) return status(404, { error: "Player not found" })
+      await player.prev()
+      return { ok: true }
+    })
+
+    // Shuffle
+    .post("/api/players/:guildId/shuffle", async ({ params, request }) => {
+      const user = await verifyUserInVC(bot, request, params.guildId)
+      if (user instanceof Response) return user
+      const player = bot.getPlayer(params.guildId)
+      if (!player) return status(404, { error: "Player not found" })
+      player.shuffle()
+      return { ok: true }
+    })
+
+    // Loop toggle (cycles: None → Song → Queue → None)
+    .post("/api/players/:guildId/loop", async ({ params, request }) => {
+      const user = await verifyUserInVC(bot, request, params.guildId)
+      if (user instanceof Response) return user
+      const player = bot.getPlayer(params.guildId)
+      if (!player) return status(404, { error: "Player not found" })
+      const modes = ["None", "Song", "Queue"] as const
+      const currentIdx = modes.indexOf((player as any).loopMode ?? "None")
+      const nextMode = modes[(currentIdx + 1) % modes.length]!
+      player.setLoopMode(nextMode)
+      return { ok: true, loopMode: nextMode }
+    })
+
+    // Search for tracks
+    .get("/api/players/:guildId/search", async ({ query, request }) => {
+      const user = await verifyJwt(request)
+      if (!user) return status(401, { error: "Unauthorized" })
+
+      const q = query.q
+      if (!q) return status(400, { error: "Missing search query" })
+
+      const node = bot.lava.nodes.values().next().value
+      if (!node) return status(503, { error: "No Lavalink nodes available" })
+
+      // Try raw search first for multiple results
+      const rawResults = await node.rest.resolve(`ytsearch:${q}`)
+      if (rawResults?.loadType === LoadType.SEARCH && rawResults.data.length > 0) {
+        return {
+          results: rawResults.data.slice(0, 10).map((t: Track) => ({
+            title: t.info.title,
+            author: t.info.author,
+            uri: t.info.uri ?? "",
+            length: t.info.length,
+            artworkUrl: t.info.artworkUrl ?? null,
+          })),
+        }
+      }
+
+      // Fallback to resolveSong
+      const result = await resolveSong(q, node)
+      if (!result.success) return { results: [] }
+
+      if (result.value.type === "playlist") {
+        return {
+          results: result.value.tracks.slice(0, 10).map((t: Track) => ({
+            title: t.info.title,
+            author: t.info.author,
+            uri: t.info.uri ?? "",
+            length: t.info.length,
+            artworkUrl: t.info.artworkUrl ?? null,
+          })),
+        }
+      }
+
+      return {
+        results: [{
+          title: result.value.track.info.title,
+          author: result.value.track.info.author,
+          uri: result.value.track.info.uri ?? "",
+          length: result.value.track.info.length,
+          artworkUrl: result.value.track.info.artworkUrl ?? null,
+        }],
+      }
+    })
+
+    // Add track to queue
+    .post("/api/players/:guildId/queue", async ({ params, request }) => {
+      const user = await verifyUserInVC(bot, request, params.guildId)
+      if (user instanceof Response) return user
+
+      const player = bot.getPlayer(params.guildId)
+      if (!player) return status(404, { error: "Player not found" })
+
+      const body = await request.json() as { uri: string }
+      if (!body.uri) return status(400, { error: "Missing track URI" })
+
+      const node = bot.lava.nodes.values().next().value
+      if (!node) return status(503, { error: "No Lavalink nodes available" })
+
+      const result = await resolveSong(body.uri, node)
+      if (!result.success) return status(400, { error: result.error ?? "Failed to resolve track" })
+
+      if (result.value.type === "playlist") {
+        await player.addTracks(result.value.tracks)
+        return { ok: true, added: result.value.tracks.length }
+      } else {
+        await player.addTrack(result.value.track)
+        return { ok: true, added: 1 }
+      }
+    })
+}
+
+/* ── JWT verification helpers ─────────────────────────────── */
+
+interface JwtPayload {
+  sub: string
+  discordId: string
+  role: "admin" | "user"
+  name: string
+  avatar: string
+}
+
+async function verifyJwt(request: Request): Promise<JwtPayload | null> {
+  const secret = process.env.JWT_SECRET
+  if (!secret) {
+    logger.warn("[api] JWT_SECRET not set — rejecting authenticated requests")
+    return null
+  }
+
+  const authHeader = request.headers.get("authorization")
+  if (!authHeader?.startsWith("Bearer ")) return null
+
+  try {
+    const { payload } = await jwtVerify(
+      authHeader.slice(7),
+      new TextEncoder().encode(secret),
+    )
+    return payload as unknown as JwtPayload
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Verify JWT and check user is in the same voice channel as the bot.
+ * Returns the JWT payload on success, or a Response on failure.
+ */
+async function verifyUserInVC(
+  bot: BassBot,
+  request: Request,
+  guildId: string,
+): Promise<JwtPayload | Response> {
+  const user = await verifyJwt(request)
+  if (!user) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 })
+
+  // Admins bypass voice channel check
+  if (user.role === "admin") return user
+
+  const guild = bot.guilds.cache.get(guildId)
+  if (!guild) return new Response(JSON.stringify({ error: "Guild not found" }), { status: 404 })
+
+  // Check if the user is in the guild
+  const member = guild.members.cache.get(user.discordId)
+  if (!member) {
+    return new Response(
+      JSON.stringify({ error: "You are not a member of this server" }),
+      { status: 403 },
+    )
+  }
+
+  // Check if the bot is in a voice channel
+  const botVC = guild.members.me?.voice.channel
+  if (!botVC) {
+    return new Response(
+      JSON.stringify({ error: "Bot is not in a voice channel" }),
+      { status: 400 },
+    )
+  }
+
+  // Check if the user is in the same voice channel as the bot
+  const userVC = member.voice.channel
+  if (userVC?.id !== botVC.id) {
+    return new Response(
+      JSON.stringify({ error: "You must be in the same voice channel as the bot" }),
+      { status: 403 },
+    )
+  }
+
+  return user
 }
 
 export type App = ReturnType<typeof createApi>

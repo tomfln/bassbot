@@ -2,6 +2,7 @@
 
 import { useState, use } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -227,7 +228,7 @@ function NodeStatsCard({ node, nodeStats }: NodeStatsCardProps) {
   )
 }
 
-export default function PlayerDetailPage({ params }: { params: Promise<{ guildId: string }> }) {
+export default function AdminPlayerDetailPage({ params }: { params: Promise<{ guildId: string }> }) {
   const { guildId } = use(params)
   const router = useRouter()
   const [queueLimit, setQueueLimit] = useState(10)
@@ -258,7 +259,7 @@ export default function PlayerDetailPage({ params }: { params: Promise<{ guildId
     return (
       <div className="space-y-4">
         <Link
-          href="/players"
+          href="/admin/players"
           className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -284,7 +285,7 @@ export default function PlayerDetailPage({ params }: { params: Promise<{ guildId
       {/* Header */}
       <div className="flex items-center gap-4 min-h-12">
         <Link
-          href="/players"
+          href="/admin/players"
           className="inline-flex items-center justify-center h-8 w-8 rounded-md hover:bg-accent transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -361,7 +362,7 @@ export default function PlayerDetailPage({ params }: { params: Promise<{ guildId
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={() => destroyPlayer.mutate(undefined, { onSuccess: () => router.push("/players") })}
+              onClick={() => destroyPlayer.mutate(undefined, { onSuccess: () => router.push("/admin/players") })}
             >
               Destroy
             </AlertDialogAction>
@@ -386,10 +387,13 @@ export default function PlayerDetailPage({ params }: { params: Promise<{ guildId
                 <div className="space-y-3">
                   <div className="flex gap-4">
                     {player.current.artworkUrl ? (
-                      <img
+                      <Image
                         src={player.current.artworkUrl}
                         alt=""
+                        width={80}
+                        height={80}
                         className="h-20 w-20 rounded-lg object-cover shrink-0 shadow-lg"
+                        unoptimized
                       />
                     ) : (
                       <div className="h-20 w-20 rounded-lg bg-muted flex items-center justify-center shrink-0">
@@ -443,7 +447,7 @@ export default function PlayerDetailPage({ params }: { params: Promise<{ guildId
 
           {/* Queue / History / Logs tabs */}
           <Tabs defaultValue="queue">
-            <TabsList className="h-11 p-1 max-sm:w-full max-sm:[&>*]:flex-1">
+            <TabsList className="h-11 p-1 max-sm:w-full max-sm:*:flex-1">
               <TabsTrigger value="queue" className="gap-1.5 text-xs px-3 py-1.5">
                 <ListMusic className="h-3.5 w-3.5" />
                 Queue ({player.queueTotal})
@@ -492,7 +496,7 @@ export default function PlayerDetailPage({ params }: { params: Promise<{ guildId
                 entries={guildLogs ?? []}
                 maxHeight="400px"
                 limit={10}
-                seeAllHref={`/logs?guild=${guildId}`}
+                seeAllHref={`/admin/logs?guild=${guildId}`}
               />
             </TabsContent>
             <TabsContent value="info" className="lg:hidden">
