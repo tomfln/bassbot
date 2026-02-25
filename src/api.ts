@@ -100,7 +100,8 @@ function playerDetail(
             })),
         }
       : null,
-    loopMode: (player as any).loopMode ?? "None",
+    loopMode: player.loopMode,
+    volume: player.userVolume,
     node: player.node.name,
     nodeStats: player.node.stats
       ? {
@@ -308,14 +309,16 @@ function createApi(bot: BassBot) {
     /* ── Logs ───────────────────────────────────────────── */
     .get("/api/logs", ({ query }) => {
       const limit = parseInt(query.limit ?? "50")
-      return cache.resolve(`logs:global:${limit}`, TTL.LOGS, () => getGlobalLog(limit))
+      const after = query.after ? parseInt(query.after) : undefined
+      return cache.resolve(`logs:global:${limit}:${after ?? 0}`, TTL.LOGS, () => getGlobalLog(limit, after))
     })
     .get("/api/logs/:guildId", ({ params, query }) => {
       const limit = parseInt(query.limit ?? "50")
+      const after = query.after ? parseInt(query.after) : undefined
       return cache.resolve(
-        `logs:${params.guildId}:${limit}`,
+        `logs:${params.guildId}:${limit}:${after ?? 0}`,
         TTL.LOGS,
-        () => getGuildLog(params.guildId, limit),
+        () => getGuildLog(params.guildId, limit, after),
       )
     })
 
@@ -415,7 +418,7 @@ function createApi(bot: BassBot) {
       const player = bot.getPlayer(params.guildId)
       if (!player) return status(404, { error: "Player not found" })
       const modes = ["None", "Song", "Queue"] as const
-      const currentIdx = modes.indexOf((player as any).loopMode ?? "None")
+      const currentIdx = modes.indexOf(player.loopMode as typeof modes[number])
       const nextMode = modes[(currentIdx + 1) % modes.length]!
       player.setLoopMode(nextMode)
       return { ok: true, loopMode: nextMode }
@@ -481,7 +484,7 @@ function createApi(bot: BassBot) {
       const player = bot.getPlayer(params.guildId)
       if (!player) return status(404, { error: "Player not found" })
 
-      const body = await request.json() as { uri: string }
+      const body = await request.json() as { uri: string; position?: "next" | "end" }
       if (!body.uri) return status(400, { error: "Missing track URI" })
 
       const node = bot.lava.nodes.values().next().value
@@ -490,13 +493,72 @@ function createApi(bot: BassBot) {
       const result = await resolveSong(body.uri, node)
       if (!result.success) return status(400, { error: result.error ?? "Failed to resolve track" })
 
+      const addNext = body.position === "next"
+
       if (result.value.type === "playlist") {
-        await player.addTracks(result.value.tracks)
+        await player.addTracks(result.value.tracks, addNext)
         return { ok: true, added: result.value.tracks.length }
       } else {
-        await player.addTrack(result.value.track)
+        await player.addTrack(result.value.track, addNext)
         return { ok: true, added: 1 }
       }
+    })
+
+    // Remove track from queue
+    .post("/api/players/:guildId/queue/remove", async ({ params, request }) => {
+      const user = await verifyUserInVC(bot, request, params.guildId)
+      if (user instanceof Response) return user
+
+      const player = bot.getPlayer(params.guildId)
+      if (!player) return status(404, { error: "Player not found" })
+
+      const body = await request.json() as { index: number }
+      if (typeof body.index !== "number" || body.index < 0 || body.index >= player.queue.length) {
+        return status(400, { error: "Invalid index" })
+      }
+
+      const removed = player.remove(body.index, body.index)
+      if (!removed) return status(400, { error: "Failed to remove track" })
+      return { ok: true }
+    })
+
+    // Move track in queue (for drag-and-drop)
+    .post("/api/players/:guildId/queue/move", async ({ params, request }) => {
+      const user = await verifyUserInVC(bot, request, params.guildId)
+      if (user instanceof Response) return user
+
+      const player = bot.getPlayer(params.guildId)
+      if (!player) return status(404, { error: "Player not found" })
+
+      const body = await request.json() as { from: number; to: number }
+      if (
+        typeof body.from !== "number" || typeof body.to !== "number" ||
+        body.from < 0 || body.from >= player.queue.length ||
+        body.to < 0 || body.to >= player.queue.length
+      ) {
+        return status(400, { error: "Invalid indices" })
+      }
+
+      const moved = player.moveTrack(body.from, body.to)
+      if (!moved) return status(400, { error: "Failed to move track" })
+      return { ok: true }
+    })
+
+    // Set volume
+    .post("/api/players/:guildId/volume", async ({ params, request }) => {
+      const user = await verifyUserInVC(bot, request, params.guildId)
+      if (user instanceof Response) return user
+
+      const player = bot.getPlayer(params.guildId)
+      if (!player) return status(404, { error: "Player not found" })
+
+      const body = await request.json() as { volume: number }
+      if (typeof body.volume !== "number" || body.volume < 0 || body.volume > 100) {
+        return status(400, { error: "Volume must be 0-100" })
+      }
+
+      await player.setGlobalVolume(body.volume / 2)
+      return { ok: true }
     })
 }
 

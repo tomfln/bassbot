@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { GuildIcon } from "@/components/guild-icon"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -221,12 +222,7 @@ export default function AdminGuildDetailPage({ params }: { params: Promise<{ gui
         >
           <ArrowLeft className="h-4 w-4" />
         </Link>
-        <Avatar className="h-12 w-12 rounded-lg">
-          <AvatarImage src={guild.icon ?? undefined} />
-          <AvatarFallback className="rounded-lg">
-            {guild.name.slice(0, 2).toUpperCase()}
-          </AvatarFallback>
-        </Avatar>
+        <GuildIcon name={guild.name} icon={guild.icon} className="h-12 w-12" />
         <div className="flex-1 min-w-0">
           <h1 className="text-xl font-bold tracking-tight truncate">
             {guild.name}
@@ -276,7 +272,7 @@ export default function AdminGuildDetailPage({ params }: { params: Promise<{ gui
 
       {/* Confirm: destroy player */}
       <AlertDialog open={confirmDestroyPlayer} onOpenChange={setConfirmDestroyPlayer}>
-        <AlertDialogContent>
+        <AlertDialogContent variant="destructive">
           <AlertDialogHeader>
             <AlertDialogTitle>Destroy player?</AlertDialogTitle>
             <AlertDialogDescription>
@@ -297,7 +293,7 @@ export default function AdminGuildDetailPage({ params }: { params: Promise<{ gui
 
       {/* Confirm: leave guild */}
       <AlertDialog open={confirmLeave} onOpenChange={setConfirmLeave}>
-        <AlertDialogContent>
+        <AlertDialogContent variant="destructive">
           <AlertDialogHeader>
             <AlertDialogTitle>Leave {guild.name}?</AlertDialogTitle>
             <AlertDialogDescription>

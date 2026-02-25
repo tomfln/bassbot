@@ -112,8 +112,11 @@ function BotInfo({
   guildCount?: number
 }) {
   return (
-    <div className="px-3 pb-1 border-t border-white/[0.06] pt-3">
-      <div className="flex items-center gap-2.5 px-2">
+    <div className="px-3 pb-1 pt-3 border-t border-primary/15">
+      <p className="px-2 pb-1.5 text-[10px] font-semibold uppercase tracking-wider text-primary/60">
+        Bot
+      </p>
+      <div className="flex items-center gap-2.5 px-2 py-1 rounded-lg bg-primary/5">
         <Avatar className="h-8 w-8 rounded-full">
           <AvatarImage src={avatar ?? undefined} />
           <AvatarFallback className="text-xs rounded-full">BB</AvatarFallback>
@@ -136,7 +139,10 @@ function UserInfo() {
   if (!session) return null
 
   return (
-    <div className="px-3 pb-3 border-t border-white/[0.06] pt-3">
+    <div className="px-3 pb-3 border-t border-white/6 pt-3">
+      <p className="px-2 pb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/50">
+        Signed in
+      </p>
       <div className="flex items-center gap-2.5 px-2">
         <Avatar className="h-8 w-8 rounded-full">
           <AvatarImage src={session.user.image ?? undefined} />
@@ -258,7 +264,7 @@ function MobileSidebar({
 function MobileHeader({ onOpenSidebar }: { onOpenSidebar: () => void }) {
   return (
     <header
-      className="overflow-hidden sticky top-0 z-30 flex items-center justify-between px-4 h-14 border-b border-white/[0.08] md:hidden"
+      className="overflow-hidden sticky top-0 z-30 flex items-center justify-between px-4 h-14 border-b border-white/8 md:hidden"
       style={GLASS_STYLE}
     >
       <Brand size="small" />

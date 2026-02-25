@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react"
 import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { GuildIcon } from "@/components/guild-icon"
 import { Badge } from "@/components/ui/badge"
 import { usePlayers } from "@/hooks/use-api"
 import {
@@ -152,12 +152,7 @@ export default function UserGuildsPage() {
               <Link key={guild.id} href={`/guilds/${guild.id}`}>
                 <Card className="py-0 gap-0 hover:border-white/15 transition-colors cursor-pointer group">
                   <CardContent className="p-4 flex items-center gap-3">
-                    <Avatar className="h-10 w-10 rounded-lg shrink-0">
-                      <AvatarImage src={guild.icon ?? undefined} />
-                      <AvatarFallback className="rounded-lg text-xs">
-                        {guild.name.slice(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
+                    <GuildIcon name={guild.name} icon={guild.icon} className="shrink-0" />
 
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate group-hover:text-primary transition-colors">

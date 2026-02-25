@@ -6,7 +6,7 @@ import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { GuildIcon } from "@/components/guild-icon"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   DropdownMenu,
@@ -30,13 +30,13 @@ import { usePlayer, useGuildLogs, useDestroyPlayer, useClearQueue } from "@/hook
 import { formatDuration, formatUptime } from "@/lib/format"
 import { ActivityLog } from "@/components/activity-log"
 import { TrackList } from "@/components/track-list"
+import { VoiceChannelCard } from "@/components/voice-channel-card"
 import { useOptimisticPosition } from "@/hooks/use-optimistic-position"
 import {
   ArrowLeft,
   Pause,
   Play,
   Music,
-  Headphones,
   ListMusic,
   History,
   Activity,
@@ -49,56 +49,6 @@ import {
 } from "lucide-react"
 
 /* ── Right‑column sub‑components ─────────────────────────── */
-
-interface VoiceChannelCardProps {
-  voiceChannel: {
-    name: string
-    members: { id: string; displayName: string; avatar: string }[]
-  } | null
-}
-
-function VoiceChannelCard({ voiceChannel }: VoiceChannelCardProps) {
-  return (
-    <Card className="py-0 gap-0">
-      <CardHeader className="px-4 pt-4 pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-          <Headphones className="h-4 w-4" />
-          Voice Channel
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="px-4 pb-4">
-        {voiceChannel ? (
-          <div className="space-y-3">
-            <p className="text-sm font-medium">{voiceChannel.name}</p>
-            {voiceChannel.members.length === 0 ? (
-              <p className="text-xs text-muted-foreground">No listeners</p>
-            ) : (
-              <div className="space-y-2">
-                {voiceChannel.members.map((member) => (
-                  <div key={member.id} className="flex items-center gap-2">
-                    <Avatar className="h-7 w-7">
-                      <AvatarImage src={member.avatar} />
-                      <AvatarFallback className="text-xs">
-                        {member.displayName.slice(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="text-sm truncate">
-                      {member.displayName}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        ) : (
-          <p className="text-sm text-muted-foreground text-center py-4">
-            Not in a voice channel
-          </p>
-        )}
-      </CardContent>
-    </Card>
-  )
-}
 
 interface NodeStatsCardProps {
   node: string
@@ -290,12 +240,7 @@ export default function AdminPlayerDetailPage({ params }: { params: Promise<{ gu
         >
           <ArrowLeft className="h-4 w-4" />
         </Link>
-        <Avatar className="h-10 w-10 rounded-lg">
-          <AvatarImage src={player.guildIcon ?? undefined} />
-          <AvatarFallback className="rounded-lg">
-            {player.guildName.slice(0, 2).toUpperCase()}
-          </AvatarFallback>
-        </Avatar>
+        <GuildIcon name={player.guildName} icon={player.guildIcon} />
         <div className="flex-1 min-w-0">
           <h1 className="text-xl font-bold tracking-tight">{player.guildName}</h1>
           <p className="text-xs text-muted-foreground">
@@ -351,7 +296,7 @@ export default function AdminPlayerDetailPage({ params }: { params: Promise<{ gu
 
       {/* Confirm: destroy player */}
       <AlertDialog open={confirmDestroy} onOpenChange={setConfirmDestroy}>
-        <AlertDialogContent>
+        <AlertDialogContent variant="destructive">
           <AlertDialogHeader>
             <AlertDialogTitle>Destroy player?</AlertDialogTitle>
             <AlertDialogDescription>

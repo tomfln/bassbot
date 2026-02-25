@@ -294,7 +294,13 @@ export default function AdminUsersPage() {
 
       {/* Confirm dialog */}
       <AlertDialog open={!!dialogAction} onOpenChange={(open) => !open && setDialogAction(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent
+          variant={
+            dialogAction?.type === "ban" || dialogAction?.type === "delete"
+              ? "destructive"
+              : "default"
+          }
+        >
           <AlertDialogHeader>
             <AlertDialogTitle>
               {dialogAction?.type === "promote" && "Promote to Admin?"}

@@ -26,8 +26,9 @@ function AdminLogsContent() {
   const [search, setSearch] = useState("")
   const [actionFilter, setActionFilter] = useState<string>("all")
   const [showCount, setShowCount] = useState(20)
+  const [fetchLimit, setFetchLimit] = useState(200)
 
-  const { data: logs } = useGlobalLogs(200)
+  const { data: logs } = useGlobalLogs(fetchLimit)
   const { data: guilds } = useGuilds()
 
   const filtered = useMemo(() => {
@@ -88,7 +89,7 @@ function AdminLogsContent() {
             window.history.replaceState(null, "", params.toString() ? `?${params.toString()}` : window.location.pathname)
           }}
         >
-          <SelectTrigger className="flex-1 sm:flex-initial sm:w-[220px] rounded-lg border-border bg-card py-2 h-auto text-sm">
+          <SelectTrigger className="flex-1 sm:flex-initial sm:w-55 rounded-lg border-border bg-card py-2 h-auto text-sm">
             <SelectValue placeholder="All guilds" />
           </SelectTrigger>
           <SelectContent className="rounded-lg p-1.5">
@@ -107,7 +108,7 @@ function AdminLogsContent() {
 
         {/* Action filter */}
         <Select value={actionFilter} onValueChange={setActionFilter}>
-          <SelectTrigger className="flex-1 sm:flex-initial sm:w-[200px] rounded-lg border-border bg-card py-2 h-auto text-sm">
+          <SelectTrigger className="flex-1 sm:flex-initial sm:w-50 rounded-lg border-border bg-card py-2 h-auto text-sm">
             <SelectValue placeholder="All actions" />
           </SelectTrigger>
           <SelectContent className="rounded-lg p-1.5">
@@ -147,7 +148,16 @@ function AdminLogsContent() {
             ))}
             {filtered.length > showCount && (
               <button
-                onClick={() => setShowCount((c) => c + 20)}
+                onClick={() => {
+                  setShowCount((c) => {
+                    const next = c + 20
+                    // Fetch more from the API if we're nearing the limit
+                    if (next >= fetchLimit - 20) {
+                      setFetchLimit((l) => l + 200)
+                    }
+                    return next
+                  })
+                }}
                 className="flex items-center justify-center gap-1.5 w-full text-sm text-muted-foreground hover:text-foreground transition-colors py-2"
               >
                 <ChevronDown className="h-3.5 w-3.5" />

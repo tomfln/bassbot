@@ -3,7 +3,7 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { GuildIcon } from "@/components/guild-icon"
 import { useGuilds } from "@/hooks/use-api"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -47,12 +47,7 @@ export default function AdminGuildsPage() {
                 <Card className="py-0 gap-0 hover:bg-accent/50 transition-colors">
                   <CardContent className="p-4">
                     <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10 rounded-lg">
-                        <AvatarImage src={guild.icon ?? undefined} />
-                        <AvatarFallback className="rounded-lg text-xs">
-                          {guild.name.slice(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
+                      <GuildIcon name={guild.name} icon={guild.icon} />
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-sm truncate">
                           {guild.name}

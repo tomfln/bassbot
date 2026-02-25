@@ -1,6 +1,6 @@
 import db from "./db"
 import { schema } from "./db"
-import { eq, asc, desc, inArray } from "drizzle-orm"
+import { eq, asc, desc, inArray, gt, and } from "drizzle-orm"
 import { broadcast } from "./broadcast"
 import { cache } from "./api-cache"
 import type { ButtonInteraction, ChatInputCommandInteraction } from "discord.js"
@@ -64,12 +64,17 @@ export function logActivity(entry: Omit<ActivityEntry, "timestamp">) {
 
 /**
  * Get activity log for a specific guild, newest first.
+ * If `after` is provided, only returns entries newer than that timestamp.
  */
-export function getGuildLog(guildId: string, limit = 50): ActivityEntry[] {
+export function getGuildLog(guildId: string, limit = 50, after?: number): ActivityEntry[] {
+  const conditions = [eq(schema.activityLog.guildId, guildId)]
+  if (after !== undefined) {
+    conditions.push(gt(schema.activityLog.timestamp, after))
+  }
   return db
     .select()
     .from(schema.activityLog)
-    .where(eq(schema.activityLog.guildId, guildId))
+    .where(and(...conditions))
     .orderBy(desc(schema.activityLog.timestamp))
     .limit(limit)
     .all()
@@ -77,11 +82,14 @@ export function getGuildLog(guildId: string, limit = 50): ActivityEntry[] {
 
 /**
  * Get global activity log, newest first.
+ * If `after` is provided, only returns entries newer than that timestamp.
  */
-export function getGlobalLog(limit = 50): ActivityEntry[] {
+export function getGlobalLog(limit = 50, after?: number): ActivityEntry[] {
+  const condition = after !== undefined ? gt(schema.activityLog.timestamp, after) : undefined
   return db
     .select()
     .from(schema.activityLog)
+    .where(condition)
     .orderBy(desc(schema.activityLog.timestamp))
     .limit(limit)
     .all()

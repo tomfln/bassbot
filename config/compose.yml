@@ -53,7 +53,7 @@ services:
     restart: unless-stopped
     environment:
       # Change this to match your system's capabilities — see Lavalink docs for details
-      - _JAVA_OPTIONS=-Xmx4G -Xms1G -XX:+UseG1GC -XX:MaxGCPauseMillis=20 -XX:ParallelGCThreads=4
+      _JAVA_OPTIONS: -Xmx4G -Xms1G -XX:+UseG1GC -XX:MaxGCPauseMillis=20 -XX:ParallelGCThreads=4
     volumes:
       - ./bassbot-data/application.yml:/opt/Lavalink/application.yml
     expose:

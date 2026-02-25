@@ -10,10 +10,14 @@ import {
   Github,
   LogOut,
   Shield,
+  Music,
+  Plus,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { GuildIcon } from "@/components/guild-icon"
 import { useSession, signOut } from "@/lib/auth-client"
+import { usePlayers, useStats } from "@/hooks/use-api"
 import pkg from "../../package.json"
 
 /* ── Constants ────────────────────────────────────────────── */
@@ -96,8 +100,20 @@ function UserInfo() {
   if (!session) return null
 
   return (
-    <div className="px-3 pb-3 border-t border-white/6 pt-3">
-      <div className="flex items-center gap-2.5 px-2">
+    <div className="pb-3 pt-3">
+      {session.user.role === "admin" && (
+        <Link
+          href="/admin"
+          className="mx-3 flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-xs font-medium text-primary hover:bg-primary/10 transition-colors"
+        >
+          <Shield className="h-3.5 w-3.5" />
+          Admin Panel
+        </Link>
+      )}
+      {session.user.role === "admin" && (
+        <div className="my-3 border-t border-white/6" />
+      )}
+      <div className="flex items-center gap-2.5 px-3">
         <Avatar className="h-8 w-8 rounded-full">
           <AvatarImage src={session.user.image ?? undefined} />
           <AvatarFallback className="text-xs rounded-full">
@@ -118,22 +134,22 @@ function UserInfo() {
           <LogOut className="h-4 w-4" />
         </button>
       </div>
-      {session.user.role === "admin" && (
-        <Link
-          href="/admin"
-          className="mt-2 mx-2 flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
-        >
-          <Shield className="h-3.5 w-3.5" />
-          Admin Panel
-        </Link>
-      )}
     </div>
   )
 }
 
 function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
+  const pathname = usePathname()
+  const { data: players } = usePlayers()
+  const { data: stats } = useStats()
+  const activePlayers = (players?.filter((p) => p.current) ?? []).slice(0, 6)
+
+  const inviteUrl = stats?.botId
+    ? `https://discord.com/oauth2/authorize?client_id=${stats.botId}&permissions=36703360&scope=bot+applications.commands`
+    : null
+
   return (
-    <nav className="flex-1 px-3 pb-3 space-y-1.5">
+    <nav className="flex-1 px-3 pb-3 space-y-1.5 overflow-y-auto">
       {NAV_ITEMS.map(({ href, icon, label, ...rest }) => (
         <NavItem
           key={href}
@@ -144,6 +160,82 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
           onNavigate={onNavigate}
         />
       ))}
+
+      {activePlayers.length > 0 && (
+        <div className="pt-4 mt-4 space-y-1.5">
+          <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider text-center">
+            Now Playing
+          </p>
+          {activePlayers.map((p) => {
+            const href = `/guilds/${p.guildId}`
+            const isActive = pathname === href
+
+            return (
+              <Link
+                key={p.guildId}
+                href={href}
+                onClick={onNavigate}
+                className="relative block"
+              >
+                {isActive && (
+                  <span
+                    className="absolute top-1/2 -translate-y-1/2 w-1 h-6 rounded-full bg-primary z-10"
+                    style={{ left: "-0.875rem" }}
+                  />
+                )}
+                <span
+                  className={cn(
+                    "flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm transition-colors",
+                    isActive
+                      ? "text-primary outline-2 -outline-offset-2 outline-primary/80"
+                      : "bg-accent/40 text-muted-foreground hover:bg-accent/70 hover:text-accent-foreground scope-hover",
+                  )}
+                  style={
+                    isActive
+                      ? {
+                          background:
+                            "radial-gradient(circle at 0px 50%, oklch(0.77 0.20 131 / 0.18), oklch(0.77 0.20 131 / 0.04) 70%, transparent), rgba(from var(--color-accent) r g b / 0.4)",
+                        }
+                      : undefined
+                  }
+                >
+                  <GuildIcon
+                    name={p.guildName}
+                    icon={p.guildIcon}
+                    className="h-6 w-6 text-[8px]"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium truncate">{p.guildName}</p>
+                    {p.current && (
+                      <p className="text-[10px] text-muted-foreground truncate">
+                        {p.current.title}
+                      </p>
+                    )}
+                  </div>
+                  {!p.paused && (
+                    <Music className="h-3 w-3 text-primary shrink-0 animate-pulse" />
+                  )}
+                </span>
+              </Link>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Add to guild */}
+      {inviteUrl && (
+        <div className={activePlayers.length > 0 ? "pt-2" : "pt-4 mt-4 border-t border-white/6"}>
+          <a
+            href={inviteUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 rounded-lg border border-dashed border-primary/30 px-3 py-2 text-xs font-medium text-primary/80 hover:bg-primary/5 hover:text-primary transition-colors"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Add to Server
+          </a>
+        </div>
+      )}
     </nav>
   )
 }
@@ -155,7 +247,7 @@ function DesktopSidebar() {
     <div className="hidden md:flex flex-col">
       <div className="shrink-0 pb-3 pl-3 sticky top-0 self-start pt-24">
         <aside
-          className="flex w-56 xl:w-64 flex-col rounded-xl border border-white/8 shadow-sm overflow-visible min-h-[40dvh]"
+          className="flex w-56 xl:w-64 flex-col rounded-xl border border-white/8 shadow-sm overflow-visible h-[65dvh]"
           style={GLASS_STYLE}
         >
           <div className="flex items-center justify-center py-6">

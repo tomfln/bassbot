@@ -74,6 +74,8 @@ export type PlayerDetail = {
     id: string
     members: { id: string; displayName: string; avatar: string }[]
   } | null
+  volume: number
+  loopMode: string
   node: string
   nodeStats: {
     players: number

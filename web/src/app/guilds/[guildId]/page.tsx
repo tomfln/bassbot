@@ -3,33 +3,27 @@
 import { useState, useCallback, use } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { GuildIcon } from "@/components/guild-icon"
+import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { usePlayer, useGuildLogs } from "@/hooks/use-api"
 import { formatDuration } from "@/lib/format"
 import { getApiUrl } from "@/lib/api"
 import { ActivityLog } from "@/components/activity-log"
 import { TrackList } from "@/components/track-list"
+import { PlayBar } from "@/components/play-bar"
+import { VoiceChannelCard } from "@/components/voice-channel-card"
 import { useOptimisticPosition } from "@/hooks/use-optimistic-position"
 import {
   ArrowLeft,
-  Pause,
-  Play,
-  SkipForward,
-  SkipBack,
-  Repeat,
-  Repeat1,
-  Shuffle,
   Music,
-  Headphones,
   ListMusic,
   History,
   Activity,
-  Search,
-  AlertCircle,
+  Pause,
+  Play,
 } from "lucide-react"
 
 /* ── JWT helper ───────────────────────────────────────────── */
@@ -72,304 +66,6 @@ async function botFetch(path: string, init?: RequestInit): Promise<Response> {
   })
 }
 
-/* ── Types ────────────────────────────────────────────────── */
-
-interface VoiceChannelCardProps {
-  voiceChannel: {
-    name: string
-    members: { id: string; displayName: string; avatar: string }[]
-  } | null
-}
-
-/* ── Sub-components ───────────────────────────────────────── */
-
-function VoiceChannelCard({ voiceChannel }: VoiceChannelCardProps) {
-  return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-          <Headphones className="h-4 w-4" />
-          Voice Channel
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {voiceChannel ? (
-          <div>
-            <p className="text-sm font-medium">{voiceChannel.name}</p>
-            <div className="mt-2 space-y-1.5">
-              {voiceChannel.members.map((m) => (
-                <div key={m.id} className="flex items-center gap-2">
-                  <Avatar className="h-5 w-5">
-                    <AvatarImage src={m.avatar} />
-                    <AvatarFallback className="text-[9px]">
-                      {m.displayName.slice(0, 2)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="text-xs text-muted-foreground truncate">
-                    {m.displayName}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <p className="text-sm text-muted-foreground">Not connected</p>
-        )}
-      </CardContent>
-    </Card>
-  )
-}
-
-function ProgressBar({
-  position,
-  length,
-}: {
-  position: number
-  length: number
-}) {
-  const pct = length > 0 ? Math.min((position / length) * 100, 100) : 0
-
-  return (
-    <div className="space-y-1">
-      <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-        <div
-          className="h-full rounded-full bg-primary transition-[width] duration-1000 ease-linear"
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-      <div className="flex justify-between text-[10px] text-muted-foreground tabular-nums">
-        <span>{formatDuration(position)}</span>
-        <span>{formatDuration(length)}</span>
-      </div>
-    </div>
-  )
-}
-
-/* ── Player controls ──────────────────────────────────────── */
-
-function PlayerControls({
-  guildId,
-  paused,
-  loopMode,
-  onRefresh,
-}: {
-  guildId: string
-  paused: boolean
-  loopMode?: string
-  onRefresh: () => void
-}) {
-  const [loading, setLoading] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
-
-  async function sendAction(action: string) {
-    setLoading(action)
-    setError(null)
-    try {
-      const res = await botFetch(`/api/players/${guildId}/${action}`, { method: "POST" })
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
-        setError((data as { error?: string }).error ?? `Action failed (${res.status})`)
-      }
-      onRefresh()
-    } catch {
-      setError("Failed to send command")
-    } finally {
-      setLoading(null)
-    }
-  }
-
-  return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-center gap-2">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-9 w-9"
-          onClick={() => sendAction("shuffle")}
-          disabled={loading !== null}
-          title="Shuffle queue"
-        >
-          <Shuffle className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-9 w-9"
-          onClick={() => sendAction("prev")}
-          disabled={loading !== null}
-          title="Previous track"
-        >
-          <SkipBack className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="default"
-          size="icon"
-          className="h-11 w-11 rounded-full"
-          onClick={() => sendAction(paused ? "resume" : "pause")}
-          disabled={loading !== null}
-        >
-          {loading === "pause" || loading === "resume" ? (
-            <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full" />
-          ) : paused ? (
-            <Play className="h-5 w-5 ml-0.5" />
-          ) : (
-            <Pause className="h-5 w-5" />
-          )}
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-9 w-9"
-          onClick={() => sendAction("next")}
-          disabled={loading !== null}
-          title="Next track"
-        >
-          <SkipForward className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-9 w-9"
-          onClick={() => sendAction("loop")}
-          disabled={loading !== null}
-          title="Toggle loop"
-        >
-          {loopMode === "track" ? (
-            <Repeat1 className="h-4 w-4 text-primary" />
-          ) : loopMode === "queue" ? (
-            <Repeat className="h-4 w-4 text-primary" />
-          ) : (
-            <Repeat className="h-4 w-4" />
-          )}
-        </Button>
-      </div>
-
-      {error && (
-        <div className="flex items-center gap-2 text-xs text-destructive justify-center">
-          <AlertCircle className="h-3.5 w-3.5" />
-          {error}
-        </div>
-      )}
-    </div>
-  )
-}
-
-/* ── Search bar ───────────────────────────────────────────── */
-
-function SearchBar({
-  guildId,
-  onRefresh,
-}: {
-  guildId: string
-  onRefresh: () => void
-}) {
-  const [query, setQuery] = useState("")
-  const [results, setResults] = useState<
-    { title: string; author: string; uri: string; length: number }[]
-  >([])
-  const [searching, setSearching] = useState(false)
-  const [adding, setAdding] = useState<string | null>(null)
-
-  async function handleSearch() {
-    if (!query.trim()) return
-    setSearching(true)
-    try {
-      const res = await botFetch(
-        `/api/players/${guildId}/search?q=${encodeURIComponent(query.trim())}`,
-      )
-      if (res.ok) {
-        const data = await res.json() as { results: typeof results }
-        setResults(data.results ?? [])
-      }
-    } catch {
-      /* ignore */
-    } finally {
-      setSearching(false)
-    }
-  }
-
-  async function addTrack(uri: string) {
-    setAdding(uri)
-    try {
-      const res = await botFetch(`/api/players/${guildId}/queue`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ uri }),
-      })
-      if (res.ok) {
-        onRefresh()
-        // Remove from results to indicate it was added
-        setResults((prev) => prev.filter((r) => r.uri !== uri))
-      }
-    } catch {
-      /* ignore */
-    } finally {
-      setAdding(null)
-    }
-  }
-
-  return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-          <Search className="h-4 w-4" />
-          Search & Add
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="flex gap-2">
-          <input
-            type="text"
-            placeholder="Search for a song…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-            className="flex-1 rounded-md border border-border bg-card px-3 py-1.5 text-sm outline-none focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground"
-          />
-          <Button
-            size="sm"
-            onClick={handleSearch}
-            disabled={searching || !query.trim()}
-          >
-            {searching ? (
-              <div className="animate-spin h-3.5 w-3.5 border-2 border-current border-t-transparent rounded-full" />
-            ) : (
-              "Search"
-            )}
-          </Button>
-        </div>
-
-        {results.length > 0 && (
-          <div className="space-y-1.5 max-h-60 overflow-y-auto">
-            {results.map((r) => (
-              <div
-                key={r.uri}
-                className="flex items-center gap-2 rounded-lg border border-border/50 bg-muted/30 px-3 py-2"
-              >
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm truncate">{r.title}</p>
-                  <p className="text-xs text-muted-foreground truncate">
-                    {r.author} • {formatDuration(r.length)}
-                  </p>
-                </div>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="shrink-0 text-xs"
-                  onClick={() => addTrack(r.uri)}
-                  disabled={adding === r.uri}
-                >
-                  {adding === r.uri ? "Adding…" : "+ Add"}
-                </Button>
-              </div>
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  )
-}
-
 /* ── Main page ────────────────────────────────────────────── */
 
 export default function UserPlayerPage({
@@ -378,9 +74,11 @@ export default function UserPlayerPage({
   params: Promise<{ guildId: string }>
 }) {
   const { guildId } = use(params)
+  const [queueLimit, setQueueLimit] = useState(20)
+  const [historyLimit, setHistoryLimit] = useState(10)
   const { data: player, isLoading, refetch } = usePlayer(guildId, {
-    queueLimit: 20,
-    historyLimit: 10,
+    queueLimit,
+    historyLimit,
   })
   const { data: logs } = useGuildLogs(guildId, 20)
 
@@ -390,10 +88,63 @@ export default function UserPlayerPage({
     player?.paused ?? true,
   )
 
+  const progress =
+    player?.current && player.current.length > 0
+      ? (position / player.current.length) * 100
+      : 0
+
   const handleRefresh = useCallback(() => {
-    // Small delay for state to propagate on the bot side
     setTimeout(() => refetch(), 300)
   }, [refetch])
+
+  const handleQueueReorder = useCallback(
+    async (from: number, to: number) => {
+      try {
+        await botFetch(`/api/players/${guildId}/queue/move`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ from, to }),
+        })
+        refetch()
+      } catch {
+        /* ignore */
+      }
+    },
+    [guildId, refetch],
+  )
+
+  const handleQueueRemove = useCallback(
+    async (index: number) => {
+      try {
+        await botFetch(`/api/players/${guildId}/queue/remove`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ index }),
+        })
+        refetch()
+      } catch {
+        /* ignore */
+      }
+    },
+    [guildId, refetch],
+  )
+
+  const handlePlayNext = useCallback(
+    async (index: number) => {
+      if (index === 0) return // already first
+      try {
+        await botFetch(`/api/players/${guildId}/queue/move`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ from: index, to: 0 }),
+        })
+        refetch()
+      } catch {
+        /* ignore */
+      }
+    },
+    [guildId, refetch],
+  )
 
   if (isLoading) {
     return (
@@ -431,50 +182,56 @@ export default function UserPlayerPage({
   return (
     <div className="space-y-6">
       {/* Back + Header */}
-      <div className="space-y-3">
+      <div className="flex items-center gap-4 min-h-12">
         <Link
           href="/guilds"
-          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          className="inline-flex items-center justify-center h-8 w-8 rounded-md hover:bg-accent transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to servers
         </Link>
-        <div className="flex items-center gap-3">
-          <Avatar className="h-10 w-10 rounded-lg">
-            <AvatarImage src={player.guildIcon ?? undefined} />
-            <AvatarFallback className="rounded-lg text-xs">
-              {player.guildName.slice(0, 2).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-          <div>
-            <h1 className="text-xl font-bold tracking-tight">{player.guildName}</h1>
-            <p className="text-xs text-muted-foreground">
-              {player.paused ? "Paused" : "Now Playing"}
-            </p>
-          </div>
+        <GuildIcon name={player.guildName} icon={player.guildIcon} />
+        <div className="flex-1 min-w-0">
+          <h1 className="text-xl font-bold tracking-tight">{player.guildName}</h1>
+          <p className="text-xs text-muted-foreground">
+            {player.paused ? "Paused" : "Now Playing"}
+          </p>
         </div>
       </div>
 
-      {/* Now Playing Card */}
-      <Card>
-        <CardContent className="p-6 space-y-4">
+      {/* Now Playing card — admin-style with blurred artwork */}
+      <Card className="overflow-hidden relative py-0 gap-0">
+        {player.current?.artworkUrl && (
+          <div
+            className="absolute inset-0 opacity-15 blur-2xl scale-110"
+            style={{
+              backgroundImage: `url(${player.current.artworkUrl})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+            }}
+          />
+        )}
+        <CardContent className="p-4 relative">
           {player.current ? (
-            <>
-              <div className="flex items-start gap-4">
-                {player.current.artworkUrl && (
+            <div className="space-y-3">
+              <div className="flex gap-4">
+                {player.current.artworkUrl ? (
                   <Image
                     src={player.current.artworkUrl}
                     alt=""
                     width={80}
                     height={80}
-                    className="h-20 w-20 rounded-lg object-cover shrink-0"
+                    className="h-20 w-20 rounded-lg object-cover shrink-0 shadow-lg"
                     unoptimized
                   />
+                ) : (
+                  <div className="h-20 w-20 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                    <Music className="h-8 w-8 text-muted-foreground" />
+                  </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <h2 className="text-lg font-semibold truncate">
+                  <h3 className="font-semibold truncate">
                     {player.current.title}
-                  </h2>
+                  </h3>
                   <p className="text-sm text-muted-foreground truncate">
                     {player.current.author}
                   </p>
@@ -489,17 +246,35 @@ export default function UserPlayerPage({
                     )}
                   </div>
                 </div>
+                {/* Play/Pause icon */}
+                <div className="shrink-0 relative flex items-center justify-center w-6 h-6">
+                  <div
+                    className="absolute inset-0 rounded-full blur-md opacity-40"
+                    style={{ background: player.paused ? "transparent" : "oklch(0.77 0.20 131)" }}
+                  />
+                  {player.paused ? (
+                    <Pause className="h-6 w-6 text-muted-foreground relative" />
+                  ) : (
+                    <Play className="h-6 w-6 text-primary relative" />
+                  )}
+                </div>
               </div>
-
-              <ProgressBar position={position} length={player.current.length} />
-
-              <PlayerControls
-                guildId={guildId}
-                paused={player.paused}
-                loopMode={(player as unknown as { loopMode?: string }).loopMode}
-                onRefresh={handleRefresh}
-              />
-            </>
+              {/* Progress bar */}
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs text-muted-foreground tabular-nums">
+                  {formatDuration(position)}
+                </span>
+                <div className="flex-1 h-1.5 rounded-full bg-black/50 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-primary"
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+                <span className="text-xs text-muted-foreground tabular-nums">
+                  {formatDuration(player.current.length)}
+                </span>
+              </div>
+            </div>
           ) : (
             <div className="text-center py-4 text-muted-foreground">
               <Music className="h-8 w-8 mx-auto mb-2 opacity-50" />
@@ -509,68 +284,72 @@ export default function UserPlayerPage({
         </CardContent>
       </Card>
 
-      {/* Two-column layout */}
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2 space-y-6">
-          {/* Queue */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                <ListMusic className="h-4 w-4" />
-                Queue
-                {player.queueTotal > 0 && (
-                  <Badge variant="secondary" className="text-xs ml-1">
-                    {player.queueTotal}
-                  </Badge>
-                )}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {player.queue.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-4">
-                  Queue is empty
-                </p>
-              ) : (
-                <TrackList tracks={player.queue} />
-              )}
-            </CardContent>
-          </Card>
+      {/* PlayBar below info card */}
+      <PlayBar
+        guildId={guildId}
+        paused={player.paused}
+        loopMode={player.loopMode}
+        volume={player.volume}
+        onAction={botFetch}
+        onRefresh={handleRefresh}
+      />
 
-          {/* History */}
-          {player.history.length > 0 && (
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                  <History className="h-4 w-4" />
-                  History
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <TrackList tracks={player.history} />
-              </CardContent>
-            </Card>
+      {/* Tabs: Queue / History / Activity */}
+      <Tabs defaultValue="queue">
+        <TabsList className="h-11 p-1 max-sm:w-full max-sm:*:flex-1">
+          <TabsTrigger value="queue" className="gap-1.5 text-xs px-3 py-1.5">
+            <ListMusic className="h-3.5 w-3.5" />
+            Queue ({player.queueTotal})
+          </TabsTrigger>
+          <TabsTrigger value="history" className="gap-1.5 text-xs px-3 py-1.5">
+            <History className="h-3.5 w-3.5" />
+            History ({player.historyTotal})
+          </TabsTrigger>
+          <TabsTrigger value="activity" className="gap-1.5 text-xs px-3 py-1.5">
+            <Activity className="h-3.5 w-3.5" />
+            Activity
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="queue">
+          {player.queueTotal === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">
+              Queue is empty
+            </p>
+          ) : (
+            <TrackList
+              tracks={player.queue}
+              total={player.queueTotal}
+              onReorder={handleQueueReorder}
+              onRemove={handleQueueRemove}
+              onPlayNext={handlePlayNext}
+              onLoadMore={() => setQueueLimit((l) => l + 20)}
+            />
           )}
-
-          {/* Activity */}
-          {logs && logs.length > 0 && (
-            <div className="space-y-3">
-              <h3 className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                <Activity className="h-4 w-4" />
-                Recent Activity
-              </h3>
-              <ActivityLog entries={logs} maxHeight="300px" limit={20} />
-            </div>
+        </TabsContent>
+        <TabsContent value="history">
+          {player.historyTotal === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">
+              No history
+            </p>
+          ) : (
+            <TrackList
+              tracks={player.history}
+              total={player.historyTotal}
+              onLoadMore={() => setHistoryLimit((l) => l + 10)}
+            />
           )}
-        </div>
+        </TabsContent>
+        <TabsContent value="activity">
+          <ActivityLog
+            entries={logs ?? []}
+            maxHeight="400px"
+            limit={20}
+          />
+        </TabsContent>
+      </Tabs>
 
-        <div className="space-y-6">
-          {/* Search */}
-          <SearchBar guildId={guildId} onRefresh={handleRefresh} />
-
-          {/* Voice channel */}
-          <VoiceChannelCard voiceChannel={player.voiceChannel} />
-        </div>
-      </div>
+      {/* Voice channel — below content */}
+      <VoiceChannelCard voiceChannel={player.voiceChannel} compact />
     </div>
   )
 }

@@ -168,6 +168,60 @@ From now on, Lavalink will use the refresh token automatically — no manual log
 
 ---
 
+## Web Dashboard Setup
+
+The web dashboard lets users control music playback from a browser. It uses Discord OAuth for authentication.
+
+### 1. Create a Discord OAuth Application
+
+1. Go to the [Discord Developer Portal](https://discord.com/developers/applications)
+2. Select your bot application (or create a new one)
+3. Go to **OAuth2 → General**
+4. Copy the **Client ID** and **Client Secret**
+5. Add a redirect URL: `http://localhost:3000/rest/auth/callback/discord` (or your production domain)
+
+### 2. Create a `.env` file
+
+Create a `.env` file in the same directory as your `compose.yml`:
+
+```env
+# Shared secret between bot and web for JWT auth — use a random string
+JWT_SECRET=your-random-secret-here
+
+# Discord OAuth credentials (from Developer Portal)
+DISCORD_CLIENT_ID=your_client_id
+DISCORD_CLIENT_SECRET=your_client_secret
+
+# Public URL where users access the dashboard
+BETTER_AUTH_URL=http://localhost:3000
+```
+
+> **Tip:** Generate a random JWT secret with `openssl rand -base64 32`
+
+### 3. Environment Variables Reference
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `JWT_SECRET` | Yes | Shared secret for bot ↔ web JWT auth |
+| `DISCORD_CLIENT_ID` | Yes | Discord application client ID |
+| `DISCORD_CLIENT_SECRET` | Yes | Discord application client secret |
+| `BETTER_AUTH_URL` | No | Public URL for the dashboard (default: `http://localhost:3000`) |
+| `API_URL` | No | Bot API URL from web container's perspective (default: `http://bassbot:3001`) |
+| `DATABASE_PATH` | No | Path to web SQLite database (default: `/app/data/web.db`) |
+
+### 4. Admin Access
+
+The first user to log in can be promoted to admin via the database, or you can set the role directly:
+
+1. Log in to the dashboard with your Discord account
+2. Access the SQLite database: `sqlite3 web-data/web.db`
+3. Promote yourself: `UPDATE user SET role = 'admin' WHERE name = 'YourDiscordName';`
+4. Refresh the dashboard — you'll see the Admin Panel link in the sidebar
+
+Once you're an admin, you can promote other users from the **Admin → Users** page.
+
+---
+
 ## Local Development
 
 1. Clone the repository

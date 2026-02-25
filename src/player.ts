@@ -24,7 +24,7 @@ export class PlayerWithQueue extends Player {
   
   private playerMsgId: string | null = null
   private _disconnect: ReturnType<typeof setTimeout> | null = null
-  private loopMode: LoopMode = LoopMode.None
+  private _loopMode: LoopMode = LoopMode.None
   private _playing = false
   private _historySaved = false
 
@@ -64,15 +64,15 @@ export class PlayerWithQueue extends Player {
 
       if (reason != "finished" && reason != "loadFailed") return
 
-      if (this.loopMode == LoopMode.Song)
+      if (this._loopMode == LoopMode.Song)
         return this.play(this.q.current)
       
       // Restart queue when looping and reached the end
-      if (this.loopMode == LoopMode.Queue && this.q.length == 0) {
+      if (this._loopMode == LoopMode.Queue && this.q.length == 0) {
         this.q.restart()
         return this.next()
       }
-      else if (this.loopMode == LoopMode.Autoplay) {
+      else if (this._loopMode == LoopMode.Autoplay) {
         // TODO: Implement autoplay
         await this.next()
       }
@@ -213,9 +213,18 @@ export class PlayerWithQueue extends Player {
     return result
   }
 
+  public get loopMode(): LoopMode {
+    return this._loopMode
+  }
+
   public setLoopMode(mode: LoopMode) {
-    this.loopMode = mode
+    this._loopMode = mode
     this.broadcastUpdate()
+  }
+
+  /** Get user-facing volume (0-100%) */
+  public get userVolume(): number {
+    return Math.round(this.volume * 2)
   }
 
   public getQueueDuration() {
