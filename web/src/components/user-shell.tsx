@@ -11,13 +11,13 @@ import {
   LogOut,
   Shield,
   Music,
-  Plus,
   Terminal,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { GuildIcon } from "@/components/guild-icon"
 import { ConfirmDialog } from "@/components/confirm-dialog"
+import { BotInfo } from "./bot-info"
 import { useSession, signOut } from "@/lib/auth-client"
 import { usePlayers, useStats, useUserGuilds } from "@/hooks/use-api"
 import pkg from "../../package.json"
@@ -162,12 +162,7 @@ function UserInfo() {
 function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname()
   const { data: players } = usePlayers()
-  const { data: stats } = useStats()
   const { data: userGuildsData } = useUserGuilds()
-
-  const inviteUrl = stats?.botId
-    ? `https://discord.com/oauth2/authorize?client_id=${stats.botId}&permissions=36703360&scope=bot+applications.commands`
-    : null
 
   // Build player map for active guild lookup
   const playerMap = new Map<string, { current: { title: string } | null; paused: boolean }>()
@@ -210,6 +205,7 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
 
       {mutualGuilds.length > 0 && (
         <>
+          <div className="my-1.5 border-t border-white/6" />
           {mutualGuilds.map((g) => {
             const href = `/guilds/${g.id}`
             const isActive = pathname === href
@@ -276,39 +272,30 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
           })}
         </>
       )}
-
-      {/* Add to guild */}
-      {inviteUrl && (
-        <div className={mutualGuilds.length > 0 ? "pt-2" : "pt-4 mt-4 border-t border-white/6"}>
-          <a
-            href={inviteUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 rounded-lg border-2 border-dashed border-primary/30 px-3 h-10 text-xs font-medium text-primary/70 hover:bg-primary/5 hover:text-primary transition-colors"
-            style={{ letterSpacing: "1.5px" }}
-          >
-            {/* <Plus className="h-4 w-4" /> */}
-            ADD SERVER
-          </a>
-        </div>
-      )}
     </nav>
   )
 }
 
 /* ── Desktop sidebar ──────────────────────────────────────── */
 
-function DesktopSidebar() {
+function DesktopSidebar({
+  botName,
+  botAvatar,
+}: {
+  botName?: string
+  botAvatar?: string | null
+}) {
   return (
     <div className="hidden md:flex flex-col">
       <div className="shrink-0 pb-3 pl-3 sticky top-0 self-start pt-24">
+        <div className="flex items-center justify-center pb-4">
+          <Brand />
+        </div>
         <aside
           className="flex w-56 xl:w-64 flex-col rounded-xl border border-white/8 shadow-sm overflow-visible h-[60dvh]"
           style={GLASS_STYLE}
         >
-          <div className="flex items-center justify-center py-6">
-            <Brand />
-          </div>
+          <BotInfo name={botName} avatar={botAvatar} />
           <SidebarNav />
           <UserInfo />
         </aside>
@@ -322,9 +309,13 @@ function DesktopSidebar() {
 function MobileSidebar({
   open,
   onClose,
+  botName,
+  botAvatar,
 }: {
   open: boolean
   onClose: () => void
+  botName?: string
+  botAvatar?: string | null
 }) {
   return (
     <>
@@ -344,6 +335,7 @@ function MobileSidebar({
             <X className="h-5 w-5" />
           </button>
         </div>
+        <BotInfo name={botName} avatar={botAvatar} />
         <SidebarNav onNavigate={onClose} />
         <UserInfo />
       </aside>
@@ -403,14 +395,20 @@ function Footer() {
 
 export function UserShell({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const { data: stats } = useStats()
 
   return (
     <div className="min-h-dvh bg-background flex justify-center">
       <div className="flex w-full max-w-350">
-        <DesktopSidebar />
+        <DesktopSidebar
+          botName={stats?.botName}
+          botAvatar={stats?.botAvatar}
+        />
         <MobileSidebar
           open={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
+          botName={stats?.botName}
+          botAvatar={stats?.botAvatar}
         />
 
         <div className="flex-1 min-w-0 flex flex-col min-h-dvh bg-black/10 md:mx-6">

@@ -20,6 +20,7 @@ import {
 import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ConfirmDialog } from "@/components/confirm-dialog"
+import { BotInfo } from "@/components/bot-info"
 import { useStats } from "@/hooks/use-api"
 import { useSession, signOut } from "@/lib/auth-client"
 import pkg from "../../package.json"
@@ -113,38 +114,6 @@ function NavItem({
   )
 }
 
-function BotInfo({
-  name,
-  avatar,
-  guildCount,
-}: {
-  name?: string
-  avatar?: string | null
-  guildCount?: number
-}) {
-  return (
-    <div className="px-3 pb-1 pt-3 border-t border-primary/15">
-      <p className="px-2 pb-1.5 text-[10px] font-semibold uppercase tracking-wider text-primary/60">
-        Bot
-      </p>
-      <div className="flex items-center gap-2.5 px-2 py-1 rounded-lg bg-primary/5">
-        <Avatar className="h-8 w-8 rounded-full">
-          <AvatarImage src={avatar ?? undefined} />
-          <AvatarFallback className="text-xs rounded-full">BB</AvatarFallback>
-        </Avatar>
-        <div className="min-w-0">
-          <p className="text-sm font-medium truncate">{name ?? "bassbot"}</p>
-          {guildCount !== undefined && (
-            <p className="text-[11px] text-muted-foreground">
-              {guildCount} server{guildCount !== 1 ? "s" : ""}
-            </p>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}
-
 function UserInfo() {
   const { data: session } = useSession()
   const [confirmLogout, setConfirmLogout] = useState(false)
@@ -152,9 +121,6 @@ function UserInfo() {
 
   return (
     <div className="px-3 pb-3 border-t border-white/6 pt-3">
-      <p className="px-2 pb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/50">
-        Signed in
-      </p>
       <div className="flex items-center gap-2.5 px-2">
         <Avatar className="h-8 w-8 rounded-full">
           <AvatarImage src={session.user.image ?? undefined} />
@@ -204,25 +170,22 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
           onNavigate={onNavigate}
         />
       ))}
-
-      <div className="pt-2 mt-2 border-t border-white/6">
-        <Link
-          href="/guilds"
-          onClick={onNavigate}
-          className="group/nav flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-accent/70 hover:text-primary transition-colors bg-accent/40 scope-hover"
-        >
-          <span
-            className="absolute inset-0 rounded-lg opacity-0 transition-opacity duration-300 pointer-events-none group-hover/nav:opacity-100"
-            style={{
-              background:
-                "radial-gradient(circle at 0% 50%, oklch(0.77 0.20 131 / 0.06), transparent 60%)",
-            }}
-          />
-          <ExternalLink className="h-4 w-4" />
-          User Dashboard
-        </Link>
-      </div>
     </nav>
+  )
+}
+
+function DashLink({ onNavigate }: { onNavigate?: () => void }) {
+  return (
+    <div className="px-3 pb-3">
+      <Link
+        href="/guilds"
+        onClick={onNavigate}
+        className="flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-xs font-medium text-primary hover:bg-primary/10 transition-colors"
+      >
+        <ExternalLink className="h-3.5 w-3.5" />
+        User Dashboard
+      </Link>
+    </div>
   )
 }
 
@@ -231,24 +194,23 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
 function DesktopSidebar({
   botName,
   botAvatar,
-  guildCount,
 }: {
   botName?: string
   botAvatar?: string | null
-  guildCount?: number
 }) {
   return (
     <div className="hidden md:flex flex-col">
       <div className="shrink-0 pb-3 pl-3 sticky top-0 self-start pt-24">
+        <div className="flex items-center justify-center pb-4">
+          <Brand />
+        </div>
         <aside
           className="flex w-56 xl:w-64 flex-col rounded-xl border border-white/8 shadow-sm overflow-visible min-h-[60dvh]"
           style={GLASS_STYLE}
         >
-          <div className="flex items-center justify-center py-6">
-            <Brand />
-          </div>
+          <BotInfo name={botName} avatar={botAvatar} />
           <SidebarNav />
-          <BotInfo name={botName} avatar={botAvatar} guildCount={guildCount} />
+          <DashLink />
           <UserInfo />
         </aside>
       </div>
@@ -263,13 +225,11 @@ function MobileSidebar({
   onClose,
   botName,
   botAvatar,
-  guildCount,
 }: {
   open: boolean
   onClose: () => void
   botName?: string
   botAvatar?: string | null
-  guildCount?: number
 }) {
   return (
     <>
@@ -289,8 +249,9 @@ function MobileSidebar({
             <X className="h-5 w-5" />
           </button>
         </div>
+        <BotInfo name={botName} avatar={botAvatar} />
         <SidebarNav onNavigate={onClose} />
-        <BotInfo name={botName} avatar={botAvatar} guildCount={guildCount} />
+        <DashLink onNavigate={onClose} />
         <UserInfo />
       </aside>
     </>
@@ -366,14 +327,12 @@ export function AdminShell({ children }: { children: ReactNode }) {
         <DesktopSidebar
           botName={stats?.botName}
           botAvatar={stats?.botAvatar}
-          guildCount={stats?.guildCount}
         />
         <MobileSidebar
           open={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
           botName={stats?.botName}
           botAvatar={stats?.botAvatar}
-          guildCount={stats?.guildCount}
         />
 
         <div className="flex-1 min-w-0 flex flex-col min-h-dvh bg-black/10 md:mx-6">

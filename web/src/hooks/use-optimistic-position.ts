@@ -1,13 +1,10 @@
 "use client"
 
-import { useState, useEffect, useRef, useCallback } from "react"
+import { useState, useEffect, useRef } from "react"
 
 /**
  * Returns an optimistically interpolated position (ms) that ticks
  * forward on the client between server syncs when not paused.
- *
- * Uses a generation counter derived from serverPosition + trackLength
- * to correctly detect track changes even when both values reset to 0.
  */
 export function useOptimisticPosition(
   serverPosition: number,
@@ -15,37 +12,26 @@ export function useOptimisticPosition(
   paused: boolean,
 ): number {
   const [position, setPosition] = useState(serverPosition)
-  const prevServerRef = useRef(serverPosition)
-  const prevLengthRef = useRef(trackLength)
+  const [syncKey, setSyncKey] = useState({ serverPosition, trackLength })
   const rafRef = useRef<number>(0)
   const lastFrameRef = useRef<number>(0)
+  const trackLengthRef = useRef(trackLength)
 
-  // Detect server value changes (position OR track length changed → new data)
+  // Detect server position changes during render (React-recommended pattern)
   if (
-    serverPosition !== prevServerRef.current ||
-    trackLength !== prevLengthRef.current
+    serverPosition !== syncKey.serverPosition ||
+    trackLength !== syncKey.trackLength
   ) {
-    prevServerRef.current = serverPosition
-    prevLengthRef.current = trackLength
-    lastFrameRef.current = 0 // Reset frame timing on server sync
+    setSyncKey({ serverPosition, trackLength })
     setPosition(serverPosition)
   }
 
-  const tick = useCallback(
-    (now: number) => {
-      if (lastFrameRef.current === 0) {
-        lastFrameRef.current = now
-        rafRef.current = requestAnimationFrame(tick)
-        return
-      }
-      const delta = now - lastFrameRef.current
-      lastFrameRef.current = now
-      setPosition((prev) => Math.min(prev + delta, trackLength))
-      rafRef.current = requestAnimationFrame(tick)
-    },
-    [trackLength],
-  )
+  // Keep trackLength ref in sync for the animation callback
+  useEffect(() => {
+    trackLengthRef.current = trackLength
+  }, [trackLength])
 
+  // Animation loop
   useEffect(() => {
     if (paused || trackLength <= 0) {
       cancelAnimationFrame(rafRef.current)
@@ -53,10 +39,23 @@ export function useOptimisticPosition(
       return
     }
 
-    lastFrameRef.current = 0 // Fresh start for animation timing
+    lastFrameRef.current = 0
+
+    function tick(now: number) {
+      if (lastFrameRef.current === 0) {
+        lastFrameRef.current = now
+        rafRef.current = requestAnimationFrame(tick)
+        return
+      }
+      const delta = now - lastFrameRef.current
+      lastFrameRef.current = now
+      setPosition((prev) => Math.min(prev + delta, trackLengthRef.current))
+      rafRef.current = requestAnimationFrame(tick)
+    }
+
     rafRef.current = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(rafRef.current)
-  }, [paused, trackLength, tick])
+  }, [paused, trackLength])
 
   return position
 }

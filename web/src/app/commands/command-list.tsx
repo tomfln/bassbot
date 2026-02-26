@@ -20,6 +20,7 @@ interface CommandInfo {
   name: string
   category: string
   description: string
+  detailDescription?: string
   options: CommandOption[]
 }
 
@@ -74,10 +75,10 @@ function CommandCard({
 
       {/* Header — always visible */}
       <button
-        onClick={command.options.length > 0 ? onToggle : undefined}
+        onClick={command.options.length > 0 || command.detailDescription ? onToggle : undefined}
         className={cn(
           "relative w-full text-left px-4 py-3 flex items-center gap-3",
-          command.options.length === 0 && "cursor-default",
+          command.options.length === 0 && !command.detailDescription && "cursor-default",
         )}
       >
         <div className="flex-1 min-w-0">
@@ -95,7 +96,7 @@ function CommandCard({
             {command.description}
           </p>
         </div>
-        {command.options.length > 0 && (
+        {(command.options.length > 0 || command.detailDescription) && (
           <ChevronRight
             className={cn(
               "h-4 w-4 text-muted-foreground/50 shrink-0 transition-transform duration-200",
@@ -105,61 +106,83 @@ function CommandCard({
         )}
       </button>
 
-      {/* Expanded detail */}
-      {isExpanded && command.options.length > 0 && (
-        <div className="relative px-4 pb-4 pt-1 border-t border-white/6">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/50 mb-2">
-            Parameters
-          </p>
-          <div className="space-y-2">
-            {command.options.map((opt) => (
-              <div
-                key={opt.name}
-                className="flex items-start gap-2.5 rounded-lg bg-background/80 /80 px-3 py-2"
-              >
-                <span
-                  className={cn(
-                    "text-[10px] font-mono px-1.5 py-0.5 rounded border shrink-0 mt-0.5",
-                    TYPE_COLORS[opt.type] ?? "bg-muted text-muted-foreground border-border",
-                  )}
-                >
-                  {opt.type}
-                </span>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-sm font-mono font-medium">{opt.name}</span>
-                    <div className="flex-1" />
-                    {opt.required && (
-                      <span className="text-[9px] font-semibold uppercase text-primary/70">
-                        required
+      {/* Expanded detail — CSS grid animation */}
+      {(command.options.length > 0 || command.detailDescription) && (
+        <div
+          className="grid transition-[grid-template-rows] duration-200 ease-out"
+          style={{ gridTemplateRows: isExpanded ? "1fr" : "0fr" }}
+        >
+          <div className="overflow-hidden">
+            <div
+              className={cn(
+                "px-4 pb-4 pt-1 border-t border-white/6 transition-opacity duration-200",
+                isExpanded ? "opacity-100" : "opacity-0",
+              )}
+            >
+              {command.detailDescription && (
+                <p className="text-sm text-muted-foreground mb-3">
+                  {command.detailDescription}
+                </p>
+              )}
+              {command.options.length > 0 && (
+                <>
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/50 mb-2">
+                    Parameters
+                  </p>
+                  <div className="space-y-1.5">
+                {command.options.map((opt) => (
+                  <div
+                    key={opt.name}
+                    className="rounded-lg bg-background/80 px-3 py-2"
+                  >
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span
+                        className={cn(
+                          "text-[10px] font-mono px-1.5 py-0.5 rounded border shrink-0",
+                          TYPE_COLORS[opt.type] ?? "bg-muted text-muted-foreground border-border",
+                        )}
+                      >
+                        {opt.type}
                       </span>
+                      <span className="text-sm font-mono font-medium">{opt.name}</span>
+                      {opt.description && (
+                        <>
+                          <span className="text-muted-foreground/40">—</span>
+                          <span className="text-xs text-muted-foreground">{opt.description}</span>
+                        </>
+                      )}
+                      <div className="flex-1" />
+                      {(opt.minValue != null || opt.maxValue != null) && (
+                        <span className="text-[11px] text-muted-foreground font-mono">
+                          {opt.minValue != null && `min: ${opt.minValue}`}
+                          {opt.minValue != null && opt.maxValue != null && " · "}
+                          {opt.maxValue != null && `max: ${opt.maxValue}`}
+                        </span>
+                      )}
+                      {opt.required && (
+                        <span className="text-[10px] font-semibold uppercase text-primary/70">
+                          required
+                        </span>
+                      )}
+                    </div>
+                    {opt.choices && (
+                      <div className="flex flex-wrap gap-1 mt-1.5 ml-[calc(0.5rem+3ch+0.5rem+0.5rem)]">
+                        {opt.choices.map((c) => (
+                          <span
+                            key={String(c.value)}
+                            className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-primary/10 text-primary/80 border border-primary/15"
+                          >
+                            {c.name}
+                          </span>
+                        ))}
+                      </div>
                     )}
                   </div>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {opt.description}
-                  </p>
-                  {opt.choices && (
-                    <div className="flex flex-wrap gap-1 mt-1.5">
-                      {opt.choices.map((c) => (
-                        <span
-                          key={String(c.value)}
-                          className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-primary/10 text-primary/80 border border-primary/15"
-                        >
-                          {c.name}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  {(opt.minValue != null || opt.maxValue != null) && (
-                    <p className="text-[10px] text-muted-foreground/60 mt-1 font-mono">
-                      {opt.minValue != null && `min: ${opt.minValue}`}
-                      {opt.minValue != null && opt.maxValue != null && " · "}
-                      {opt.maxValue != null && `max: ${opt.maxValue}`}
-                    </p>
-                  )}
-                </div>
-              </div>
-            ))}
+                ))}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
       )}

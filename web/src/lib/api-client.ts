@@ -1,8 +1,8 @@
 "use client"
 
 import { treaty } from "@elysiajs/eden"
-import type { App as BotApp } from "@server/api"
-import type { App as RestApp } from "@/lib/server"
+import type { App as BotApi } from "@bot/api"
+import type { App as DashApi } from "@/lib/server"
 
 declare global {
   interface Window {
@@ -12,8 +12,13 @@ declare global {
 
 /* ── URL helpers ──────────────────────────────────────────── */
 
-const origin = typeof window !== "undefined" ? window.location.origin : ""
-const botUrl = typeof window !== "undefined" ? (window.__BOT_API_URL__ || origin) : ""
+// use env var if defined, otherwise in dev, use port 3001, in prod use same origin
+const isDev = process.env.NODE_ENV === "development"
+const win = typeof window !== "undefined" ? window : null
+const origin = win?.location.origin || ""
+const botUrl = isDev
+ ? win ? `http://${win.location.hostname}:3001` : ""
+ : win?.__BOT_API_URL__ || origin
 
 /** Bot API URL for non-treaty use (e.g. WebSocket). */
 export const BOT_API_URL = botUrl
@@ -26,7 +31,7 @@ let _jwtExpiry = 0
 async function getJwt(): Promise<string | null> {
   if (_jwt && Date.now() < _jwtExpiry - 60_000) return _jwt
   try {
-    const { data } = await rest.rest.jwt.get()
+    const { data } = await webApi.jwt.get()
     if (!data?.token) return null
     _jwt = data.token
     const parts = data.token.split(".")
@@ -43,7 +48,7 @@ async function getJwt(): Promise<string | null> {
 /* ── Static treaty clients ────────────────────────────────── */
 
 /** Bot API (Elysia on the Discord bot) — authenticated via JWT. */
-export const bot = treaty<BotApp>(botUrl, {
+export const botApi = treaty<BotApi>(`${botUrl}/api`, {
   headers: async () => {
     const jwt = await getJwt()
     return jwt ? { authorization: `Bearer ${jwt}` } : {}
@@ -51,4 +56,4 @@ export const bot = treaty<BotApp>(botUrl, {
 })
 
 /** REST API (Elysia inside Next.js at /rest). */
-export const rest = treaty<RestApp>(origin)
+export const webApi = treaty<DashApi>(`${origin}/rest`)

@@ -4,11 +4,12 @@ import { useState, useMemo } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { GuildCard } from "@/components/guild-card"
-import { usePlayers, useUserGuilds } from "@/hooks/use-api"
+import { usePlayers, useStats, useUserGuilds } from "@/hooks/use-api"
 import {
   Server,
   Search,
   X,
+  Plus,
 } from "lucide-react"
 
 /* ── User guilds page ─────────────────────────────────────── */
@@ -17,6 +18,11 @@ export default function UserGuildsPage() {
   const [search, setSearch] = useState("")
   const { data: userGuildsData, isLoading } = useUserGuilds()
   const { data: players } = usePlayers()
+  const { data: stats } = useStats()
+
+  const inviteUrl = stats?.botId
+    ? `https://discord.com/oauth2/authorize?client_id=${stats.botId}&permissions=36703360&scope=bot+applications.commands`
+    : null
 
   // Build player map for quick lookup
   const playerMap = useMemo(() => {
@@ -57,13 +63,24 @@ export default function UserGuildsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="min-h-12 flex items-center">
+      <div className="min-h-12 flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">All Guilds</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
             Servers you share with bassbot
           </p>
         </div>
+        {inviteUrl && (
+          <a
+            href={inviteUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors shrink-0"
+          >
+            <Plus className="h-4 w-4" />
+            Add to Server
+          </a>
+        )}
       </div>
 
       {/* Search */}

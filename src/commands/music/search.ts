@@ -10,6 +10,7 @@ function abbreviateString(str: string, maxLen: number) {
 
 export default createCommand({
   description: "Search for a song.",
+  detailDescription: "Searches for a song and shows the top results. Pick from the list to add it to the queue, with the option to play it next or at the end.",
   options: buildOptions()
     .string({
       name: "query",

@@ -9,6 +9,7 @@ import getOrCreateGuildOpts from "@/middlewares/getOrCreateGuildOpts"
 
 export default createCommand({
   description: "Bind the bot to a voice or text channel.",
+  detailDescription: "Restricts the bot to specific text and voice channels. When bound, the bot will only accept commands in the bound text channel and only join the bound voice channel.",
   options: buildOptions()
     .subcommand({
       name: "add",

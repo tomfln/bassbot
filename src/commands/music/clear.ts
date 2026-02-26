@@ -4,6 +4,7 @@ import { log } from "@/util/activity-log"
 
 export default createCommand({
   description: "Remove all songs from the queue",
+  detailDescription: "Removes all songs from the queue at once. The currently playing song will continue until it ends or is skipped.",
 
   middleware: m => m.use(requireQueue),
 

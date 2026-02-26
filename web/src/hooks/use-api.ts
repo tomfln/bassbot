@@ -1,7 +1,7 @@
 "use client"
 
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query"
-import { bot, rest } from "@/lib/api-client"
+import { botApi, webApi } from "@/lib/api-client"
 
 /* ── Helpers ──────────────────────────────────────────────── */
 
@@ -22,7 +22,7 @@ function unwrap<T>(result: { data: T | null; error: unknown }): NonNullable<T> {
 export function useStats() {
   return useQuery({
     queryKey: ["stats"],
-    queryFn: async () => unwrap(await bot.api.stats.get()),
+    queryFn: async () => unwrap(await botApi.stats.get()),
     staleTime: Infinity,
   })
 }
@@ -32,7 +32,7 @@ export function useStats() {
 export function usePlayers() {
   return useQuery({
     queryKey: ["players"],
-    queryFn: async () => unwrap(await bot.api.players.get()),
+    queryFn: async () => unwrap(await botApi.players.get()),
     staleTime: Infinity,
   })
 }
@@ -47,7 +47,7 @@ export function usePlayer(
     queryKey: ["player", guildId, ql, hl],
     queryFn: async () =>
       unwrap(
-        await bot.api.players({ guildId: guildId! })
+        await botApi.players({ guildId: guildId! })
           .get({ query: { ql: String(ql), hl: String(hl) } }),
       ),
     enabled: !!guildId,
@@ -68,7 +68,7 @@ export function usePlayerQueue(
     queryKey: ["player-queue", guildId, offset, limit],
     queryFn: async () =>
       unwrap(
-        await bot.api.players({ guildId: guildId! })
+        await botApi.players({ guildId: guildId! })
           .queue.get({ query: { offset: String(offset), limit: String(limit) } }),
       ),
     enabled: !!guildId && offset > 0,
@@ -85,7 +85,7 @@ export function usePlayerHistory(
     queryKey: ["player-history", guildId, offset, limit],
     queryFn: async () =>
       unwrap(
-        await bot.api.players({ guildId: guildId! })
+        await botApi.players({ guildId: guildId! })
           .history.get({ query: { offset: String(offset), limit: String(limit) } }),
       ),
     enabled: !!guildId && offset > 0,
@@ -98,7 +98,7 @@ export function usePlayerHistory(
 export function useGuilds() {
   return useQuery({
     queryKey: ["guilds"],
-    queryFn: async () => unwrap(await bot.api.guilds.get()),
+    queryFn: async () => unwrap(await botApi.guilds.get()),
     staleTime: Infinity,
   })
 }
@@ -112,7 +112,7 @@ export function useGuild(
     queryKey: ["guild", guildId, ml],
     queryFn: async () =>
       unwrap(
-        await bot.api.guilds({ guildId: guildId! })
+        await botApi.guilds({ guildId: guildId! })
           .get({ query: { ml: String(ml) } }),
       ),
     enabled: !!guildId,
@@ -132,7 +132,7 @@ export function useGuildMembers(
     queryKey: ["guild-members", guildId, offset, limit, search],
     queryFn: async () =>
       unwrap(
-        await bot.api.guilds({ guildId: guildId! })
+        await botApi.guilds({ guildId: guildId! })
           .members.get({
             query: {
               offset: String(offset),
@@ -152,7 +152,7 @@ export function useGlobalLogs(limit = 50) {
   return useQuery({
     queryKey: ["global-logs", limit],
     queryFn: async () =>
-      unwrap(await bot.api.logs.get({ query: { limit: String(limit) } })),
+      unwrap(await botApi.logs.get({ query: { limit: String(limit) } })),
     staleTime: Infinity,
   })
 }
@@ -162,7 +162,7 @@ export function useGuildLogs(guildId: string | undefined, limit = 50) {
     queryKey: ["guild-logs", guildId, limit],
     queryFn: async () =>
       unwrap(
-        await bot.api.logs({ guildId: guildId! })
+        await botApi.logs({ guildId: guildId! })
           .get({ query: { limit: String(limit) } }),
       ),
     enabled: !!guildId,
@@ -175,7 +175,7 @@ export function useGuildLogs(guildId: string | undefined, limit = 50) {
 export function useBotSettings() {
   return useQuery({
     queryKey: ["bot-settings"],
-    queryFn: async () => unwrap(await bot.api.control.settings.get()),
+    queryFn: async () => unwrap(await botApi.control.settings.get()),
     staleTime: Infinity,
   })
 }
@@ -184,7 +184,7 @@ export function useUpdateBotSettings() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async (patch: { commandsEnabled?: boolean; slogans?: string[] }) => {
-      const result = await bot.api.control.settings.patch(patch)
+      const result = await botApi.control.settings.patch(patch)
       return unwrap(result)
     },
     onSuccess: (data) => {
@@ -199,7 +199,7 @@ export function useDestroyPlayer(guildId: string) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async () => {
-      return unwrap(await bot.api.players({ guildId }).delete())
+      return unwrap(await botApi.players({ guildId }).delete())
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["players"] })
@@ -213,7 +213,7 @@ export function useClearQueue(guildId: string) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async () => {
-      return unwrap(await bot.api.players({ guildId }).clear.post())
+      return unwrap(await botApi.players({ guildId }).clear.post())
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["player", guildId] })
@@ -225,8 +225,8 @@ export function useClearQueue(guildId: string) {
 
 async function fetchUserGuilds() {
   const [userRes, botRes] = await Promise.all([
-    rest.rest["my-guilds"].get(),
-    bot.api.guilds.get(),
+    webApi["my-guilds"].get(),
+    botApi.guilds.get(),
   ])
   const guilds = userRes.data?.guilds ?? []
   const botGuilds = botRes.data ?? []
@@ -250,7 +250,7 @@ export function useLeaveGuild(guildId: string) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async () => {
-      return unwrap(await bot.api.guilds({ guildId }).delete())
+      return unwrap(await botApi.guilds({ guildId }).delete())
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["guilds"] })

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 import {
-  Users,
   MoreVertical,
   Shield,
   ShieldOff,
@@ -178,110 +177,99 @@ export default function AdminUsersPage() {
       </div>
 
       {/* User list */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Users className="h-4 w-4 text-muted-foreground" />
-            All Users
-          </CardTitle>
-          <CardDescription>
-            Manage web dashboard users, roles, and bans.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="p-0">
-          {filtered.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">
-              {search ? "No users match your search." : "No users registered yet."}
-            </p>
-          ) : (
-            <div className="divide-y divide-border/50">
-              {filtered.map((u) => (
-                <div
-                  key={u.id}
-                  className={cn(
-                    "flex items-center gap-3 px-4 py-3 sm:px-6",
-                    u.banned && "opacity-60",
-                  )}
-                >
-                  <Avatar className="h-9 w-9 shrink-0">
-                    <AvatarImage src={u.image ?? undefined} />
-                    <AvatarFallback className="text-xs">
-                      {u.name?.slice(0, 2).toUpperCase() ?? "??"}
-                    </AvatarFallback>
-                  </Avatar>
+      {filtered.length === 0 ? (
+        <p className="text-sm text-muted-foreground text-center py-12">
+          {search ? "No users match your search." : "No users registered yet."}
+        </p>
+      ) : (
+        <div className="grid gap-2">
+          {filtered.map((u) => (
+            <Card
+              key={u.id}
+              className={cn(
+                "py-0 gap-0",
+                u.banned && "opacity-60",
+              )}
+            >
+              <CardContent className="flex items-center gap-3 px-4 py-3 sm:px-5">
+                <Avatar className="h-9 w-9 shrink-0">
+                  <AvatarImage src={u.image ?? undefined} />
+                  <AvatarFallback className="text-xs">
+                    {u.name?.slice(0, 2).toUpperCase() ?? "??"}
+                  </AvatarFallback>
+                </Avatar>
 
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium truncate">{u.name}</span>
-                      {u.role === "admin" && (
-                        <Badge variant="default" className="text-[10px] px-1.5 py-0">
-                          <Shield className="h-2.5 w-2.5 mr-0.5" />
-                          Admin
-                        </Badge>
-                      )}
-                      {u.banned && (
-                        <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
-                          <Ban className="h-2.5 w-2.5 mr-0.5" />
-                          Banned
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="text-xs text-muted-foreground truncate">{u.email}</p>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium truncate">{u.name}</span>
+                    {u.role === "admin" && (
+                      <Badge variant="default" className="text-[10px] px-1.5 py-0">
+                        <Shield className="h-2.5 w-2.5 mr-0.5" />
+                        Admin
+                      </Badge>
+                    )}
+                    {u.banned && (
+                      <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
+                        <Ban className="h-2.5 w-2.5 mr-0.5" />
+                        Banned
+                      </Badge>
+                    )}
                   </div>
+                  <p className="text-xs text-muted-foreground truncate">{u.email}</p>
+                </div>
 
-                  <span className="text-xs text-muted-foreground hidden sm:block whitespace-nowrap">
-                    {formatDate(u.createdAt)}
-                  </span>
+                <span className="text-xs text-muted-foreground hidden sm:block whitespace-nowrap">
+                  {formatDate(u.createdAt)}
+                </span>
 
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      {u.role === "admin" ? (
-                        <DropdownMenuItem onClick={() => setDialogAction({ type: "demote", user: u })}>
-                          <ShieldOff className="h-4 w-4 mr-2" />
-                          Demote to User
-                        </DropdownMenuItem>
-                      ) : (
-                        <DropdownMenuItem onClick={() => setDialogAction({ type: "promote", user: u })}>
-                          <ShieldCheck className="h-4 w-4 mr-2" />
-                          Promote to Admin
-                        </DropdownMenuItem>
-                      )}
-                      <DropdownMenuSeparator />
-                      {u.banned ? (
-                        <DropdownMenuItem onClick={() => setDialogAction({ type: "unban", user: u })}>
-                          <ShieldCheck className="h-4 w-4 mr-2" />
-                          Unban
-                        </DropdownMenuItem>
-                      ) : (
-                        <DropdownMenuItem
-                          variant="destructive"
-                          onClick={() => setDialogAction({ type: "ban", user: u })}
-                        >
-                          <Ban className="h-4 w-4 mr-2" />
-                          Ban
-                        </DropdownMenuItem>
-                      )}
-                      <DropdownMenuSeparator />
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    {u.role === "admin" ? (
+                      <DropdownMenuItem onClick={() => setDialogAction({ type: "demote", user: u })}>
+                        <ShieldOff className="h-4 w-4 mr-2" />
+                        Demote to User
+                      </DropdownMenuItem>
+                    ) : (
+                      <DropdownMenuItem onClick={() => setDialogAction({ type: "promote", user: u })}>
+                        <ShieldCheck className="h-4 w-4 mr-2" />
+                        Promote to Admin
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuSeparator />
+                    {u.banned ? (
+                      <DropdownMenuItem onClick={() => setDialogAction({ type: "unban", user: u })}>
+                        <ShieldCheck className="h-4 w-4 mr-2" />
+                        Unban
+                      </DropdownMenuItem>
+                    ) : (
                       <DropdownMenuItem
                         variant="destructive"
-                        onClick={() => setDialogAction({ type: "delete", user: u })}
+                        onClick={() => setDialogAction({ type: "ban", user: u })}
                       >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Delete User
+                        <Ban className="h-4 w-4 mr-2" />
+                        Ban
                       </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                    )}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      variant="destructive"
+                      onClick={() => setDialogAction({ type: "delete", user: u })}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete User
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
       {/* Confirm dialog */}
       <ConfirmDialog

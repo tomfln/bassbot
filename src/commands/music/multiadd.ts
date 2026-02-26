@@ -10,6 +10,7 @@ import { createReplyHelper } from "@bot/reply"
 
 export default createCommand({
   description: "Add multiple songs to the queue from a list",
+  detailDescription: "Opens a form where you can paste multiple song names or URLs, one per line. All songs will be searched and added to the queue at once.",
   options: buildOptions().build(),
 
   validators: [isInGuild(), isBoundChannel(), isInBoundVC()],

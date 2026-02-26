@@ -4,6 +4,7 @@ import { log } from "@/util/activity-log"
 
 export default createCommand({
   description: "Remove one or many songs from the queue",
+  detailDescription: "Removes one or more songs from the queue by position. You can specify a range to remove multiple songs at once.",
   options: buildOptions()
     .integer({
       name: "position",

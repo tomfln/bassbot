@@ -5,6 +5,7 @@ import { log } from "@/util/activity-log"
 
 export default createCommand({
   description: "Plays the previous song in the queue",
+  detailDescription: "Goes back to the previously played song. Returns to the track that was playing before the current one.",
   sources: { command: true, button: true },
   
   validators: [isInGuild()],

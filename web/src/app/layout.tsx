@@ -12,9 +12,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  const apiUrl = process.env.NODE_ENV === "development"
-    ? "http://localhost:3001"
-    : process.env.API_URL ?? "" // empty string makes the frontend use the web host as api url
+  const apiUrl = process.env.API_URL ?? "" // empty string makes the frontend use the web host as api url
 
   return (
     <html lang="en" className="dark">

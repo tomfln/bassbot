@@ -4,6 +4,7 @@ import { log } from "@/util/activity-log"
 
 export default createCommand({
   description: "Pauses the player",
+  detailDescription: "Pauses the currently playing song. The playback position is saved so you can resume from where you left off with /resume.",
   sources: { command: true, button: true },
 
   middleware: m => m.use(requirePlayer),

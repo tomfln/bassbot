@@ -16,7 +16,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { formatDuration } from "@/lib/format"
-import { bot } from "@/lib/api-client"
+import { botApi } from "@/lib/api-client"
 import {
   Pause,
   Play,
@@ -67,7 +67,7 @@ export function PlayBar({
     setLoading(action)
     setError(null)
     try {
-      const api = bot.api.players({ guildId })
+      const api = botApi.players({ guildId })
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const res = await (api as any)[action].post()
       if (res.error) {
@@ -88,7 +88,7 @@ export function PlayBar({
       if (debounceRef.current) clearTimeout(debounceRef.current)
       debounceRef.current = setTimeout(async () => {
         try {
-          await bot.api.players({ guildId }).volume.post({ volume: vol })
+          await botApi.players({ guildId }).volume.post({ volume: vol })
         } catch {
           /* ignore — not critical */
         }
@@ -131,7 +131,7 @@ export function PlayBar({
     if (!query.trim()) return
     setSearching(true)
     try {
-      const { data } = await bot.api.players({ guildId })
+      const { data } = await botApi.players({ guildId })
         .search.get({ query: { q: query.trim() } })
       if (data && "results" in data) {
         setResults((data as { results: typeof results }).results ?? [])
@@ -146,7 +146,7 @@ export function PlayBar({
   async function addTrack(uri: string, position: "next" | "end" = "end") {
     setAdding(uri)
     try {
-      const { error } = await bot.api.players({ guildId })
+      const { error } = await botApi.players({ guildId })
         .queue.post({ uri, position })
       if (!error) {
         onRefresh()

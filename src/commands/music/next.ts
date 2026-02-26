@@ -4,6 +4,7 @@ import { log } from "@/util/activity-log"
 
 export default createCommand({
   description: "Plays the next song in the queue",
+  detailDescription: "Skips to the next song in the queue. You can optionally specify a position to skip directly to a specific song in the queue.",
   sources: { command: true, button: true },
 
   options: buildOptions()

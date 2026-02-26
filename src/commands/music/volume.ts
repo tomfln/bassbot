@@ -5,6 +5,7 @@ import { log } from "@/util/activity-log"
 
 export default createCommand({
   description: "Sets the volume of the music player.",
+  detailDescription: "Adjusts the playback volume between 0 and 100. The default volume is 100. Changes take effect immediately on the current and future tracks.",
   options: buildOptions()
     .integer({
       name: "value",

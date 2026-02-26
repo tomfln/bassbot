@@ -6,6 +6,7 @@ import isBoundChannel from "@/validators/isBoundChannel"
 
 export default createCommand({
   description: "Get information about the current song",
+  detailDescription: "Shows detailed information about the currently playing song including title, artist, duration, source platform, and a link to the original.",
   options: buildOptions()
     .integer({
       name: "position",

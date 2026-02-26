@@ -5,6 +5,7 @@ import { log } from "@/util/activity-log"
 
 export default createCommand({
   description: "Seek to the specified time in the current song",
+  detailDescription: "Jumps to a specific time in the currently playing song. Accepts timestamps like 1:30, 90, or 1m30s. Cannot seek beyond the song's duration.",
   options: buildOptions()
     .string({
       name: "time",

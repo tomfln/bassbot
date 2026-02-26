@@ -8,6 +8,7 @@ import { ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags, type Intera
 
 export default createCommand({
   description: "View a list of songs in the queue",
+  detailDescription: "Displays the current queue of songs with titles, artists, and positions. Results are paginated with 10 songs per page.",
   sources: { command: true, button: true },
   options: buildOptions()
     .integer({

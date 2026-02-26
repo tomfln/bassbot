@@ -8,6 +8,7 @@ import {
   DndContext,
   closestCenter,
   PointerSensor,
+  TouchSensor,
   useSensor,
   useSensors,
   type DragEndEvent,
@@ -48,8 +49,11 @@ export function TrackRow({
   onPlayNext?: () => void
   showDragHandle?: boolean
 }) {
+  const [menuOpen, setMenuOpen] = useState(false)
+
   return (
     <div
+      onContextMenu={(onRemove || onPlayNext) ? (e) => { e.preventDefault(); setMenuOpen(true) } : undefined}
       className={`group flex items-center gap-2 px-2.5 py-2 rounded-lg border ${
         active
           ? "bg-primary/10 border-primary/20"
@@ -85,7 +89,7 @@ export function TrackRow({
         {formatDuration(track.length)}
       </span>
       {(onRemove || onPlayNext) && (
-        <DropdownMenu modal={false}>
+        <DropdownMenu modal={false} open={menuOpen} onOpenChange={setMenuOpen}>
           <DropdownMenuTrigger asChild>
             <button
               className="shrink-0 p-0.5 rounded text-muted-foreground hover:text-foreground transition-colors"
@@ -133,6 +137,7 @@ function SortableTrack({
   onRemove?: () => void
   onPlayNext?: () => void
 }) {
+  const [menuOpen, setMenuOpen] = useState(false)
   const {
     attributes,
     listeners,
@@ -155,13 +160,14 @@ function SortableTrack({
   return (
     <div ref={setNodeRef} style={style} {...attributes}>
       <div
-        className={`group flex items-center gap-2 px-2.5 py-2 rounded-lg border ${
+        onContextMenu={(onRemove || onPlayNext) ? (e) => { e.preventDefault(); setMenuOpen(true) } : undefined}
+        className={`group flex items-center gap-2 px-2.5 py-2 rounded-lg border scope-hover ${
           active
             ? "bg-primary/10 border-primary/20"
             : "bg-card border-border hover:bg-accent/50"
         }`}
       >
-        <div {...listeners} className="shrink-0 cursor-grab active:cursor-grabbing">
+        <div {...listeners} onContextMenu={(e: React.MouseEvent) => e.preventDefault()} className="shrink-0 cursor-grab active:cursor-grabbing">
           <GripVertical className="h-4 w-4 text-muted-foreground/50" />
         </div>
         <span className="text-xs text-muted-foreground w-4 text-center shrink-0">
@@ -193,7 +199,7 @@ function SortableTrack({
           {formatDuration(track.length)}
         </span>
         {(onRemove || onPlayNext) && (
-          <DropdownMenu modal={false}>
+          <DropdownMenu modal={false} open={menuOpen} onOpenChange={setMenuOpen}>
             <DropdownMenuTrigger asChild>
               <button
                 className="shrink-0 p-0.5 rounded text-muted-foreground hover:text-foreground transition-colors"
@@ -251,6 +257,7 @@ export function TrackList({
   const remaining = (total ?? tracks.length) - tracks.length
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } }),
   )
 
   // Optimistic local state — immediately reflects reorder without waiting for server

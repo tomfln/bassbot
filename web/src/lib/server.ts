@@ -58,7 +58,7 @@ async function getDiscordAccessToken(userId: string): Promise<string | null> {
   return acct?.accessToken ?? null
 }
 
-const app = new Elysia({ prefix: "/rest" })
+const routes = new Elysia()
   // Forward auth requests to BetterAuth (preserve original request URL)
   .all("/auth/*", async ({ request }) => auth.handler(request))
 
@@ -234,5 +234,7 @@ const app = new Elysia({ prefix: "/rest" })
     return { success: true }
   })
 
+const app = new Elysia({ prefix: "/rest" }).use(routes)
+
 export default app
-export type App = typeof app
+export type App = typeof routes

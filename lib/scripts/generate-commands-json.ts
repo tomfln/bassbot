@@ -37,6 +37,7 @@ interface CommandInfo {
   name: string
   category: string
   description: string
+  detailDescription?: string
   options: CommandOption[]
 }
 
@@ -78,7 +79,7 @@ async function main() {
           return o
         })
 
-        commands.push({ name, category, description, options })
+        commands.push({ name, category, description, ...(cmd.detailDescription ? { detailDescription: cmd.detailDescription } : {}), options })
         console.log(`  ✓ ${category}/${name}`)
       } catch (err) {
         console.warn(`  ⚠ Failed: ${category}/${name}: ${(err as Error).message}`)

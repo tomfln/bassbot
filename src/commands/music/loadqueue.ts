@@ -24,6 +24,7 @@ function abbreviate(str: string, maxLen: number) {
 
 export default createCommand({
   description: "Load a recently played queue",
+  detailDescription: "Restores a previously played queue from the server's history. Select from the list and songs will be added to your current queue. Any currently queued songs will remain.",
 
   validators: [isBoundChannel(), isInGuild(), isInVC()],
 

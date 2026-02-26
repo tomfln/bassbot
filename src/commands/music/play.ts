@@ -7,6 +7,7 @@ import { log } from "@/util/activity-log"
 
 export default createCommand({
   description: "Play a song.",
+  detailDescription: "Plays a song by name or URL. Supports YouTube, Spotify, SoundCloud, and direct links. If a playlist URL is provided, all songs will be added to the queue.",
   options: buildOptions()
     .string({
       name: "song",

@@ -5,6 +5,7 @@ import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js"
 
 export default createCommand({
   description: "Create a Watch2Gether room.",
+  detailDescription: "Creates a Watch2Gether room where you and your friends can watch videos together in sync. Optionally provide a URL to start watching immediately.",
   options: buildOptions()
     .string({
       name: "url",

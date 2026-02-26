@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { usePlayer, useGuildLogs } from "@/hooks/use-api"
-import { bot } from "@/lib/api-client"
+import { botApi } from "@/lib/api-client"
 import { ActivityLog } from "@/components/activity-log"
 import { TrackList } from "@/components/track-list"
 import { PlayBar } from "@/components/play-bar"
@@ -56,7 +56,7 @@ export default function UserPlayerPage({
   const handleQueueReorder = useCallback(
     async (from: number, to: number) => {
       try {
-        await bot.api.players({ guildId }).queue.move.post({ from, to })
+        await botApi.players({ guildId }).queue.move.post({ from, to })
         refetch()
       } catch {
         /* ignore */
@@ -68,7 +68,7 @@ export default function UserPlayerPage({
   const handleQueueRemove = useCallback(
     async (index: number) => {
       try {
-        await bot.api.players({ guildId }).queue.remove.post({ index })
+        await botApi.players({ guildId }).queue.remove.post({ index })
         refetch()
       } catch {
         /* ignore */
@@ -81,7 +81,7 @@ export default function UserPlayerPage({
     async (index: number) => {
       if (index === 0) return // already first
       try {
-        await bot.api.players({ guildId }).queue.move.post({ from: index, to: 0 })
+        await botApi.players({ guildId }).queue.move.post({ from: index, to: 0 })
         refetch()
       } catch {
         /* ignore */

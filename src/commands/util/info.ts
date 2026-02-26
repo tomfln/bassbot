@@ -4,6 +4,7 @@ import { EmbedBuilder } from "discord.js"
 
 export default createCommand({
   description: "Shows basic information about the bot.",
+  detailDescription: "Displays information about the bot including version, uptime, memory usage, server count, and the number of active music players.",
 
   run: async ({ i, bot }) => {
     const memUsage = (process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2)

@@ -40,13 +40,26 @@
 - [x] instead make sure the buttons in all popups have this style change: when they are danger buttons, they
 - [x] /guilds/<id> page takes too long to load and somehow sends two requests to /api/players/<id>?ql=20&hl=10 that fail in 404's.
 - [x] make sure all buttons in the sidebar have the same height. the server buttons get larger when a song is displayed in them as well, while the add to server button is always smaller. make the song text smaller so it fits and make the add to server button match the height.
-- [ ] make user list have individual cards for each user not one around all
-- [ ] fix bot info in admin sidebar, remove bot and signed in labels
-- [ ] fix extra spacing between servers and add to server button in user dash
-- [ ] player cards overflow when showing long songs on mobile
-- [ ] unify admin dash and user dash links
-- [ ] move bass logo text over sidebar on desktop (maybe show bot icon in top left of sidebar plus name)
-- [ ] add divider between commands and guilds in user dash
-- [ ] animate command opening
-- [ ] add longer descriptions to all commands that can show on expanding
-- [ ] clean up param styles and min conditions text to be more readable
+- [x] make user list have individual cards for each user not one around all (everywhere!)
+- [x] fix bot info in admin sidebar: remove bot and signed in labels, add primary color border and background gradient like active navlinks in the sidebar
+- [x] fix extra spacing between servers and add to server button in user dash
+- [x] make add to server button gray/white not green
+- [x] player cards overflow horizontally when showing long songs on mobile -> ellipsis cutoff
+- [x] unify admin dash and user dash link buttons, both should be like the admin dash link in the user dash.
+- [x] move bass logo text over sidebar on desktop, make sure to keep spacing from top of window to sidebar the same though.
+- [x] add bot pfp and name to the top of the sidebar for users and admins on desktop and mobile too
+- [x] add divider between commands and guilds in user dash
+- [x] animate command opening using css only approach with grid to animate from 0 height to auto and fade in the content
+- [x] add longer descriptions to all commands that can show when expanding them, bring back expand button for commands that dont have options to show the long description
+- [x] clean up param styles and min conditions text to be more readable (text too small and too low-opacity, also it should be next to the param name not below the content to not inflate the vertical size too much)
+- [x] fix dnd on mobile not working (starts draggin for a split-second but then just scrolls the page instead)
+- [x] mobile long press to show song options instead of three dot menu?
+
+
+- [x] add cta to invite bot to server in all guilds page as primary button, remove button from sidebar.
+- [x] reuse bot info card in both user and admin dash, use the design thats currently in the admin dash but remove the server count from it. also make sure the user sidebar has the same spacing between bot info card and sidebar nav items.
+- [x] unify elysia code, use plugins/guards for shared logic, separate api routes into separate files and dont mix with other lib files.
+- [x] remove .rest. prefix from api calls or .api. we want two treaty instances, botApi that always adds /api/ to its calls, and webApi that always adds /rest/ to its calls.
+- [x] use @bot and @web aliases for imports
+- [ ] maybe move to turborepo with apps/web and apps/bot structure?
+- [x] move user dashboard link in admin sidebar to bottom, remove separator before it.

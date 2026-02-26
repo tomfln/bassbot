@@ -6,6 +6,7 @@ import { log } from "@/util/activity-log"
 
 export default createCommand({
   description: "Stops the player and quits the voice channel",
+  detailDescription: "Stops playback, clears the queue, and disconnects the bot from the voice channel. This completely ends the listening session.",
 
   validators: [isBoundChannel(), isInBoundVC()],
   middleware: m => m.use(requirePlayer),

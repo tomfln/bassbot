@@ -12,6 +12,7 @@ const loopModeSchema = z.string().refine(isValidLoopMode)
 
 export default createCommand({
   description: "Change the Loop Mode",
+  detailDescription: "Changes how the queue repeats. Off plays through once, Track repeats the current song, and Queue loops the entire playlist back to the start when it ends.",
   options: buildOptions()
     .string({
       name: "mode",

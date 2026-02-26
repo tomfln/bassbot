@@ -4,6 +4,7 @@ import { log } from "@/util/activity-log"
 
 export default createCommand({
   description: "Move a track in the queue to a different position",
+  detailDescription: "Moves a song from one position to another in the queue. Specify the current position and the target position to rearrange without removing and re-adding songs.",
   options: buildOptions()
     .integer({
       name: "from",

@@ -1,28 +1,16 @@
-import { Elysia, status, t } from "elysia"
-import { cors } from "@elysiajs/cors"
-import { jwtVerify } from "jose"
-import type { BassBot } from "./bot"
-import type { PlayerWithQueue } from "./player"
+import { Elysia, status } from "elysia"
+import type { BassBot } from "../../bot"
+import type { PlayerWithQueue } from "../../player"
 import { LoadType, type Track } from "shoukaku"
-import { getGlobalLog, getGuildLog } from "./util/activity-log"
-import { cache } from "./util/api-cache"
-import { addWsClient, removeWsClient } from "./util/broadcast"
-import { resolveSong } from "./util/song-search"
-import logger from "@bot/logger"
-import { join } from "node:path"
-import { readFileSync } from "node:fs"
-
-const pkg = JSON.parse(readFileSync(join(import.meta.dir, "..", "package.json"), "utf-8")) as { version: string }
+import { cache } from "../../util/api-cache"
+import { resolveSong } from "../../util/song-search"
+import { verifyJwt, verifyUserInVC } from "../auth"
 
 /* ── Cache TTLs (ms) ─────────────────────────────────────── */
 
 const TTL = {
-  STATS:        30_000,
   PLAYER_LIST:   5_000,
   PLAYER_DETAIL: 2_000,
-  GUILD_LIST:   30_000,
-  GUILD_DETAIL: 10_000,
-  LOGS:          5_000,
 } as const
 
 /* ── Serializers ──────────────────────────────────────────── */
@@ -116,42 +104,10 @@ function playerDetail(
   }
 }
 
-/* ── API ──────────────────────────────────────────────────── */
+/* ── Routes ───────────────────────────────────────────────── */
 
-function createRoutes(bot: BassBot) {
+export function playerRoutes(bot: BassBot) {
   return new Elysia()
-
-    /* ── WebSocket for push updates ─────────────────────── */
-    .ws("/ws", {
-      open(ws) {
-        addWsClient(ws)
-      },
-      close(ws) {
-        removeWsClient(ws)
-      },
-      message() {
-        // Client→server messages not used; all updates are server-pushed
-      },
-    })
-
-    /* ── Stats — rarely changes ─────────────────────────── */
-    .get("/stats", () =>
-      cache.resolve("stats", TTL.STATS, () => {
-        const players = [...bot.lava.players.values()] as PlayerWithQueue[]
-        return {
-          botName: bot.user?.displayName ?? "bassbot",
-          botAvatar: bot.user?.displayAvatarURL({ size: 64 }) ?? null,
-          botId: bot.user?.id ?? null,
-          version: pkg.version,
-          guildCount: bot.guilds.cache.size,
-          userCount: bot.guilds.cache.reduce((a, g) => a + g.memberCount, 0),
-          activePlayers: players.filter((p) => p.current).length,
-          totalPlayers: players.length,
-          uptime: process.uptime(),
-          lavalinkNodes: bot.lava.nodes.size,
-        }
-      }),
-    )
 
     /* ── Player list — summary only ─────────────────────── */
     .get("/players", () =>
@@ -199,136 +155,7 @@ function createRoutes(bot: BassBot) {
       }
     })
 
-    /* ── Guild list ─────────────────────────────────────── */
-    .get("/guilds", () =>
-      cache.resolve("guilds", TTL.GUILD_LIST, () =>
-        bot.guilds.cache.map((g) => {
-          const player = bot.lava.players.get(g.id) as PlayerWithQueue | undefined
-          const current = player?.current
-          return {
-            id: g.id,
-            name: g.name,
-            icon: g.iconURL({ size: 64 }),
-            memberCount: g.memberCount,
-            hasPlayer: !!player,
-            currentSong: current
-              ? { title: current.info.title, author: current.info.author }
-              : null,
-          }
-        }),
-      ),
-    )
-
-    /* ── Guild detail — configurable member limit ───────── */
-    .get("/guilds/:guildId", ({ params, query }) => {
-      const ml = Math.min(parseInt(query.ml ?? "20") || 20, 200)
-      const cacheKey = `guild:${params.guildId}:${ml}`
-      return cache.resolve(cacheKey, TTL.GUILD_DETAIL, () => {
-        const guild = bot.guilds.cache.get(params.guildId)
-        if (!guild) return status(404, { error: "Guild not found" })
-
-        const owner = guild.members.cache.get(guild.ownerId)
-        const allMembers = guild.members.cache
-          .sort((a, b) => {
-            if (a.id === guild.ownerId) return -1
-            if (b.id === guild.ownerId) return 1
-            if (a.user.bot !== b.user.bot) return a.user.bot ? 1 : -1
-            return a.displayName.localeCompare(b.displayName)
-          })
-          .map((m) => ({
-            id: m.id,
-            displayName: m.displayName,
-            username: m.user.username,
-            avatar: m.user.displayAvatarURL({ size: 32 }),
-            isBot: m.user.bot,
-            isOwner: m.id === guild.ownerId,
-            joinedAt: m.joinedTimestamp,
-          }))
-
-        const humanCount = allMembers.filter((m) => !m.isBot).length
-        const botCount = allMembers.filter((m) => m.isBot).length
-
-        return {
-          id: guild.id,
-          name: guild.name,
-          icon: guild.iconURL({ size: 128 }),
-          banner: guild.bannerURL({ size: 512 }),
-          memberCount: guild.memberCount,
-          createdAt: guild.createdTimestamp,
-          owner: owner
-            ? {
-                id: owner.id,
-                displayName: owner.displayName,
-                username: owner.user.username,
-                avatar: owner.user.displayAvatarURL({ size: 64 }),
-              }
-            : null,
-          hasPlayer: bot.lava.players.has(guild.id),
-          members: allMembers.slice(0, ml),
-          memberTotal: allMembers.length,
-          humanCount,
-          botCount,
-        }
-      })
-    })
-
-    /* ── Guild members page ─────────────────────────────── */
-    .get("/guilds/:guildId/members", ({ params, query }) => {
-      const offset = parseInt(query.offset ?? "0") || 0
-      const limit = Math.min(parseInt(query.limit ?? "20") || 20, 200)
-      const search = (query.search ?? "").toLowerCase()
-      const guild = bot.guilds.cache.get(params.guildId)
-      if (!guild) return status(404, { error: "Guild not found" })
-
-      let members = guild.members.cache
-        .sort((a, b) => {
-          if (a.id === guild.ownerId) return -1
-          if (b.id === guild.ownerId) return 1
-          if (a.user.bot !== b.user.bot) return a.user.bot ? 1 : -1
-          return a.displayName.localeCompare(b.displayName)
-        })
-        .map((m) => ({
-          id: m.id,
-          displayName: m.displayName,
-          username: m.user.username,
-          avatar: m.user.displayAvatarURL({ size: 32 }),
-          isBot: m.user.bot,
-          isOwner: m.id === guild.ownerId,
-          joinedAt: m.joinedTimestamp,
-        }))
-
-      if (search) {
-        members = members.filter(
-          (m) =>
-            m.displayName.toLowerCase().includes(search) ||
-            m.username.toLowerCase().includes(search),
-        )
-      }
-
-      return {
-        items: members.slice(offset, offset + limit),
-        total: members.length,
-        offset,
-      }
-    })
-
-    /* ── Logs ───────────────────────────────────────────── */
-    .get("/logs", ({ query }) => {
-      const limit = parseInt(query.limit ?? "50")
-      const after = query.after ? parseInt(query.after) : undefined
-      return cache.resolve(`logs:global:${limit}:${after ?? 0}`, TTL.LOGS, () => getGlobalLog(limit, after))
-    })
-    .get("/logs/:guildId", ({ params, query }) => {
-      const limit = parseInt(query.limit ?? "50")
-      const after = query.after ? parseInt(query.after) : undefined
-      return cache.resolve(
-        `logs:${params.guildId}:${limit}:${after ?? 0}`,
-        TTL.LOGS,
-        () => getGuildLog(params.guildId, limit, after),
-      )
-    })
-
-    /* ── Player actions ─────────────────────────────────── */
+    /* ── Player actions (admin) ─────────────────────────── */
     .delete("/players/:guildId", async ({ params }) => {
       const player = bot.getPlayer(params.guildId)
       if (!player) return status(404, { error: "Player not found" })
@@ -340,33 +167,6 @@ function createRoutes(bot: BassBot) {
       if (!player) return status(404, { error: "Player not found" })
       player.clear()
       return { ok: true }
-    })
-
-    /* ── Guild actions ──────────────────────────────────── */
-    .delete("/guilds/:guildId", async ({ params }) => {
-      // Gracefully stop player first
-      const player = bot.getPlayer(params.guildId)
-      if (player) await player.disconnect()
-
-      const guild = bot.guilds.cache.get(params.guildId)
-      if (!guild) return status(404, { error: "Guild not found" })
-      await guild.leave()
-      cache.invalidate(`guild:${params.guildId}`)
-      cache.invalidate("guilds")
-      cache.invalidate("stats")
-      return { ok: true }
-    })
-
-    /* ── Control settings ───────────────────────────────── */
-    .get("/control/settings", () => bot.getSettings())
-    .patch("/control/settings", async ({ body }) => {
-      await bot.updateSettings(body)
-      return bot.getSettings()
-    }, {
-      body: t.Partial(t.Object({
-        commandsEnabled: t.Boolean(),
-        slogans: t.Array(t.String()),
-      })),
     })
 
     /* ── User player controls (JWT-authenticated) ───────── */
@@ -566,96 +366,4 @@ function createRoutes(bot: BassBot) {
       await player.setGlobalVolume(body.volume / 2)
       return { ok: true }
     })
-}
-
-/* ── JWT verification helpers ─────────────────────────────── */
-
-interface JwtPayload {
-  sub: string
-  discordId: string
-  role: "admin" | "user"
-  name: string
-  avatar: string
-}
-
-async function verifyJwt(request: Request): Promise<JwtPayload | null> {
-  const secret = process.env.JWT_SECRET
-  if (!secret) {
-    logger.warn("[api] JWT_SECRET not set — rejecting authenticated requests")
-    return null
-  }
-
-  const authHeader = request.headers.get("authorization")
-  if (!authHeader?.startsWith("Bearer ")) return null
-
-  try {
-    const { payload } = await jwtVerify(
-      authHeader.slice(7),
-      new TextEncoder().encode(secret),
-    )
-    return payload as unknown as JwtPayload
-  } catch {
-    return null
-  }
-}
-
-/**
- * Verify JWT and check user is in the same voice channel as the bot.
- * Returns the JWT payload on success, or a Response on failure.
- */
-async function verifyUserInVC(
-  bot: BassBot,
-  request: Request,
-  guildId: string,
-): Promise<JwtPayload | Response> {
-  const user = await verifyJwt(request)
-  if (!user) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 })
-
-  // Admins bypass voice channel check
-  if (user.role === "admin") return user
-
-  const guild = bot.guilds.cache.get(guildId)
-  if (!guild) return new Response(JSON.stringify({ error: "Guild not found" }), { status: 404 })
-
-  // Check if the user is in the guild
-  const member = guild.members.cache.get(user.discordId)
-  if (!member) {
-    return new Response(
-      JSON.stringify({ error: "You are not a member of this server" }),
-      { status: 403 },
-    )
-  }
-
-  // Check if the bot is in a voice channel
-  const botVC = guild.members.me?.voice.channel
-  if (!botVC) {
-    return new Response(
-      JSON.stringify({ error: "Bot is not in a voice channel" }),
-      { status: 400 },
-    )
-  }
-
-  // Check if the user is in the same voice channel as the bot
-  const userVC = member.voice.channel
-  if (userVC?.id !== botVC.id) {
-    return new Response(
-      JSON.stringify({ error: "You must be in the same voice channel as the bot" }),
-      { status: 403 },
-    )
-  }
-
-  return user
-}
-
-export type App = ReturnType<typeof createRoutes>
-
-export function startApiServer(bot: BassBot, port: number) {
-  const app = new Elysia()
-    .use(cors())
-    .use(new Elysia({ prefix: "/api" }).use(createRoutes(bot)))
-
-  app.listen(port)
-
-  logger.info(`REST API running on port ${port}`)
-  return app
 }

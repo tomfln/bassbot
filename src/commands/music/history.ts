@@ -9,6 +9,7 @@ import { EmbedColor } from "@bot/message"
 
 export default createCommand({
   description: "View recently played queues",
+  detailDescription: "Shows a list of recently played queues for this server. Each entry shows when it was played and how many songs it contained. Use /loadqueue to restore a previous queue.",
 
   options: buildOptions()
     .integer({
