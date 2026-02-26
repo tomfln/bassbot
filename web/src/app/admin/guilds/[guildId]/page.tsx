@@ -16,16 +16,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 import { useGuild, useGuildLogs, useGuildMembers, useDestroyPlayer, useLeaveGuild } from "@/hooks/use-api"
 import { formatDate } from "@/lib/format"
 import { ActivityLog } from "@/components/activity-log"
@@ -250,7 +241,8 @@ export default function AdminGuildDetailPage({ params }: { params: Promise<{ gui
             {guild.hasPlayer && (
               <>
                 <DropdownMenuItem
-                  className="gap-2 cursor-pointer text-destructive focus:text-destructive"
+                  variant="destructive"
+                  className="gap-2 cursor-pointer"
                   onClick={() => setConfirmDestroyPlayer(true)}
                 >
                   <Trash2 className="h-4 w-4" />
@@ -260,7 +252,8 @@ export default function AdminGuildDetailPage({ params }: { params: Promise<{ gui
               </>
             )}
             <DropdownMenuItem
-              className="gap-2 cursor-pointer text-destructive focus:text-destructive"
+              variant="destructive"
+              className="gap-2 cursor-pointer"
               onClick={() => setConfirmLeave(true)}
             >
               <LogOut className="h-4 w-4" />
@@ -271,46 +264,26 @@ export default function AdminGuildDetailPage({ params }: { params: Promise<{ gui
       </div>
 
       {/* Confirm: destroy player */}
-      <AlertDialog open={confirmDestroyPlayer} onOpenChange={setConfirmDestroyPlayer}>
-        <AlertDialogContent variant="destructive">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Destroy player?</AlertDialogTitle>
-            <AlertDialogDescription>
-              The bot will stop playing and leave the voice channel. The queue will be saved.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={() => destroyPlayer.mutate()}
-            >
-              Destroy
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDialog
+        open={confirmDestroyPlayer}
+        onOpenChange={setConfirmDestroyPlayer}
+        title="Destroy player?"
+        description="The bot will stop playing and leave the voice channel. The queue will be saved."
+        confirmLabel="Destroy"
+        destructive
+        onConfirm={() => destroyPlayer.mutate()}
+      />
 
       {/* Confirm: leave guild */}
-      <AlertDialog open={confirmLeave} onOpenChange={setConfirmLeave}>
-        <AlertDialogContent variant="destructive">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Leave {guild.name}?</AlertDialogTitle>
-            <AlertDialogDescription>
-              The bot will leave this server. Any active player will be stopped first.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={() => leaveGuild.mutate(undefined, { onSuccess: () => router.push("/admin/guilds") })}
-            >
-              Leave
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDialog
+        open={confirmLeave}
+        onOpenChange={setConfirmLeave}
+        title={`Leave ${guild.name}?`}
+        description="The bot will leave this server. Any active player will be stopped first."
+        confirmLabel="Leave"
+        destructive
+        onConfirm={() => leaveGuild.mutate(undefined, { onSuccess: () => router.push("/admin/guilds") })}
+      />
 
       {/* Info cards */}
       <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">

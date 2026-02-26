@@ -3,7 +3,6 @@ const AppEmojiEnum = {
   play: "1339745989363503156",
   next: "1339746022783717468",
   prev: "1339746009479254087",
-  spacer: "1340072790359015464",
 } as const
 export type AppEmoji = keyof typeof AppEmojiEnum
 

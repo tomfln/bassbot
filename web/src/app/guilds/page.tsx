@@ -1,18 +1,14 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { GuildIcon } from "@/components/guild-icon"
-import { Badge } from "@/components/ui/badge"
+import { GuildCard } from "@/components/guild-card"
 import { usePlayers, useUserGuilds } from "@/hooks/use-api"
 import {
   Server,
-  Music,
   Search,
   X,
-  Radio,
 } from "lucide-react"
 
 /* ── User guilds page ─────────────────────────────────────── */
@@ -49,7 +45,7 @@ export default function UserGuildsPage() {
       <div className="space-y-6">
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-10 w-64" />
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 xl:grid-cols-2 2xl:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
             <Skeleton key={i} className="h-20 w-full rounded-xl" />
           ))}
@@ -106,55 +102,20 @@ export default function UserGuildsPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 xl:grid-cols-2 2xl:grid-cols-3">
           {mutualGuilds.map((guild) => {
             const player = playerMap.get(guild.id)
-            const isPlaying = player?.current && !player.paused
 
             return (
-              <Link key={guild.id} href={`/guilds/${guild.id}`}>
-                <Card className="py-0 gap-0 hover:border-white/15 transition-colors cursor-pointer group">
-                  <CardContent className="p-4 flex items-center gap-3">
-                    <GuildIcon
-                      name={guild.name}
-                      icon={guild.icon}
-                      className="shrink-0"
-                    />
-
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate group-hover:text-primary transition-colors">
-                        {guild.name}
-                      </p>
-                      {player?.current ? (
-                        <p className="text-xs text-muted-foreground truncate">
-                          {player.current.title} — {player.current.author}
-                        </p>
-                      ) : (
-                        <p className="text-xs text-muted-foreground">No music playing</p>
-                      )}
-                    </div>
-
-                    {player?.current && (
-                      <Badge
-                        variant={isPlaying ? "default" : "outline"}
-                        className="text-[10px] px-1.5 py-0 shrink-0"
-                      >
-                        {isPlaying ? (
-                          <>
-                            <Radio className="h-2.5 w-2.5 mr-0.5 animate-pulse" />
-                            Live
-                          </>
-                        ) : (
-                          <>
-                            <Music className="h-2.5 w-2.5 mr-0.5" />
-                            Paused
-                          </>
-                        )}
-                      </Badge>
-                    )}
-                  </CardContent>
-                </Card>
-              </Link>
+              <GuildCard
+                key={guild.id}
+                id={guild.id}
+                name={guild.name}
+                icon={guild.icon}
+                href={`/guilds/${guild.id}`}
+                currentSong={player?.current}
+                paused={player?.paused}
+              />
             )
           })}
         </div>

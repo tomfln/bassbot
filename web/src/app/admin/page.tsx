@@ -117,7 +117,7 @@ export default function AdminOverviewPage() {
       <div className="space-y-3">
         <h2 className="text-lg font-semibold">Active Players</h2>
         {playersLoading ? (
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-4 xl:grid-cols-2 2xl:grid-cols-3">
             {Array.from({ length: 3 }).map((_, i) => (
               <Card key={i}>
                 <CardContent className="p-4">
@@ -134,7 +134,7 @@ export default function AdminOverviewPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-3 xl:grid-cols-2 2xl:grid-cols-3">
             {players.filter(p => p.current).map((player) => (
               <PlayerCard key={player.guildId} player={player} basePath="/admin/players" />
             ))}

@@ -101,7 +101,7 @@ export function TrackRow({
               </DropdownMenuItem>
             )}
             {onRemove && (
-              <DropdownMenuItem onClick={onRemove} className="text-destructive focus:text-destructive">
+              <DropdownMenuItem variant="destructive" onClick={onRemove}>
                 <Trash2 className="h-4 w-4 mr-2" />
                 Remove
               </DropdownMenuItem>
@@ -209,7 +209,7 @@ function SortableTrack({
                 </DropdownMenuItem>
               )}
               {onRemove && (
-                <DropdownMenuItem onClick={onRemove} className="text-destructive focus:text-destructive">
+                <DropdownMenuItem variant="destructive" onClick={onRemove}>
                   <Trash2 className="h-4 w-4 mr-2" />
                   Remove
                 </DropdownMenuItem>

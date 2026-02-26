@@ -12,10 +12,12 @@ import {
   Shield,
   Music,
   Plus,
+  Terminal,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { GuildIcon } from "@/components/guild-icon"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 import { useSession, signOut } from "@/lib/auth-client"
 import { usePlayers, useStats, useUserGuilds } from "@/hooks/use-api"
 import pkg from "../../package.json"
@@ -24,6 +26,7 @@ import pkg from "../../package.json"
 
 const NAV_ITEMS = [
   { href: "/guilds", icon: Server, label: "All Guilds", exact: true },
+  { href: "/commands", icon: Terminal, label: "Commands", exact: true },
 ] as const
 
 const GLASS_STYLE: CSSProperties = {
@@ -65,7 +68,7 @@ function NavItem({
   const isActive = exact ? pathname === href : pathname.startsWith(href)
 
   return (
-    <Link href={href} onClick={onNavigate} className="relative block">
+    <Link href={href} onClick={onNavigate} className="relative block group/nav">
       {isActive && (
         <span
           className="absolute top-1/2 -translate-y-1/2 w-1 h-6 rounded-full bg-primary z-10"
@@ -77,7 +80,7 @@ function NavItem({
           "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
           isActive
             ? "text-primary outline-2 -outline-offset-2 outline-primary/80"
-            : "bg-accent/40 text-muted-foreground hover:bg-accent/70 hover:text-accent-foreground scope-hover",
+            : "bg-accent/40 text-muted-foreground hover:bg-accent/70 hover:text-primary scope-hover",
         )}
         style={
           isActive
@@ -88,6 +91,15 @@ function NavItem({
             : undefined
         }
       >
+        {!isActive && (
+          <span
+            className="absolute inset-0 rounded-lg opacity-0 transition-opacity duration-300 pointer-events-none group-hover/nav:opacity-100"
+            style={{
+              background:
+                "radial-gradient(circle at 0% 50%, oklch(0.77 0.20 131 / 0.06), transparent 60%)",
+            }}
+          />
+        )}
         <Icon className="h-4 w-4" />
         {label}
       </span>
@@ -97,6 +109,7 @@ function NavItem({
 
 function UserInfo() {
   const { data: session } = useSession()
+  const [confirmLogout, setConfirmLogout] = useState(false)
   if (!session) return null
 
   return (
@@ -127,13 +140,21 @@ function UserInfo() {
           </p>
         </div>
         <button
-          onClick={() => signOut({ fetchOptions: { onSuccess: () => window.location.replace("/login") } })}
+          onClick={() => setConfirmLogout(true)}
           className="shrink-0 p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
           title="Sign out"
         >
           <LogOut className="h-4 w-4" />
         </button>
       </div>
+      <ConfirmDialog
+        open={confirmLogout}
+        onOpenChange={setConfirmLogout}
+        title="Sign out?"
+        description="You will be signed out of the dashboard."
+        confirmLabel="Sign out"
+        onConfirm={() => signOut({ fetchOptions: { onSuccess: () => window.location.replace("/login") } })}
+      />
     </div>
   )
 }
@@ -188,7 +209,7 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
       ))}
 
       {mutualGuilds.length > 0 && (
-        <div className="pt-1 space-y-1.5">
+        <>
           {mutualGuilds.map((g) => {
             const href = `/guilds/${g.id}`
             const isActive = pathname === href
@@ -200,7 +221,7 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
                 key={g.id}
                 href={href}
                 onClick={onNavigate}
-                className="relative block"
+                className="relative block group/nav"
               >
                 {isActive && (
                   <span
@@ -210,10 +231,10 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
                 )}
                 <span
                   className={cn(
-                    "flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm transition-colors",
+                    "flex items-center gap-2.5 rounded-lg px-2.5 h-10 text-sm transition-colors",
                     isActive
                       ? "text-primary outline-2 -outline-offset-2 outline-primary/80"
-                      : "bg-accent/40 text-muted-foreground hover:bg-accent/70 hover:text-accent-foreground scope-hover",
+                      : "bg-accent/40 text-muted-foreground hover:bg-accent/70 hover:text-primary scope-hover",
                   )}
                   style={
                     isActive
@@ -224,15 +245,24 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
                       : undefined
                   }
                 >
+                  {!isActive && (
+                    <span
+                      className="absolute inset-0 rounded-lg opacity-0 transition-opacity duration-300 pointer-events-none group-hover/nav:opacity-100"
+                      style={{
+                        background:
+                          "radial-gradient(circle at 0% 50%, oklch(0.77 0.20 131 / 0.06), transparent 60%)",
+                      }}
+                    />
+                  )}
                   <GuildIcon
                     name={g.name}
                     icon={icon}
                     className="h-6 w-6 text-[8px]"
                   />
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium truncate">{g.name}</p>
+                    <p className="text-xs font-medium truncate leading-tight">{g.name}</p>
                     {player?.current && (
-                      <p className="text-[10px] text-muted-foreground truncate">
+                      <p className="text-[9px] leading-tight text-muted-foreground truncate">
                         {player.current.title}
                       </p>
                     )}
@@ -244,7 +274,7 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
               </Link>
             )
           })}
-        </div>
+        </>
       )}
 
       {/* Add to guild */}
@@ -254,10 +284,11 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
             href={inviteUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 rounded-lg border border-dashed border-primary/30 px-3 py-2 text-xs font-medium text-primary/80 hover:bg-primary/5 hover:text-primary transition-colors"
+            className="flex items-center justify-center gap-2 rounded-lg border-2 border-dashed border-primary/30 px-3 h-10 text-xs font-medium text-primary/70 hover:bg-primary/5 hover:text-primary transition-colors"
+            style={{ letterSpacing: "1.5px" }}
           >
-            <Plus className="h-3.5 w-3.5" />
-            Add to Server
+            {/* <Plus className="h-4 w-4" /> */}
+            ADD SERVER
           </a>
         </div>
       )}
@@ -272,7 +303,7 @@ function DesktopSidebar() {
     <div className="hidden md:flex flex-col">
       <div className="shrink-0 pb-3 pl-3 sticky top-0 self-start pt-24">
         <aside
-          className="flex w-56 xl:w-64 flex-col rounded-xl border border-white/8 shadow-sm overflow-visible h-[65dvh]"
+          className="flex w-56 xl:w-64 flex-col rounded-xl border border-white/8 shadow-sm overflow-visible h-[60dvh]"
           style={GLASS_STYLE}
         >
           <div className="flex items-center justify-center py-6">

@@ -53,6 +53,7 @@ export function usePlayer(
     enabled: !!guildId,
     staleTime: Infinity,
     placeholderData: keepPreviousData,
+    retry: false,
   })
 }
 

@@ -29,7 +29,7 @@ export function nowPlayingMessage(track: Track) {
   const title = cleanTrackTitle(track)
   const padChar = "\u00A0"
   const padLength = 47 - Math.floor(1.8 * title.length)
-  const padding = `${padLength > 0 ? padChar.repeat(padLength) : ""}${padLength > -5 ? AppEmoji.string("spacer") : ""}`
+  const padding = padLength > 0 ? padChar.repeat(padLength) : ""
   const embed = new EmbedBuilder()
     .setAuthor({ name: "Now Playing" })
     .setDescription(`[${title}](${track.info.uri})${padding}\nby ${track.info.author}\n`)

@@ -9,6 +9,10 @@
 #   4. (Optional) Set up YouTube OAuth — see README for instructions.
 #   5. Start:  docker compose up -d
 
+# Shared env vars — referenced via YAML anchors below
+x-shared-env: &shared-env
+  JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env for shared auth between bot and web}
+
 services:
   bassbot:
     image: ghcr.io/tomfln/bassbot:latest
@@ -21,8 +25,8 @@ services:
     volumes:
       - ./bassbot-data:/data
     environment:
+      <<: *shared-env
       DATA_DIR: /data
-      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env for shared auth between bot and web}
       # All config is read from /data/config.json
       # You can override individual values via env vars:
       # TOKEN: override_token_here
@@ -39,8 +43,8 @@ services:
     volumes:
       - ./web-data:/app/data
     environment:
+      <<: *shared-env
       API_URL: http://bassbot:3001
-      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env for shared auth between bot and web}
       DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID}
       DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET}
       DATABASE_PATH: /app/data/web.db
@@ -64,4 +68,3 @@ services:
 networks:
   lavalink:
     name: lavalink
-    

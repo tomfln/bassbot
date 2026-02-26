@@ -16,9 +16,9 @@
 :root {
   --background: oklch(18.379% 0.00516 67.41);
   --foreground: oklch(0.985 0.001 106.423);
-  --card: oklch(21.57% 0.00314 16.972);
+  --card: oklch(21.851% 0.00246 67.473);
   --card-foreground: oklch(0.985 0.001 106.423);
-  --popover: oklch(21.851% 0.00246 67.473);
+  --popover: oklch(24.846% 0.00238 67.451);
   --popover-foreground: oklch(0.985 0.001 106.423);
   --primary: oklch(0.77 0.20 131);
   --primary-foreground: oklch(0.27 0.07 132);
@@ -26,7 +26,7 @@
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(27.148% 0.00482 39.119);
   --muted-foreground: oklch(0.709 0.01 56.259);
-  --accent: oklch(27.969% 0.00478 39.111);
+  --accent: oklch(24.846% 0.00238 67.451);
   --accent-foreground: oklch(0.985 0.001 106.423);
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
@@ -99,7 +99,7 @@
   }
   html {
     @apply font-sans;
-    scrollbar-gutter: stable;
+    overflow-y: scroll;
   }
 }
 
@@ -109,7 +109,7 @@
     --scope-radius: var(--radius);
     
     &:hover {
-      color: var(--primary) !important;
+      /* color: var(--primary) !important; */
     }
 
     &::before, &::after {

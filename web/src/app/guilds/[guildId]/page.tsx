@@ -114,7 +114,6 @@ export default function UserPlayerPage({
             <Music className="h-10 w-10 mx-auto mb-3 opacity-40" />
             <p className="font-medium">No active player</p>
             <p className="text-sm mt-1">
-              Nobody is playing music in this server right now.
               Use <code className="text-primary">/play</code> in Discord to get started!
             </p>
           </CardContent>

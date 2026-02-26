@@ -15,9 +15,11 @@ import {
   Users,
   LogOut,
   Shield,
+  ExternalLink,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 import { useStats } from "@/hooks/use-api"
 import { useSession, signOut } from "@/lib/auth-client"
 import pkg from "../../package.json"
@@ -72,7 +74,7 @@ function NavItem({
   const isActive = exact ? pathname === href : pathname.startsWith(href)
 
   return (
-    <Link href={href} onClick={onNavigate} className="relative block">
+    <Link href={href} onClick={onNavigate} className="relative block group/nav">
       {isActive && (
         <span
           className="absolute top-1/2 -translate-y-1/2 w-1 h-6 rounded-full bg-primary z-10"
@@ -84,7 +86,7 @@ function NavItem({
           "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
           isActive
             ? "text-primary outline-2 -outline-offset-2 outline-primary/80"
-            : "bg-accent/40 text-muted-foreground hover:bg-accent/70 hover:text-accent-foreground scope-hover",
+            : "bg-accent/40 text-muted-foreground hover:bg-accent/70 hover:text-primary scope-hover",
         )}
         style={
           isActive
@@ -95,6 +97,15 @@ function NavItem({
             : undefined
         }
       >
+        {!isActive && (
+          <span
+            className="absolute inset-0 rounded-lg opacity-0 transition-opacity duration-300 pointer-events-none group-hover/nav:opacity-100"
+            style={{
+              background:
+                "radial-gradient(circle at 0% 50%, oklch(0.77 0.20 131 / 0.06), transparent 60%)",
+            }}
+          />
+        )}
         <Icon className="h-4 w-4" />
         {label}
       </span>
@@ -136,6 +147,7 @@ function BotInfo({
 
 function UserInfo() {
   const { data: session } = useSession()
+  const [confirmLogout, setConfirmLogout] = useState(false)
   if (!session) return null
 
   return (
@@ -160,13 +172,21 @@ function UserInfo() {
           </p>
         </div>
         <button
-          onClick={() => signOut({ fetchOptions: { onSuccess: () => window.location.replace("/login") } })}
+          onClick={() => setConfirmLogout(true)}
           className="shrink-0 p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
           title="Sign out"
         >
           <LogOut className="h-4 w-4" />
         </button>
       </div>
+      <ConfirmDialog
+        open={confirmLogout}
+        onOpenChange={setConfirmLogout}
+        title="Sign out?"
+        description="You will be signed out of the dashboard."
+        confirmLabel="Sign out"
+        onConfirm={() => signOut({ fetchOptions: { onSuccess: () => window.location.replace("/login") } })}
+      />
     </div>
   )
 }
@@ -184,6 +204,24 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
           onNavigate={onNavigate}
         />
       ))}
+
+      <div className="pt-2 mt-2 border-t border-white/6">
+        <Link
+          href="/guilds"
+          onClick={onNavigate}
+          className="group/nav flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-accent/70 hover:text-primary transition-colors bg-accent/40 scope-hover"
+        >
+          <span
+            className="absolute inset-0 rounded-lg opacity-0 transition-opacity duration-300 pointer-events-none group-hover/nav:opacity-100"
+            style={{
+              background:
+                "radial-gradient(circle at 0% 50%, oklch(0.77 0.20 131 / 0.06), transparent 60%)",
+            }}
+          />
+          <ExternalLink className="h-4 w-4" />
+          User Dashboard
+        </Link>
+      </div>
     </nav>
   )
 }
@@ -294,11 +332,11 @@ function Footer() {
           </a>
         </span>
         <span className="flex gap-2">
-          <span>dashboard v{pkg.version}</span>
+          <span>web {pkg.version}</span>
           {stats?.version && (
             <>
               <span>•</span>
-              <span>bot v{stats.version}</span>
+              <span>bot {stats.version}</span>
             </>
           )}
         </span>

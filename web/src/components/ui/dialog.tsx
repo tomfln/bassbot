@@ -48,17 +48,24 @@ function DialogContent({
   className,
   children,
   showCloseButton = true,
+  forceOverlay = false,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean
+  /** Render a plain overlay div (for modal={false} where DialogPrimitive.Overlay won't render) */
+  forceOverlay?: boolean
 }) {
   return (
     <DialogPortal>
-      <DialogOverlay />
+      {forceOverlay ? (
+        <div className="fixed inset-0 z-50 bg-black/80 animate-in fade-in-0 duration-100" />
+      ) : (
+        <DialogOverlay />
+      )}
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
-          "bg-background data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 data-closed:zoom-out-95 data-open:zoom-in-95 ring-foreground/5 grid max-w-[calc(100%-2rem)] gap-6 rounded-4xl p-6 text-sm ring-1 duration-100 sm:max-w-md fixed top-1/2 left-1/2 z-50 w-full -translate-x-1/2 -translate-y-1/2 outline-none",
+          "bg-background data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 data-closed:zoom-out-95 data-open:zoom-in-95 border border-foreground/5 grid max-w-[calc(100%-2rem)] gap-6 rounded-4xl p-6 text-sm duration-100 sm:max-w-md fixed top-1/2 left-1/2 z-50 w-full -translate-x-1/2 -translate-y-1/2 outline-none",
           className
         )}
         {...props}

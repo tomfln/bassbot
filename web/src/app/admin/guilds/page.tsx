@@ -1,13 +1,10 @@
 "use client"
 
 import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { GuildIcon } from "@/components/guild-icon"
+import { GuildCard } from "@/components/guild-card"
 import { useGuilds } from "@/hooks/use-api"
-import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Users, Music } from "lucide-react"
 
 export default function AdminGuildsPage() {
   const { data: guilds, isLoading } = useGuilds()
@@ -25,54 +22,31 @@ export default function AdminGuildsPage() {
       </div>
 
       {isLoading ? (
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-3 xl:grid-cols-2 2xl:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
             <Card key={i}>
-              <CardContent className="p-4">
-                <Skeleton className="h-12 w-full" />
+              <CardContent className="p-0">
+                <Skeleton className="h-20 w-full" />
               </CardContent>
             </Card>
           ))}
         </div>
       ) : (
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-3 xl:grid-cols-2 2xl:grid-cols-3">
           {guilds
             ?.sort((a, b) => (a.hasPlayer === b.hasPlayer ? 0 : a.hasPlayer ? -1 : 1))
             .map((guild) => (
-              <div
+              <GuildCard
                 key={guild.id}
-                className="block cursor-pointer scope-2xl scope-hover"
+                id={guild.id}
+                name={guild.name}
+                icon={guild.icon}
+                href={`/admin/guilds/${guild.id}`}
+                memberCount={guild.memberCount}
+                currentSong={guild.currentSong}
+                playerHref={guild.hasPlayer ? `/admin/players/${guild.id}` : undefined}
                 onClick={() => router.push(`/admin/guilds/${guild.id}`)}
-              >
-                <Card className="py-0 gap-0 hover:bg-accent/50 transition-colors">
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-3">
-                      <GuildIcon name={guild.name} icon={guild.icon} />
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm truncate">
-                          {guild.name}
-                        </p>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <Users className="h-3 w-3" />
-                          <span>{guild.memberCount.toLocaleString()}</span>
-                        </div>
-                      </div>
-                      {guild.hasPlayer && (
-                        <Link
-                          href={`/admin/players/${guild.id}`}
-                          onClick={(e) => e.stopPropagation()}
-                          className="shrink-0"
-                        >
-                          <Badge variant="default" className="hover:bg-primary/80">
-                            <Music className="h-3 w-3 mr-1" />
-                            Active
-                          </Badge>
-                        </Link>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+              />
             ))}
         </div>
       )}

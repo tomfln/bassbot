@@ -14,16 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 import { Button } from "@/components/ui/button"
 import { usePlayer, useGuildLogs, useDestroyPlayer, useClearQueue } from "@/hooks/use-api"
 import { formatUptime } from "@/lib/format"
@@ -266,7 +257,8 @@ export default function AdminPlayerDetailPage({ params }: { params: Promise<{ gu
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              className="gap-2 cursor-pointer text-destructive focus:text-destructive"
+              variant="destructive"
+              className="gap-2 cursor-pointer"
               onClick={() => setConfirmDestroy(true)}
             >
               <Trash2 className="h-4 w-4" />
@@ -277,45 +269,25 @@ export default function AdminPlayerDetailPage({ params }: { params: Promise<{ gu
       </div>
 
       {/* Confirm: clear queue */}
-      <AlertDialog open={confirmClear} onOpenChange={setConfirmClear}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Clear queue?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will remove all tracks from the queue. The current track will keep playing.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => clearQueue.mutate()}
-            >
-              Clear
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDialog
+        open={confirmClear}
+        onOpenChange={setConfirmClear}
+        title="Clear queue?"
+        description="This will remove all tracks from the queue. The current track will keep playing."
+        confirmLabel="Clear"
+        onConfirm={() => clearQueue.mutate()}
+      />
 
       {/* Confirm: destroy player */}
-      <AlertDialog open={confirmDestroy} onOpenChange={setConfirmDestroy}>
-        <AlertDialogContent variant="destructive">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Destroy player?</AlertDialogTitle>
-            <AlertDialogDescription>
-              The bot will stop playing and leave the voice channel. The queue will be saved.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={() => destroyPlayer.mutate(undefined, { onSuccess: () => router.push("/admin/players") })}
-            >
-              Destroy
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDialog
+        open={confirmDestroy}
+        onOpenChange={setConfirmDestroy}
+        title="Destroy player?"
+        description="The bot will stop playing and leave the voice channel. The queue will be saved."
+        confirmLabel="Destroy"
+        destructive
+        onConfirm={() => destroyPlayer.mutate(undefined, { onSuccess: () => router.push("/admin/players") })}
+      />
 
       <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
         {/* Left column — Now playing + Queue */}

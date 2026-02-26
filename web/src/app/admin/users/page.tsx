@@ -13,16 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 import {
   Users,
   MoreVertical,
@@ -268,7 +259,7 @@ export default function AdminUsersPage() {
                         </DropdownMenuItem>
                       ) : (
                         <DropdownMenuItem
-                          className="text-destructive"
+                          variant="destructive"
                           onClick={() => setDialogAction({ type: "ban", user: u })}
                         >
                           <Ban className="h-4 w-4 mr-2" />
@@ -277,7 +268,7 @@ export default function AdminUsersPage() {
                       )}
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
-                        className="text-destructive"
+                        variant="destructive"
                         onClick={() => setDialogAction({ type: "delete", user: u })}
                       >
                         <Trash2 className="h-4 w-4 mr-2" />
@@ -293,50 +284,26 @@ export default function AdminUsersPage() {
       </Card>
 
       {/* Confirm dialog */}
-      <AlertDialog open={!!dialogAction} onOpenChange={(open) => !open && setDialogAction(null)}>
-        <AlertDialogContent
-          variant={
-            dialogAction?.type === "ban" || dialogAction?.type === "delete"
-              ? "destructive"
-              : "default"
-          }
-        >
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {dialogAction?.type === "promote" && "Promote to Admin?"}
-              {dialogAction?.type === "demote" && "Demote to User?"}
-              {dialogAction?.type === "ban" && "Ban User?"}
-              {dialogAction?.type === "unban" && "Unban User?"}
-              {dialogAction?.type === "delete" && "Delete User?"}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {dialogAction?.type === "promote" &&
-                `${dialogAction.user.name} will gain admin access to the dashboard.`}
-              {dialogAction?.type === "demote" &&
-                `${dialogAction.user.name} will lose admin access.`}
-              {dialogAction?.type === "ban" &&
-                `${dialogAction.user.name} will be banned and cannot log in.`}
-              {dialogAction?.type === "unban" &&
-                `${dialogAction.user.name} will be unbanned and can log in again.`}
-              {dialogAction?.type === "delete" &&
-                `${dialogAction.user.name} will be permanently deleted. This cannot be undone.`}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleConfirm}
-              className={
-                dialogAction?.type === "delete" || dialogAction?.type === "ban"
-                  ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  : undefined
-              }
-            >
-              Confirm
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDialog
+        open={!!dialogAction}
+        onOpenChange={(open) => !open && setDialogAction(null)}
+        title={
+          dialogAction?.type === "promote" ? "Promote to Admin?" :
+          dialogAction?.type === "demote" ? "Demote to User?" :
+          dialogAction?.type === "ban" ? "Ban User?" :
+          dialogAction?.type === "unban" ? "Unban User?" :
+          dialogAction?.type === "delete" ? "Delete User?" : ""
+        }
+        description={
+          dialogAction?.type === "promote" ? `${dialogAction.user.name} will gain admin access to the dashboard.` :
+          dialogAction?.type === "demote" ? `${dialogAction.user.name} will lose admin access.` :
+          dialogAction?.type === "ban" ? `${dialogAction.user.name} will be banned and cannot log in.` :
+          dialogAction?.type === "unban" ? `${dialogAction.user.name} will be unbanned and can log in again.` :
+          dialogAction?.type === "delete" ? `${dialogAction.user.name} will be permanently deleted. This cannot be undone.` : ""
+        }
+        destructive={dialogAction?.type === "delete" || dialogAction?.type === "ban"}
+        onConfirm={handleConfirm}
+      />
     </div>
   )
 }

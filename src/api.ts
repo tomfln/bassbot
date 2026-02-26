@@ -164,8 +164,8 @@ function createApi(bot: BassBot) {
 
     /* ── Player detail — configurable list limits ───────── */
     .get("/api/players/:guildId", ({ params, query }) => {
-      const ql = Math.min(parseInt(query.ql ?? "10") || 10, 100)
-      const hl = Math.min(parseInt(query.hl ?? "10") || 10, 100)
+      const ql = Math.min(parseInt(query.ql ?? "10") || 10, 5000)
+      const hl = Math.min(parseInt(query.hl ?? "10") || 10, 5000)
       const cacheKey = `player:${params.guildId}:${ql}:${hl}`
       return cache.resolve(cacheKey, TTL.PLAYER_DETAIL, () => {
         const player = bot.getPlayer(params.guildId)
@@ -203,13 +203,20 @@ function createApi(bot: BassBot) {
     /* ── Guild list ─────────────────────────────────────── */
     .get("/api/guilds", () =>
       cache.resolve("guilds", TTL.GUILD_LIST, () =>
-        bot.guilds.cache.map((g) => ({
-          id: g.id,
-          name: g.name,
-          icon: g.iconURL({ size: 64 }),
-          memberCount: g.memberCount,
-          hasPlayer: bot.lava.players.has(g.id),
-        })),
+        bot.guilds.cache.map((g) => {
+          const player = bot.lava.players.get(g.id) as PlayerWithQueue | undefined
+          const current = player?.current
+          return {
+            id: g.id,
+            name: g.name,
+            icon: g.iconURL({ size: 64 }),
+            memberCount: g.memberCount,
+            hasPlayer: !!player,
+            currentSong: current
+              ? { title: current.info.title, author: current.info.author }
+              : null,
+          }
+        }),
       ),
     )
 

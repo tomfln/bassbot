@@ -21,7 +21,7 @@ export default function AdminPlayersPage() {
       </div>
 
       {isLoading ? (
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-3 xl:grid-cols-2 2xl:grid-cols-3">
           {Array.from({ length: 3 }).map((_, i) => (
             <Card key={i}>
               <CardContent className="p-0">
@@ -39,7 +39,7 @@ export default function AdminPlayersPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-3 xl:grid-cols-2 2xl:grid-cols-3">
           {players.map((player) => (
             <PlayerCard key={player.guildId} player={player} basePath="/admin/players" />
           ))}

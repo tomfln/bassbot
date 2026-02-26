@@ -24,6 +24,7 @@ export class PlayerWithQueue extends Player {
   
   private playerMsgId: string | null = null
   private _disconnect: ReturnType<typeof setTimeout> | null = null
+  private _autoPaused = false
   private _loopMode: LoopMode = LoopMode.None
   private _playing = false
   private _historySaved = false
@@ -110,10 +111,25 @@ export class PlayerWithQueue extends Player {
       if (!currentVC) return
 
       if (prev.channelId !== currentVC.id && next.channelId !== currentVC.id) return
-      const members = currentVC.members.filter((m) => !m.user.bot)
+      const members = currentVC.members.filter((m: any) => !m.user.bot)
 
-      if (members.size == 0) this.scheduleDisconnect()
-      else this.cancelDisconnect()
+      if (members.size == 0) {
+        // Auto-pause immediately when no listeners remain
+        if (!this.paused && this._playing) {
+          this._autoPaused = true
+          void this.setPaused(true)
+          logger.info(`[${this.guildId}] Auto-paused — no listeners in channel`)
+        }
+        this.scheduleDisconnect(120)
+      } else {
+        this.cancelDisconnect()
+        // Resume if we auto-paused earlier
+        if (this._autoPaused) {
+          this._autoPaused = false
+          void this.setPaused(false)
+          logger.info(`[${this.guildId}] Auto-resumed — listener rejoined`)
+        }
+      }
     })
   }
 
