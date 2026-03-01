@@ -42,7 +42,7 @@ function Brand({ size = "large" }: { size?: "small" | "large" }) {
     <Link href="/" className="relative flex items-end gap-1">
       <p
         style={{ fontFamily: "Veter", transform: "translateY(10%)" }}
-        className={`text-primary ${size === "small" ? "text-xl" : "text-3xl"}`}
+        className={`text-primary ${size === "small" ? "text-xl" : "text-4xl"}`}
       >
         bass
       </p>
@@ -287,12 +287,12 @@ function DesktopSidebar({
 }) {
   return (
     <div className="hidden md:flex flex-col">
-      <div className="shrink-0 pb-3 pl-3 sticky top-0 self-start pt-24">
-        <div className="flex items-center justify-center pb-4">
+      <div className="shrink-0 pb-3 pl-3 sticky top-0 self-start pt-2">
+        <div className="flex items-center justify-center pb-2 h-24">
           <Brand />
         </div>
         <aside
-          className="flex w-56 xl:w-64 flex-col rounded-xl border border-white/8 shadow-sm overflow-visible h-[60dvh]"
+          className="flex gap-2 w-56 xl:w-64 flex-col rounded-xl border border-white/8 shadow-sm overflow-visible h-[60dvh]"
           style={GLASS_STYLE}
         >
           <BotInfo name={botName} avatar={botAvatar} />

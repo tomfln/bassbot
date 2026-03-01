@@ -11,12 +11,12 @@ export function BotInfo({
 }) {
   return (
     <div className="px-3 pt-3 pb-1">
-      <div className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg">
+      <div className="flex items-center gap-4 px-2.5 py-2 rounded-lg">
         <Avatar className="h-8 w-8 rounded-full">
           <AvatarImage src={avatar ?? undefined} />
           <AvatarFallback className="text-xs rounded-full">BB</AvatarFallback>
         </Avatar>
-        <p className="text-sm font-medium truncate text-primary">{name ?? "bassbot"}</p>
+        <p className="text-sm font-medium truncate">{name ?? "bassbot"}</p>
       </div>
     </div>
   )

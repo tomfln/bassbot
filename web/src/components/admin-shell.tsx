@@ -205,7 +205,7 @@ function DesktopSidebar({
           <Brand />
         </div>
         <aside
-          className="flex w-56 xl:w-64 flex-col rounded-xl border border-white/8 shadow-sm overflow-visible min-h-[60dvh]"
+          className="flex gap-2 w-56 xl:w-64 flex-col rounded-xl border border-white/8 shadow-sm overflow-visible min-h-[60dvh]"
           style={GLASS_STYLE}
         >
           <BotInfo name={botName} avatar={botAvatar} />
