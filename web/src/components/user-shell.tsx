@@ -205,7 +205,7 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
 
       {mutualGuilds.length > 0 && (
         <>
-          <div className="my-1.5 border-t border-white/6" />
+          <div className="my-3 mx-2 border-t border-white/6" />
           {mutualGuilds.map((g) => {
             const href = `/guilds/${g.id}`
             const isActive = pathname === href
