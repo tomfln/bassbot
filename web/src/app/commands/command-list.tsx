@@ -115,18 +115,18 @@ function CommandCard({
           <div className="overflow-hidden">
             <div
               className={cn(
-                "px-4 pb-4 pt-1 border-t border-white/6 transition-opacity duration-200",
+                "p-4 border-t border-white/6 transition-opacity duration-200",
                 isExpanded ? "opacity-100" : "opacity-0",
               )}
             >
               {command.detailDescription && (
-                <p className="text-sm text-muted-foreground mb-3">
+                <p className="text-sm text-muted-foreground">
                   {command.detailDescription}
                 </p>
               )}
               {command.options.length > 0 && (
                 <>
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/50 mb-2">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/50 mb-2 mt-4">
                     Parameters
                   </p>
                   <div className="space-y-1.5">
