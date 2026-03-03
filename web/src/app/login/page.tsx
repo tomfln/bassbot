@@ -3,10 +3,10 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@web/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@web/components/ui/card"
 import { signIn, useSession } from "@web/lib/auth-client"
 import { ArrowLeft, ShieldAlert } from "lucide-react"
 import Link from "next/link"
+import type { CSSProperties } from "react"
 
 /* ── Discord icon ─────────────────────────────────────────── */
 
@@ -18,15 +18,26 @@ function DiscordIcon({ className }: { className?: string }) {
   )
 }
 
-/* ── Background ───────────────────────────────────────────── */
+/* ── Scattered primary glow blobs ─────────────────────────── */
 
-function LoginGlow() {
+function ScatteredGlow() {
+  const blobs: CSSProperties[] = [
+    { top: "10%", left: "15%", width: 200, height: 200, opacity: 0.07 },
+    { top: "20%", right: "10%", width: 160, height: 160, opacity: 0.06 },
+    { bottom: "15%", left: "8%", width: 180, height: 180, opacity: 0.05 },
+    { bottom: "10%", right: "12%", width: 150, height: 150, opacity: 0.06 },
+    { top: "50%", left: "45%", width: 220, height: 220, opacity: 0.04 },
+  ]
+
   return (
-    <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
-      <div
-        className="absolute top-1/4 left-1/2 -translate-x-1/2 w-125 h-125 rounded-full blur-[120px] opacity-15"
-        style={{ background: "oklch(0.77 0.20 131)" }}
-      />
+    <div className="pointer-events-none fixed inset-0 overflow-hidden" aria-hidden>
+      {blobs.map((style, i) => (
+        <div
+          key={i}
+          className="absolute rounded-full blur-[100px]"
+          style={{ background: "var(--primary)", ...style }}
+        />
+      ))}
     </div>
   )
 }
@@ -40,7 +51,6 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Check signup status
   useEffect(() => {
     fetch("/rest/signup-enabled")
       .then((r) => r.json())
@@ -48,7 +58,6 @@ export default function LoginPage() {
       .catch(() => setSignupEnabled(true))
   }, [])
 
-  // Redirect if already logged in
   useEffect(() => {
     if (isPending) return
     if (session) {
@@ -82,10 +91,65 @@ export default function LoginPage() {
   if (session) return null
 
   return (
-    <div className="relative min-h-dvh bg-background flex items-center justify-center px-4">
-      <LoginGlow />
+    <div className="relative min-h-dvh bg-background flex flex-col items-center justify-center px-4">
+      <div className="grid-bg pointer-events-none fixed inset-0" aria-hidden />
+      <ScatteredGlow />
 
-      <div className="relative z-10 w-full max-w-md space-y-6">
+      <div className="relative z-10 w-full max-w-sm space-y-8 text-center">
+        {/* Logo */}
+        <div className="flex items-end justify-center gap-1">
+          <p
+            style={{ fontFamily: "Veter", transform: "translateY(10%)" }}
+            className="text-primary text-4xl"
+          >
+            bass
+          </p>
+        </div>
+
+        {/* Heading */}
+        <div className="space-y-2">
+          <h1 className="text-2xl font-bold">Welcome back</h1>
+          <p className="text-sm text-muted-foreground">
+            Sign in with your Discord account to continue
+          </p>
+        </div>
+
+        {/* Errors / warnings */}
+        {error && (
+          <div className="rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive text-left">
+            {error}
+          </div>
+        )}
+
+        {signupEnabled === false && (
+          <div className="rounded-lg border border-yellow-500/30 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-200 flex items-start gap-2 text-left">
+            <ShieldAlert className="h-4 w-4 mt-0.5 shrink-0" />
+            <span>
+              New registrations are currently closed. Existing users can still sign in.
+            </span>
+          </div>
+        )}
+
+        {/* CTA */}
+        <Button
+          className="w-full gap-2 h-12 text-base"
+          size="lg"
+          onClick={handleLogin}
+          disabled={loading}
+        >
+          {loading ? (
+            <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full" />
+          ) : (
+            <DiscordIcon className="h-5 w-5" />
+          )}
+          {loading ? "Redirecting…" : "Continue with Discord"}
+        </Button>
+
+        <p className="text-xs text-muted-foreground">
+          By signing in, you agree to give bassbot access to your Discord
+          profile and server list.
+        </p>
+
         {/* Back link */}
         <Link
           href="/"
@@ -94,57 +158,6 @@ export default function LoginPage() {
           <ArrowLeft className="h-4 w-4" />
           Back to home
         </Link>
-
-        <Card className="border-white/8">
-          <CardHeader className="text-center pb-2">
-            <div className="mx-auto mb-3 flex items-end gap-1">
-              <p
-                style={{ fontFamily: "Veter", transform: "translateY(10%)" }}
-                className="text-primary text-3xl"
-              >
-                bass
-              </p>
-            </div>
-            <CardTitle className="text-xl">Welcome back</CardTitle>
-            <CardDescription>
-              Sign in with your Discord account to continue
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4 pt-4">
-            {error && (
-              <div className="rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-                {error}
-              </div>
-            )}
-
-            {signupEnabled === false && (
-              <div className="rounded-lg border border-yellow-500/30 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-200 flex items-start gap-2">
-                <ShieldAlert className="h-4 w-4 mt-0.5 shrink-0" />
-                <span>
-                  New registrations are currently closed. Existing users can still sign in.
-                </span>
-              </div>
-            )}
-
-            <Button
-              className="w-full gap-2"
-              size="lg"
-              onClick={handleLogin}
-              disabled={loading}
-            >
-              {loading ? (
-                <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full" />
-              ) : (
-                <DiscordIcon className="h-5 w-5" />
-              )}
-              {loading ? "Redirecting…" : "Continue with Discord"}
-            </Button>
-
-            <p className="text-xs text-center text-muted-foreground pt-2">
-              By signing in, you agree to give bassbot access to your Discord profile and server list.
-            </p>
-          </CardContent>
-        </Card>
       </div>
     </div>
   )

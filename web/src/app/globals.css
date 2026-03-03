@@ -104,6 +104,33 @@
 }
 
 @layer components {
+  /* Liquid glass card */
+  .glass-card {
+    background:
+      linear-gradient(
+        135deg,
+        oklch(1 0 0 / 0.05) 0%,
+        transparent 50%,
+        oklch(1 0 0 / 0.02) 100%
+      );
+    backdrop-filter: blur(4px);
+    /* -webkit-backdrop-filter: blur(4px); */
+    border: 1px solid oklch(1 0 0 / 0.06);
+    border-top-color: oklch(1 0 0 / 0.1);
+    border-bottom-color: oklch(1 0 0 / 0.03);
+    box-shadow:
+      inset 0 1px 0 0 oklch(1 0 0 / 0.06),
+      0 8px 24px -6px oklch(0 0 0 / 0.25);
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
+
+    &:hover {
+      box-shadow:
+        inset 0 1px 0 0 oklch(1 0 0 / 0.08),
+        0 12px 32px -6px oklch(0 0 0 / 0.35);
+      transform: translateY(-1px);
+    }
+  }
+
   .scope-hover {
     position: relative;
     --scope-radius: var(--radius);
@@ -160,6 +187,14 @@
   .scope-3xl {
     --scope-radius: var(--radius-3xl);
   }
+}
+
+/* Full-page grid background */
+.grid-bg {
+  background-image:
+    linear-gradient(oklch(1 0 0 / 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, oklch(1 0 0 / 0.04) 1px, transparent 1px);
+  background-size: 60px 60px;
 }
 
 /* Custom scrollbar */

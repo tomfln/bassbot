@@ -4,29 +4,40 @@ import Link from "next/link"
 import { Button } from "@web/components/ui/button"
 import { useSession } from "@web/lib/auth-client"
 import {
-  Music,
   Headphones,
   Zap,
   Shield,
   ArrowRight,
   Github,
   LogIn,
+  Radio,
+  Server,
+  Terminal,
 } from "lucide-react"
 import type { ReactNode, CSSProperties } from "react"
 
-/* ── Animated background ──────────────────────────────────── */
+/* ── Scattered primary glow blobs ─────────────────────────── */
 
-function HeroGlow() {
+function ScatteredGlow() {
+  const blobs: CSSProperties[] = [
+    { top: "5%", left: "10%", width: 220, height: 220, opacity: 0.07 },
+    { top: "15%", right: "8%", width: 180, height: 180, opacity: 0.06 },
+    { top: "45%", left: "3%", width: 160, height: 160, opacity: 0.05 },
+    { top: "60%", right: "15%", width: 200, height: 200, opacity: 0.08 },
+    { bottom: "10%", left: "25%", width: 140, height: 140, opacity: 0.06 },
+    { bottom: "5%", right: "5%", width: 170, height: 170, opacity: 0.05 },
+    { top: "30%", left: "50%", width: 250, height: 250, opacity: 0.04 },
+  ]
+
   return (
-    <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
-      <div
-        className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-150 h-150 rounded-full blur-[120px] opacity-20"
-        style={{ background: "oklch(0.77 0.20 131)" }}
-      />
-      <div
-        className="absolute bottom-[-10%] right-[-5%] w-100 h-100 rounded-full blur-[100px] opacity-10"
-        style={{ background: "oklch(0.72 0.19 155)" }}
-      />
+    <div className="pointer-events-none fixed inset-0 overflow-hidden" aria-hidden>
+      {blobs.map((style, i) => (
+        <div
+          key={i}
+          className="absolute rounded-full blur-[100px]"
+          style={{ background: "var(--primary)", ...style }}
+        />
+      ))}
     </div>
   )
 }
@@ -37,29 +48,15 @@ function FeatureCard({
   icon,
   title,
   description,
-  color,
 }: {
   icon: ReactNode
   title: string
   description: string
-  color: string
 }) {
-  const style: CSSProperties = {
-    background: "oklch(21% 0.005 67 / 0.5)",
-    backdropFilter: "blur(12px)",
-  }
-
   return (
-    <div
-      className="relative rounded-xl border border-white/8 p-6 transition-colors hover:border-white/15"
-      style={style}
-    >
-      <div
-        className="absolute -top-4 -right-4 h-20 w-20 rounded-full opacity-10 blur-2xl"
-        style={{ background: color }}
-      />
+    <div className="scope-hover scope-xl glass-card relative rounded-xl p-6">
       <div className="relative">
-        <div className="mb-3 inline-flex rounded-lg p-2 bg-white/5" style={{ color }}>
+        <div className="mb-3 inline-flex rounded-lg p-2 bg-primary/10 text-primary">
           {icon}
         </div>
         <h3 className="text-base font-semibold mb-1">{title}</h3>
@@ -76,19 +73,20 @@ export default function LandingPage() {
 
   return (
     <div className="relative min-h-dvh bg-background flex flex-col">
-      <HeroGlow />
+      {/* Full-page grid background */}
+      <div className="grid-bg pointer-events-none fixed inset-0" aria-hidden />
+      <ScatteredGlow />
 
       {/* Nav */}
       <header className="relative z-10 flex items-center justify-between px-6 md:px-12 py-5 max-w-6xl mx-auto w-full">
-        <div className="flex items-end gap-1">
+        <Link href="/" className="flex items-end gap-1">
           <p
             style={{ fontFamily: "Veter", transform: "translateY(10%)" }}
             className="text-primary text-2xl"
           >
             bass
           </p>
-          <div className="absolute inset-2 bg-primary blur-lg opacity-40" />
-        </div>
+        </Link>
         <nav className="flex items-center gap-3">
           {session ? (
             <>
@@ -100,16 +98,23 @@ export default function LandingPage() {
                   </Button>
                 </Link>
               )}
-              <Link href="/guilds">
-                <Button size="sm" className="gap-1.5">
-                  <Music className="h-4 w-4" />
-                  My Servers
-                </Button>
+              <Link href="/guilds" className="flex items-center gap-2 group">
+                {session.user.image ? (
+                  <img
+                    src={session.user.image}
+                    alt=""
+                    className="h-7 w-7 rounded-full ring-1 ring-white/10 group-hover:ring-primary/40 transition-all"
+                  />
+                ) : (
+                  <div className="h-7 w-7 rounded-full bg-primary/20 flex items-center justify-center text-xs font-medium text-primary">
+                    {session.user.name?.charAt(0) ?? "?"}
+                  </div>
+                )}
               </Link>
             </>
           ) : (
             <Link href="/login">
-              <Button size="sm" className="gap-1.5">
+              <Button variant="outline" size="sm" className="gap-1.5">
                 <LogIn className="h-4 w-4" />
                 Sign In
               </Button>
@@ -119,39 +124,32 @@ export default function LandingPage() {
       </header>
 
       {/* Hero */}
-      <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 text-center -mt-16">
-        <div className="max-w-2xl mx-auto space-y-6">
-          <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-sm text-primary">
-            <Zap className="h-3.5 w-3.5" />
-            High quality music streaming
-          </div>
-
+      <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 text-center">
+        <div className="max-w-2xl mx-auto space-y-6 mt-24 sm:mt-32">
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight">
-            Your server&apos;s
+            The only music bot
             <br />
-            <span className="text-primary">music backbone</span>
+            <span className="text-primary">you&apos;ll ever need</span>
           </h1>
 
           <p className="text-lg text-muted-foreground max-w-lg mx-auto leading-relaxed">
-            A powerful Discord music bot with a web dashboard.
-            Search, queue, and control your music right from the browser.
+            Open-source, high-quality audio streaming with a full web dashboard
+            and over 30 commands. Self-host it and own your music experience.
           </p>
 
-          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+          <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
             {session ? (
               <Link href="/guilds">
-                <Button size="lg" className="gap-2">
-                  <Music className="h-4 w-4" />
+                <Button variant="outline" size="lg" className="gap-2 h-12 px-6 text-base">
                   Go to Dashboard
-                  <ArrowRight className="h-4 w-4" />
+                  <ArrowRight className="h-5 w-5" />
                 </Button>
               </Link>
             ) : (
               <Link href="/login">
-                <Button size="lg" className="gap-2">
-                  <LogIn className="h-4 w-4" />
+                <Button variant="outline" size="lg" className="gap-2 h-12 px-6 text-base">
                   Get Started
-                  <ArrowRight className="h-4 w-4" />
+                  <ArrowRight className="h-5 w-5" />
                 </Button>
               </Link>
             )}
@@ -160,41 +158,58 @@ export default function LandingPage() {
               target="_blank"
               rel="noopener noreferrer"
             >
-              <Button variant="outline" size="lg" className="gap-2">
-                <Github className="h-4 w-4" />
-                GitHub
+              <Button size="lg" className="gap-2 h-12 px-6 text-base">
+                <Github className="h-5 w-5" />
+                Self-Host
               </Button>
             </a>
           </div>
         </div>
 
         {/* Features grid */}
-        <div className="mt-20 mb-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4 max-w-5xl w-full">
+        <div className="mt-20 mb-16 grid gap-4 sm:grid-cols-2 lg:grid-cols-4 max-w-5xl w-full">
           <FeatureCard
-            icon={<Music className="h-5 w-5" />}
-            title="Rich Playback"
-            description="Play from YouTube, Spotify, SoundCloud, and more with Lavalink-powered streaming."
-            color="oklch(0.77 0.20 131)"
+            icon={<Radio className="h-5 w-5" />}
+            title="Multi-Source Playback"
+            description="Stream from YouTube, Spotify, SoundCloud, Deezer, and more — powered by Lavalink for consistent, high-quality audio."
           />
           <FeatureCard
             icon={<Headphones className="h-5 w-5" />}
-            title="Web Controls"
-            description="Control playback, manage queues, and search for songs directly from your browser."
-            color="oklch(0.72 0.19 155)"
+            title="Web Dashboard"
+            description="Browse, search, and queue songs from any device. Manage playback without ever opening Discord."
           />
           <FeatureCard
             icon={<Zap className="h-5 w-5" />}
-            title="Real-time Updates"
-            description="Live player status and queue updates via WebSocket — always in sync."
-            color="oklch(0.80 0.18 85)"
+            title="Live Sync"
+            description="Real-time player and queue state over WebSocket. Every connected client stays in sync instantly."
           />
           <FeatureCard
-            icon={<Shield className="h-5 w-5" />}
-            title="Admin Dashboard"
-            description="Full admin panel with user management, bot settings, and server monitoring."
-            color="oklch(0.70 0.15 250)"
+            icon={<Server className="h-5 w-5" />}
+            title="Self-Hosted"
+            description="Run it on your own hardware. Full admin panel with user management, logs, and per-server configuration."
           />
         </div>
+
+        {/* Commands section */}
+        <section className="mb-16 max-w-3xl w-full text-center space-y-6">
+          <div className="inline-flex items-center justify-center rounded-lg p-2.5 bg-primary/10 text-primary">
+            <Terminal className="h-6 w-6" />
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
+            A command for everything
+          </h2>
+          <p className="text-muted-foreground leading-relaxed max-w-xl mx-auto">
+            Play, pause, skip, loop, shuffle, seek, view lyrics, save queues,
+            manage history — bassbot has over 30 slash commands covering every
+            music workflow you can think of.
+          </p>
+          <Link href="/commands">
+            <Button variant="outline" size="lg" className="gap-2 mt-2">
+              Browse Commands
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </Link>
+        </section>
       </main>
 
       {/* Footer */}
