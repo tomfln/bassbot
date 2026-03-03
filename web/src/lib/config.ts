@@ -4,7 +4,7 @@ import { existsSync, readFileSync } from "node:fs"
 // ── Resolve data directory (env-only, needed to locate config.json) ──
 
 const dataDir = resolve(
-  process.env.DATA_DIR ?? join(process.cwd(), "data"),
+  process.env.DATA_DIR ?? join(process.cwd(), "..", "data"),
 )
 
 // ── Load config.json ──

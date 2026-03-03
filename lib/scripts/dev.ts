@@ -11,7 +11,7 @@ const bot = Bun.spawn(["bun", "--watch", "src/index.ts"], {
   stdio: ["inherit", "inherit", "inherit"],
 })
 
-const dash = Bun.spawn(["bun", "run", "dev"], {
+const dash = Bun.spawn(["bun", "--bun", "run", "dev"], {
   cwd: join(root, "web"),
   stdio: ["inherit", "inherit", "inherit"],
 })
