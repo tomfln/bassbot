@@ -1,10 +1,10 @@
 "use client"
 
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { Card, CardContent } from "@web/components/ui/card"
+import { Badge } from "@web/components/ui/badge"
 import Link from "next/link"
 import { Pause, Play, Music } from "lucide-react"
-import type { PlayerSummary } from "@/hooks/use-api"
+import type { PlayerSummary } from "@web/hooks/use-api"
 
 export function PlayerCard({ player, basePath = "/players" }: { player: PlayerSummary; basePath?: string }) {
   return (

@@ -1,7 +1,7 @@
 "use client"
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Card, CardContent, CardHeader, CardTitle } from "@web/components/ui/card"
+import { Avatar, AvatarFallback, AvatarImage } from "@web/components/ui/avatar"
 import { Headphones } from "lucide-react"
 
 interface VoiceChannelCardProps {

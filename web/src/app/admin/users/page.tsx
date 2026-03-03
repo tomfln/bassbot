@@ -1,19 +1,19 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { Card, CardContent } from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@web/components/ui/card"
+import { Skeleton } from "@web/components/ui/skeleton"
+import { Avatar, AvatarFallback, AvatarImage } from "@web/components/ui/avatar"
+import { Badge } from "@web/components/ui/badge"
+import { Button } from "@web/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { ConfirmDialog } from "@/components/confirm-dialog"
+} from "@web/components/ui/dropdown-menu"
+import { ConfirmDialog } from "@web/components/confirm-dialog"
 import {
   MoreVertical,
   Shield,
@@ -24,7 +24,7 @@ import {
   Search,
   X,
 } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn } from "@web/lib/utils"
 
 /* ── Types ────────────────────────────────────────────────── */
 

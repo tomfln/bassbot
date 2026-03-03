@@ -1,9 +1,9 @@
 "use client"
 
 import { useMemo, useState, useEffect, useCallback } from "react"
-import { formatDuration } from "@/lib/format"
+import { formatDuration } from "@web/lib/format"
 import { Music, ChevronDown, GripVertical, MoreVertical, Trash2, ListStart } from "lucide-react"
-import type { Track } from "@/hooks/use-api"
+import type { Track } from "@web/hooks/use-api"
 import {
   DndContext,
   closestCenter,
@@ -25,7 +25,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@web/components/ui/dropdown-menu"
 
 /** Generate a stable-ish ID for a track using its content + index */
 function trackId(track: Track, index: number) {

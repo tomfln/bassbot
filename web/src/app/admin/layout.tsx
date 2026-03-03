@@ -1,9 +1,9 @@
 "use client"
 
-import { useSession } from "@/lib/auth-client"
+import { useSession } from "@web/lib/auth-client"
 import { useRouter } from "next/navigation"
 import { useEffect, type ReactNode } from "react"
-import { AdminShell } from "@/components/admin-shell"
+import { AdminShell } from "@web/components/admin-shell"
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const { data: session, isPending } = useSession()

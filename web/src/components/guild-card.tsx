@@ -1,9 +1,9 @@
 "use client"
 
 import Link from "next/link"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { GuildIcon } from "@/components/guild-icon"
+import { Card, CardContent } from "@web/components/ui/card"
+import { Badge } from "@web/components/ui/badge"
+import { GuildIcon } from "@web/components/guild-icon"
 import { Music, Radio, Users } from "lucide-react"
 
 interface GuildCardProps {

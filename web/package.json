@@ -8,7 +8,8 @@
     "prebuild": "bun run ../lib/scripts/generate-commands-json.ts",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "tsc",
+    "eslint": "eslint"
   },
   "dependencies": {
     "@base-ui/react": "^1.2.0",

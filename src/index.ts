@@ -1,5 +1,5 @@
-import config from "@/config"
-import { BassBot } from "@/bot"
+import config from "@bot/config"
+import { BassBot } from "@bot/bot"
 import { setupLavalinkEvents } from "./events/lavalink-events"
 import { startApiServer } from "./api"
 import logger from "@lib/logger"

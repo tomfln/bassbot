@@ -1,4 +1,4 @@
-import type { BassBot } from "@/bot"
+import type { BassBot } from "@bot/bot"
 import logger from "@lib/logger"
 
 export const setupLavalinkEvents = ({ lava }: BassBot) => {

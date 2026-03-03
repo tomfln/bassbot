@@ -1,6 +1,6 @@
-import requirePlayer from "@/middlewares/requirePlayer";
+import requirePlayer from "@bot/middlewares/requirePlayer";
 import { createCommand } from "@lib/command";
-import { log } from "@/util/activity-log";
+import { log } from "@bot/util/activity-log";
 
 export default createCommand({
   description: "Resume the current song",

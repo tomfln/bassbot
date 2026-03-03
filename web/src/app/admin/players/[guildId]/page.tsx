@@ -3,27 +3,27 @@
 import { useState, useCallback, use } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
-import { GuildIcon } from "@/components/guild-icon"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Card, CardContent, CardHeader, CardTitle } from "@web/components/ui/card"
+import { Skeleton } from "@web/components/ui/skeleton"
+import { GuildIcon } from "@web/components/guild-icon"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@web/components/ui/tabs"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { ConfirmDialog } from "@/components/confirm-dialog"
-import { Button } from "@/components/ui/button"
-import { usePlayer, useGuildLogs, useDestroyPlayer, useClearQueue } from "@/hooks/use-api"
-import { formatUptime } from "@/lib/format"
-import { ActivityLog } from "@/components/activity-log"
-import { TrackList } from "@/components/track-list"
-import { PlayBar } from "@/components/play-bar"
-import { SongCard } from "@/components/song-card"
-import { VoiceChannelCard } from "@/components/voice-channel-card"
-import { useOptimisticPosition } from "@/hooks/use-optimistic-position"
+} from "@web/components/ui/dropdown-menu"
+import { ConfirmDialog } from "@web/components/confirm-dialog"
+import { Button } from "@web/components/ui/button"
+import { usePlayer, useGuildLogs, useDestroyPlayer, useClearQueue } from "@web/hooks/use-api"
+import { formatUptime } from "@web/lib/format"
+import { ActivityLog } from "@web/components/activity-log"
+import { TrackList } from "@web/components/track-list"
+import { PlayBar } from "@web/components/play-bar"
+import { SongCard } from "@web/components/song-card"
+import { VoiceChannelCard } from "@web/components/voice-channel-card"
+import { useOptimisticPosition } from "@web/hooks/use-optimistic-position"
 import {
   ArrowLeft,
   ListMusic,

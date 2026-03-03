@@ -1,8 +1,8 @@
-import requirePlayer from "@/middlewares/requirePlayer"
+import requirePlayer from "@bot/middlewares/requirePlayer"
 import { createCommand } from "@lib/command"
-import isBoundChannel from "@/validators/isBoundChannel"
-import isInBoundVC from "@/validators/isInBoundVC"
-import { log } from "@/util/activity-log"
+import isBoundChannel from "@bot/validators/isBoundChannel"
+import isInBoundVC from "@bot/validators/isInBoundVC"
+import { log } from "@bot/util/activity-log"
 
 export default createCommand({
   description: "Stops the player and quits the voice channel",

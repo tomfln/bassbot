@@ -66,7 +66,7 @@ async function main() {
             ? cmd.description
             : cmd.description["en-US"] ?? Object.values(cmd.description)[0] ?? ""
 
-        const options: CommandOption[] = (cmd.options ?? []).map((opt: any) => {
+        const options: CommandOption[] = ((cmd.options ?? []) as any[]).map((opt: any) => {
           const o: CommandOption = {
             name: opt.name,
             description: opt.description ?? "",

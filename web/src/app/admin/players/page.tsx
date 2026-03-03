@@ -1,10 +1,10 @@
 "use client"
 
-import { Card, CardContent } from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
-import { usePlayers } from "@/hooks/use-api"
+import { Card, CardContent } from "@web/components/ui/card"
+import { Skeleton } from "@web/components/ui/skeleton"
+import { usePlayers } from "@web/hooks/use-api"
 import { Radio } from "lucide-react"
-import { PlayerCard } from "@/components/player-card"
+import { PlayerCard } from "@web/components/player-card"
 
 export default function AdminPlayersPage() {
   const { data: players, isLoading } = usePlayers()

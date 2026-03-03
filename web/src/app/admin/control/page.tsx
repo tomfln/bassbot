@@ -1,12 +1,12 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Skeleton } from "@/components/ui/skeleton"
-import { Badge } from "@/components/ui/badge"
-import { useBotSettings, useUpdateBotSettings } from "@/hooks/use-api"
-import { cn } from "@/lib/utils"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@web/components/ui/card"
+import { Button } from "@web/components/ui/button"
+import { Skeleton } from "@web/components/ui/skeleton"
+import { Badge } from "@web/components/ui/badge"
+import { useBotSettings, useUpdateBotSettings } from "@web/hooks/use-api"
+import { cn } from "@web/lib/utils"
 import {
   Settings,
   MessageSquareOff,

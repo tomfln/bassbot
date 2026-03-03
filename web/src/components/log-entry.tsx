@@ -1,11 +1,11 @@
 "use client"
 
 import Link from "next/link"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { ACTION_ICONS, ACTION_BG_COLORS } from "@/lib/constants"
-import { formatRelativeTime } from "@/lib/format"
+import { Avatar, AvatarFallback, AvatarImage } from "@web/components/ui/avatar"
+import { ACTION_ICONS, ACTION_BG_COLORS } from "@web/lib/constants"
+import { formatRelativeTime } from "@web/lib/format"
 import { Play } from "lucide-react"
-import type { ActivityEntry } from "@/hooks/use-api"
+import type { ActivityEntry } from "@web/hooks/use-api"
 
 export function LogEntry({
   entry,

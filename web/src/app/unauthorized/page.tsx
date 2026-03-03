@@ -1,8 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@web/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@web/components/ui/card"
 import { ShieldX, ArrowLeft, Home } from "lucide-react"
 
 export default function UnauthorizedPage() {

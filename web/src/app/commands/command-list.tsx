@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react"
 import { Search, X, Terminal, ChevronRight, Music, Wrench } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn } from "@web/lib/utils"
 
 /* ── Types ────────────────────────────────────────────────── */
 

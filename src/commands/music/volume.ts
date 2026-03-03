@@ -1,7 +1,7 @@
-import requirePlayer from "@/middlewares/requirePlayer"
+import requirePlayer from "@bot/middlewares/requirePlayer"
 import { createCommand, buildOptions } from "@lib/command"
-import isInBoundVC from "@/validators/isInBoundVC"
-import { log } from "@/util/activity-log"
+import isInBoundVC from "@bot/validators/isInBoundVC"
+import { log } from "@bot/util/activity-log"
 
 export default createCommand({
   description: "Sets the volume of the music player.",

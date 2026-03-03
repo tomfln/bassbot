@@ -1,8 +1,8 @@
-import requirePlayer from "@/middlewares/requirePlayer"
+import requirePlayer from "@bot/middlewares/requirePlayer"
 import { createCommand, buildOptions } from "@lib/command"
-import { cleanTrackTitle } from "@/util/helpers"
-import { duration } from "@/util/time"
-import isBoundChannel from "@/validators/isBoundChannel"
+import { cleanTrackTitle } from "@bot/util/helpers"
+import { duration } from "@bot/util/time"
+import isBoundChannel from "@bot/validators/isBoundChannel"
 
 export default createCommand({
   description: "Get information about the current song",

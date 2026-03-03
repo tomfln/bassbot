@@ -2,8 +2,8 @@
 
 import { useEffect, useRef } from "react"
 import { useQueryClient } from "@tanstack/react-query"
-import { BOT_API_URL } from "@/lib/api-client"
-import type { ActivityEntry } from "@/hooks/use-api"
+import { BOT_API_URL } from "@web/lib/api-client"
+import type { ActivityEntry } from "@web/hooks/use-api"
 
 interface WsEvent {
   event: string

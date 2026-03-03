@@ -1,9 +1,9 @@
 "use client"
 
-import { useSession } from "@/lib/auth-client"
+import { useSession } from "@web/lib/auth-client"
 import { useRouter } from "next/navigation"
 import { useEffect, type ReactNode } from "react"
-import { UserShell } from "@/components/user-shell"
+import { UserShell } from "@web/components/user-shell"
 
 export default function GuildsLayout({ children }: { children: ReactNode }) {
   const { data: session, isPending } = useSession()

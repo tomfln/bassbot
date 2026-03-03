@@ -4,9 +4,9 @@ import { useState, type CSSProperties, type ReactNode } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { LayoutDashboard, Server, Music, Menu, X, ScrollText, Github, SlidersHorizontal } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { useStats } from "@/hooks/use-api"
+import { cn } from "@web/lib/utils"
+import { Avatar, AvatarFallback, AvatarImage } from "@web/components/ui/avatar"
+import { useStats } from "@web/hooks/use-api"
 import pkg from "../../package.json"
 
 /* ── Constants ────────────────────────────────────────────── */

@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { signIn, useSession } from "@/lib/auth-client"
+import { Button } from "@web/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@web/components/ui/card"
+import { signIn, useSession } from "@web/lib/auth-client"
 import { ArrowLeft, ShieldAlert } from "lucide-react"
 import Link from "next/link"
 

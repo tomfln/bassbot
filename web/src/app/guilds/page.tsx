@@ -1,10 +1,10 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { Card, CardContent } from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
-import { GuildCard } from "@/components/guild-card"
-import { usePlayers, useStats, useUserGuilds } from "@/hooks/use-api"
+import { Card, CardContent } from "@web/components/ui/card"
+import { Skeleton } from "@web/components/ui/skeleton"
+import { GuildCard } from "@web/components/guild-card"
+import { usePlayers, useStats, useUserGuilds } from "@web/hooks/use-api"
 import {
   Server,
   Search,

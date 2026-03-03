@@ -1,9 +1,9 @@
 import { createCommand, buildOptions } from "@lib/command"
-import { cleanTrackTitle } from "@/util/helpers"
-import isBoundChannel from "@/validators/isBoundChannel"
-import isInBoundVC from "@/validators/isInBoundVC"
-import { resolveSong } from "@/util/song-search"
-import { log } from "@/util/activity-log"
+import { cleanTrackTitle } from "@bot/util/helpers"
+import isBoundChannel from "@bot/validators/isBoundChannel"
+import isInBoundVC from "@bot/validators/isInBoundVC"
+import { resolveSong } from "@bot/util/song-search"
+import { log } from "@bot/util/activity-log"
 
 export default createCommand({
   description: "Play a song.",

@@ -1,12 +1,12 @@
 import { createCommand } from "@lib/command"
-import { cleanTrackTitle } from "@/util/helpers"
-import { duration } from "@/util/time"
-import { Queue } from "@/queue"
-import isBoundChannel from "@/validators/isBoundChannel"
-import isInGuild from "@/validators/isInGuild"
-import isInVC from "@/validators/isInVC"
+import { cleanTrackTitle } from "@bot/util/helpers"
+import { duration } from "@bot/util/time"
+import { Queue } from "@bot/queue"
+import isBoundChannel from "@bot/validators/isBoundChannel"
+import isInGuild from "@bot/validators/isInGuild"
+import isInVC from "@bot/validators/isInVC"
 import { createMessageEmbed, EmbedColor } from "@lib/message"
-import { log } from "@/util/activity-log"
+import { log } from "@bot/util/activity-log"
 import {
   ActionRowBuilder,
   ButtonBuilder,

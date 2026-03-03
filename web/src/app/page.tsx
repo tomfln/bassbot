@@ -1,8 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { useSession } from "@/lib/auth-client"
+import { Button } from "@web/components/ui/button"
+import { useSession } from "@web/lib/auth-client"
 import {
   Music,
   Headphones,

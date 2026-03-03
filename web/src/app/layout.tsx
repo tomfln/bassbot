@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import "./globals.css"
-import { Providers } from "@/components/providers"
-import config from "@/lib/config"
+import { Providers } from "@web/components/providers"
+import config from "@web/lib/config"
 
 export const metadata: Metadata = {
   title: "bassbot",

@@ -1,4 +1,4 @@
-import app from "@/lib/server"
+import app from "@web/lib/server"
 
 const handler = app.fetch.bind(app)
 

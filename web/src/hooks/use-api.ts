@@ -1,7 +1,7 @@
 "use client"
 
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query"
-import { botApi, webApi } from "@/lib/api-client"
+import { botApi, webApi } from "@web/lib/api-client"
 
 /* ── Helpers ──────────────────────────────────────────────── */
 

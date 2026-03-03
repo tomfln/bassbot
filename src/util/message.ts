@@ -7,7 +7,7 @@ import {
 } from "discord.js"
 import { type Track } from "shoukaku"
 import { cleanTrackTitle } from "./helpers"
-import { AppEmoji } from "../constants/emojis"
+import { AppEmoji } from "@bot/constants/emojis"
 import { EmbedColor } from "@lib/message"
 
 // Re-export generic message helpers for convenience

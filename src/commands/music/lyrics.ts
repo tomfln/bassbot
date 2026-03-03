@@ -1,5 +1,5 @@
 import { createCommand, buildOptions } from "@lib/command"
-import { fetchAndParse } from "@/util/helpers"
+import { fetchAndParse } from "@bot/util/helpers"
 import { z } from "zod"
 
 const suggestSchema = z.object({

@@ -8,10 +8,10 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { LogEntry } from "@/components/log-entry"
-import { useGlobalLogs, useGuilds } from "@/hooks/use-api"
-import { ACTION_ICONS, ALL_ACTIONS } from "@/lib/constants"
+} from "@web/components/ui/select"
+import { LogEntry } from "@web/components/log-entry"
+import { useGlobalLogs, useGuilds } from "@web/hooks/use-api"
+import { ACTION_ICONS, ALL_ACTIONS } from "@web/lib/constants"
 import {
   Search,
   Server,

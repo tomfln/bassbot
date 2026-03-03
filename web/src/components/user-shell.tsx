@@ -13,13 +13,13 @@ import {
   Music,
   Terminal,
 } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { GuildIcon } from "@/components/guild-icon"
-import { ConfirmDialog } from "@/components/confirm-dialog"
+import { cn } from "@web/lib/utils"
+import { Avatar, AvatarFallback, AvatarImage } from "@web/components/ui/avatar"
+import { GuildIcon } from "@web/components/guild-icon"
+import { ConfirmDialog } from "@web/components/confirm-dialog"
 import { BotInfo } from "./bot-info"
-import { useSession, signOut } from "@/lib/auth-client"
-import { usePlayers, useStats, useUserGuilds } from "@/hooks/use-api"
+import { useSession, signOut } from "@web/lib/auth-client"
+import { usePlayers, useStats, useUserGuilds } from "@web/hooks/use-api"
 import pkg from "../../package.json"
 
 /* ── Constants ────────────────────────────────────────────── */

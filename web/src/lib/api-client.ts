@@ -2,7 +2,7 @@
 
 import { treaty } from "@elysiajs/eden"
 import type { App as BotApi } from "@bot/api"
-import type { App as DashApi } from "@/lib/server"
+import type { App as DashApi } from "@web/lib/server"
 
 declare global {
   interface Window {

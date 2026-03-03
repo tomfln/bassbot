@@ -1,11 +1,11 @@
 "use client"
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
-import { useStats, usePlayers, useGlobalLogs } from "@/hooks/use-api"
-import { formatUptime } from "@/lib/format"
-import { ActivityLog } from "@/components/activity-log"
-import { PlayerCard } from "@/components/player-card"
+import { Card, CardContent, CardHeader, CardTitle } from "@web/components/ui/card"
+import { Skeleton } from "@web/components/ui/skeleton"
+import { useStats, usePlayers, useGlobalLogs } from "@web/hooks/use-api"
+import { formatUptime } from "@web/lib/format"
+import { ActivityLog } from "@web/components/activity-log"
+import { PlayerCard } from "@web/components/player-card"
 import {
   Server,
   Users,

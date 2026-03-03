@@ -1,11 +1,11 @@
 import { buildOptions, createCommand } from "@lib/command"
 import { PermissionFlagsBits } from "discord.js"
-import db from "@/util/db"
-import { schema } from "@/util/db"
+import db from "@bot/util/db"
+import { schema } from "@bot/util/db"
 import { eq } from "drizzle-orm"
 import logger from "@lib/logger"
-import hasPermissions from "@/validators/hasPermissions"
-import getOrCreateGuildOpts from "@/middlewares/getOrCreateGuildOpts"
+import hasPermissions from "@bot/validators/hasPermissions"
+import getOrCreateGuildOpts from "@bot/middlewares/getOrCreateGuildOpts"
 
 export default createCommand({
   description: "Bind the bot to a voice or text channel.",

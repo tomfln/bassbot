@@ -1,6 +1,6 @@
-import requireQueue from "@/middlewares/requireQueue"
+import requireQueue from "@bot/middlewares/requireQueue"
 import { createCommand, buildOptions } from "@lib/command"
-import { log } from "@/util/activity-log"
+import { log } from "@bot/util/activity-log"
 
 export default createCommand({
   description: "Remove one or many songs from the queue",

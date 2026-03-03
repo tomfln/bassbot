@@ -17,12 +17,12 @@ import {
   Shield,
   ExternalLink,
 } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { ConfirmDialog } from "@/components/confirm-dialog"
-import { BotInfo } from "@/components/bot-info"
-import { useStats } from "@/hooks/use-api"
-import { useSession, signOut } from "@/lib/auth-client"
+import { cn } from "@web/lib/utils"
+import { Avatar, AvatarFallback, AvatarImage } from "@web/components/ui/avatar"
+import { ConfirmDialog } from "@web/components/confirm-dialog"
+import { BotInfo } from "@web/components/bot-info"
+import { useStats } from "@web/hooks/use-api"
+import { useSession, signOut } from "@web/lib/auth-client"
 import pkg from "../../package.json"
 
 /* ── Constants ────────────────────────────────────────────── */

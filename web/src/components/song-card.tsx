@@ -1,7 +1,7 @@
 "use client"
 
 import Image from "next/image"
-import { formatDuration } from "@/lib/format"
+import { formatDuration } from "@web/lib/format"
 import { Music, ExternalLink } from "lucide-react"
 
 interface SongCardProps {

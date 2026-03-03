@@ -1,9 +1,9 @@
 "use client"
 
-import { Card, CardContent } from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
-import { GuildCard } from "@/components/guild-card"
-import { useGuilds } from "@/hooks/use-api"
+import { Card, CardContent } from "@web/components/ui/card"
+import { Skeleton } from "@web/components/ui/skeleton"
+import { GuildCard } from "@web/components/guild-card"
+import { useGuilds } from "@web/hooks/use-api"
 import { useRouter } from "next/navigation"
 
 export default function AdminGuildsPage() {

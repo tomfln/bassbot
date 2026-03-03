@@ -3,23 +3,23 @@
 import { useState, use } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { GuildIcon } from "@/components/guild-icon"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@web/components/ui/card"
+import { Skeleton } from "@web/components/ui/skeleton"
+import { Avatar, AvatarFallback, AvatarImage } from "@web/components/ui/avatar"
+import { GuildIcon } from "@web/components/guild-icon"
+import { Badge } from "@web/components/ui/badge"
+import { Button } from "@web/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { ConfirmDialog } from "@/components/confirm-dialog"
-import { useGuild, useGuildLogs, useGuildMembers, useDestroyPlayer, useLeaveGuild } from "@/hooks/use-api"
-import { formatDate } from "@/lib/format"
-import { ActivityLog } from "@/components/activity-log"
+} from "@web/components/ui/dropdown-menu"
+import { ConfirmDialog } from "@web/components/confirm-dialog"
+import { useGuild, useGuildLogs, useGuildMembers, useDestroyPlayer, useLeaveGuild } from "@web/hooks/use-api"
+import { formatDate } from "@web/lib/format"
+import { ActivityLog } from "@web/components/activity-log"
 import {
   ArrowLeft,
   Crown,

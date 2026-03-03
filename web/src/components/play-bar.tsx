@@ -1,22 +1,22 @@
 "use client"
 
 import { useState, useRef, useCallback, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Slider } from "@/components/ui/slider"
+import { Button } from "@web/components/ui/button"
+import { Slider } from "@web/components/ui/slider"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover"
+} from "@web/components/ui/popover"
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { formatDuration } from "@/lib/format"
-import { botApi } from "@/lib/api-client"
+} from "@web/components/ui/dialog"
+import { formatDuration } from "@web/lib/format"
+import { botApi } from "@web/lib/api-client"
 import {
   Pause,
   Play,
