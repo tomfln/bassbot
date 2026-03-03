@@ -178,3 +178,5 @@ config.json
 
 # Default data directories
 data
+
+lavalink

@@ -2,10 +2,11 @@
  * Runtime API base URL.
  *
  * Set once by the root Providers component (which receives it from the
- * Server Component layout that reads `process.env.API_URL`).
+ * Server Component layout via the config helper).
  *
- * - Non-empty string → separate-hosts mode (e.g. "http://bot:3001")
- * - Empty string      → proxy mode (API lives on the same origin)
+ * - Non-empty string → separate-hosts mode (e.g. "https://api.example.com")
+ * - Empty string      → same-origin mode (API calls go to the same domain,
+ *                        typically handled by a reverse proxy)
  */
 let _apiUrl = ""
 

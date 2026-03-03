@@ -5,6 +5,7 @@ import { db } from "./db"
 import { webSettings } from "./schema"
 import { eq } from "drizzle-orm"
 import * as schema from "./schema"
+import config from "./config"
 
 export const auth = betterAuth({
   basePath: "/rest/auth",
@@ -14,8 +15,8 @@ export const auth = betterAuth({
   }),
   socialProviders: {
     discord: {
-      clientId: process.env.DISCORD_CLIENT_ID!,
-      clientSecret: process.env.DISCORD_CLIENT_SECRET!,
+      clientId: config.appId,
+      clientSecret: config.discordOauthSecret,
       scope: ["identify", "email", "guilds"],
       mapProfileToUser: (profile) => ({
         name: profile.username ?? profile.global_name ?? "Unknown",

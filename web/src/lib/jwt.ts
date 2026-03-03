@@ -1,14 +1,8 @@
 import { SignJWT, jwtVerify } from "jose"
-
-const JWT_SECRET = process.env.JWT_SECRET
-if (!JWT_SECRET) {
-  console.warn("[jwt] JWT_SECRET not set — JWT signing/verification will fail at runtime")
-}
+import config from "./config"
 
 function getSecret() {
-  const secret = process.env.JWT_SECRET
-  if (!secret) throw new Error("JWT_SECRET environment variable is required")
-  return new TextEncoder().encode(secret)
+  return new TextEncoder().encode(config.jwtSecret)
 }
 
 export interface JwtPayload {

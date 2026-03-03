@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import "./globals.css"
 import { Providers } from "@/components/providers"
+import config from "@/lib/config"
 
 export const metadata: Metadata = {
   title: "bassbot",
@@ -12,7 +13,9 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  const apiUrl = process.env.API_URL ?? "" // empty string makes the frontend use the web host as api url
+  // apiUrl is a browser-side URL — only set when the bot API is on a
+  // different domain.  Empty string = same-origin (reverse proxy).
+  const apiUrl = config.apiUrl
 
   return (
     <html lang="en" className="dark">

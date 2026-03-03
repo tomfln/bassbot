@@ -40,7 +40,7 @@ if (guildId === "clear" || guildId === "sync") {
 
 const opts = {
   token: config.token,
-  clientId: config.clientId,
+  clientId: config.appId,
   ...(guildId && { guildId }),
 }
 

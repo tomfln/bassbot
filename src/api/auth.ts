@@ -1,6 +1,7 @@
 import { jwtVerify } from "jose"
 import type { BassBot } from "../bot"
 import logger from "@bot/logger"
+import config from "../config"
 
 export interface JwtPayload {
   sub: string
@@ -11,19 +12,13 @@ export interface JwtPayload {
 }
 
 export async function verifyJwt(request: Request): Promise<JwtPayload | null> {
-  const secret = process.env.JWT_SECRET
-  if (!secret) {
-    logger.warn("[api] JWT_SECRET not set — rejecting authenticated requests")
-    return null
-  }
-
   const authHeader = request.headers.get("authorization")
   if (!authHeader?.startsWith("Bearer ")) return null
 
   try {
     const { payload } = await jwtVerify(
       authHeader.slice(7),
-      new TextEncoder().encode(secret),
+      new TextEncoder().encode(config.jwtSecret),
     )
     return payload as unknown as JwtPayload
   } catch {

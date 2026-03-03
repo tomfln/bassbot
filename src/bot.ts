@@ -60,7 +60,7 @@ export class BassBot extends Bot<BassBot> {
     await this.loadSettings()
     const commandDir = path.join(import.meta.dir, "commands")
     await this.loadCommands(commandDir, { depth: 2, silent: true })
-    this._syncResult = await this.syncCommands({ token: config.token, clientId: config.clientId, silent: true })
+    this._syncResult = await this.syncCommands({ token: config.token, clientId: config.appId, silent: true })
 
     setInterval(() => this.randomActivity(), 1000 * 15)
   }

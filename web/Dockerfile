@@ -20,8 +20,8 @@ ENV NEXT_TELEMETRY_DISABLED=1
 
 RUN useradd --system --uid 1001 nextjs
 
-# Create data directory for SQLite
-RUN mkdir -p /app/data && chown nextjs /app/data
+# Create data directory (shared volume mount point)
+RUN mkdir -p /data && chown nextjs /data
 
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs /app/.next/standalone ./
@@ -31,5 +31,5 @@ USER nextjs
 EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
-ENV DATABASE_PATH=/app/data/web.db
+ENV DATA_DIR=/data
 CMD ["bun", "server.js"]

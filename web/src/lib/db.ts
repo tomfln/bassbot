@@ -3,8 +3,9 @@ import Database from "better-sqlite3"
 import { mkdirSync } from "node:fs"
 import { dirname } from "node:path"
 import * as schema from "./schema"
+import config from "./config"
 
-const dbPath = process.env.DATABASE_PATH ?? "./data/web.db"
+const dbPath = config.databasePath
 
 // Ensure parent directory exists
 mkdirSync(dirname(dbPath), { recursive: true })
