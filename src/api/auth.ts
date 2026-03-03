@@ -1,6 +1,6 @@
 import { jwtVerify } from "jose"
 import type { BassBot } from "../bot"
-import logger from "@bot/logger"
+import logger from "@lib/logger"
 import config from "../config"
 
 export interface JwtPayload {

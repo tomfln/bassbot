@@ -1,6 +1,6 @@
 import requirePlayer from "@/middlewares/requirePlayer"
 import { LoopMode } from "@/player"
-import { createCommand, buildOptions } from "@bot/command"
+import { createCommand, buildOptions } from "@lib/command"
 import { z } from "zod"
 import { log } from "@/util/activity-log"
 

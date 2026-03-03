@@ -1,4 +1,4 @@
-import { createCommand, buildOptions } from "@bot/command"
+import { createCommand, buildOptions } from "@lib/command"
 import { cleanTrackTitle } from "@/util/helpers"
 import isBoundChannel from "@/validators/isBoundChannel"
 import isInBoundVC from "@/validators/isInBoundVC"

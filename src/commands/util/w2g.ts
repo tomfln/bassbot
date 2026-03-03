@@ -1,5 +1,5 @@
-import { buildOptions, createCommand } from "@bot/command"
-import logger from "@bot/logger"
+import { buildOptions, createCommand } from "@lib/command"
+import logger from "@lib/logger"
 import { createRoom } from "@/util/w2g"
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js"
 

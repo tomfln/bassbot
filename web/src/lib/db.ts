@@ -1,5 +1,5 @@
-import { drizzle } from "drizzle-orm/better-sqlite3"
-import Database from "better-sqlite3"
+import { drizzle } from "drizzle-orm/bun-sqlite"
+import { Database } from "bun:sqlite"
 import { mkdirSync } from "node:fs"
 import { dirname } from "node:path"
 import * as schema from "./schema"
@@ -10,8 +10,8 @@ const dbPath = config.databasePath
 // Ensure parent directory exists
 mkdirSync(dirname(dbPath), { recursive: true })
 
-const sqlite = new Database(dbPath)
-sqlite.pragma("journal_mode = WAL")
+const sqlite = new Database(dbPath, { create: true })
+sqlite.run("PRAGMA journal_mode = WAL;")
 
 // Ensure all tables exist (auto-migrate on startup)
 sqlite.exec(`

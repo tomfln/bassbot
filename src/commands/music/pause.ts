@@ -1,5 +1,5 @@
 import requirePlayer from "@/middlewares/requirePlayer"
-import { createCommand } from "@bot/command"
+import { createCommand } from "@lib/command"
 import { log } from "@/util/activity-log"
 
 export default createCommand({

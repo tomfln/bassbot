@@ -18,8 +18,8 @@ const success = (msg: string) => console.log("\x1b[32m" + msg + "\x1b[0m")
 import readline from "node:readline"
 import path from "node:path"
 import config from "@/config"
-import { loadCommandFiles } from "@bot/command"
-import { syncCommands, clearCommands } from "@bot/register"
+import { loadCommandFiles } from "@lib/command"
+import { syncCommands, clearCommands } from "@lib/register"
 
 const rl = readline.createInterface({
   input: process.stdin,

@@ -1,5 +1,5 @@
 import requireHistory from "@/middlewares/requireHistory"
-import { createCommand } from "@bot/command"
+import { createCommand } from "@lib/command"
 import isInGuild from "@/validators/isInGuild"
 import { log } from "@/util/activity-log"
 

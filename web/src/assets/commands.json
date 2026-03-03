@@ -1,0 +1,322 @@
+[
+  {
+    "name": "clear",
+    "category": "music",
+    "description": "Remove all songs from the queue",
+    "detailDescription": "Removes all songs from the queue at once. The currently playing song will continue until it ends or is skipped.",
+    "options": []
+  },
+  {
+    "name": "history",
+    "category": "music",
+    "description": "View recently played queues",
+    "detailDescription": "Shows a list of recently played queues for this server. Each entry shows when it was played and how many songs it contained. Use /loadqueue to restore a previous queue.",
+    "options": [
+      {
+        "name": "page",
+        "description": "Page number to display",
+        "type": "integer"
+      }
+    ]
+  },
+  {
+    "name": "loadqueue",
+    "category": "music",
+    "description": "Load a recently played queue",
+    "detailDescription": "Restores a previously played queue from the server's history. Select from the list and songs will be added to your current queue. Any currently queued songs will remain.",
+    "options": []
+  },
+  {
+    "name": "loop",
+    "category": "music",
+    "description": "Change the Loop Mode",
+    "detailDescription": "Changes how the queue repeats. Off plays through once, Track repeats the current song, and Queue loops the entire playlist back to the start when it ends.",
+    "options": [
+      {
+        "name": "mode",
+        "description": "The loop mode",
+        "type": "string",
+        "required": true,
+        "choices": [
+          {
+            "name": "None",
+            "value": "None"
+          },
+          {
+            "name": "Song",
+            "value": "Song"
+          },
+          {
+            "name": "Queue",
+            "value": "Queue"
+          },
+          {
+            "name": "Autoplay",
+            "value": "Autoplay"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "lyrics",
+    "category": "music",
+    "description": "Search for the lyrics of a specific song",
+    "detailDescription": "Searches for and displays the lyrics of a song. If no song name is provided, it will look up lyrics for the currently playing track.",
+    "options": [
+      {
+        "name": "search_term",
+        "description": "The search query, preferably the artist name and song name",
+        "type": "string",
+        "required": true
+      }
+    ]
+  },
+  {
+    "name": "move",
+    "category": "music",
+    "description": "Move a track in the queue to a different position",
+    "detailDescription": "Moves a song from one position to another in the queue. Specify the current position and the target position to rearrange without removing and re-adding songs.",
+    "options": [
+      {
+        "name": "from",
+        "description": "The position of the song to move in the queue",
+        "type": "integer",
+        "required": true,
+        "minValue": 1
+      },
+      {
+        "name": "to",
+        "description": "The position in the queue to move the song to",
+        "type": "integer",
+        "required": true,
+        "minValue": 1
+      }
+    ]
+  },
+  {
+    "name": "multiadd",
+    "category": "music",
+    "description": "Add multiple songs to the queue from a list",
+    "detailDescription": "Opens a form where you can paste multiple song names or URLs, one per line. All songs will be searched and added to the queue at once.",
+    "options": []
+  },
+  {
+    "name": "next",
+    "category": "music",
+    "description": "Plays the next song in the queue",
+    "detailDescription": "Skips to the next song in the queue. You can optionally specify a position to skip directly to a specific song in the queue.",
+    "options": [
+      {
+        "name": "position",
+        "description": "The position in the queue to skip to",
+        "type": "integer",
+        "minValue": 1
+      }
+    ]
+  },
+  {
+    "name": "pause",
+    "category": "music",
+    "description": "Pauses the player",
+    "detailDescription": "Pauses the currently playing song. The playback position is saved so you can resume from where you left off with /resume.",
+    "options": []
+  },
+  {
+    "name": "play",
+    "category": "music",
+    "description": "Play a song.",
+    "detailDescription": "Plays a song by name or URL. Supports YouTube, Spotify, SoundCloud, and direct links. If a playlist URL is provided, all songs will be added to the queue.",
+    "options": [
+      {
+        "name": "song",
+        "description": "The name/url of the song to play.",
+        "type": "string",
+        "required": true
+      },
+      {
+        "name": "next",
+        "description": "Play as next song",
+        "type": "boolean"
+      }
+    ]
+  },
+  {
+    "name": "prev",
+    "category": "music",
+    "description": "Plays the previous song in the queue",
+    "detailDescription": "Goes back to the previously played song. Returns to the track that was playing before the current one.",
+    "options": []
+  },
+  {
+    "name": "queue",
+    "category": "music",
+    "description": "View a list of songs in the queue",
+    "detailDescription": "Displays the current queue of songs with titles, artists, and positions. Results are paginated with 10 songs per page.",
+    "options": [
+      {
+        "name": "page",
+        "description": "Displays the tracks in queue",
+        "type": "integer"
+      }
+    ]
+  },
+  {
+    "name": "remove",
+    "category": "music",
+    "description": "Remove one or many songs from the queue",
+    "detailDescription": "Removes one or more songs from the queue by position. You can specify a range to remove multiple songs at once.",
+    "options": [
+      {
+        "name": "position",
+        "description": "The queue position of the song to remove",
+        "type": "integer",
+        "required": true
+      },
+      {
+        "name": "end",
+        "description": "The queue position of the last song to remove",
+        "type": "integer"
+      }
+    ]
+  },
+  {
+    "name": "resume",
+    "category": "music",
+    "description": "Resume the current song",
+    "detailDescription": "Resumes playback of the currently paused song from where it was paused. Has no effect if the player is already playing.",
+    "options": []
+  },
+  {
+    "name": "search",
+    "category": "music",
+    "description": "Search for a song.",
+    "detailDescription": "Searches for a song and shows the top results. Pick from the list to add it to the queue, with the option to play it next or at the end.",
+    "options": [
+      {
+        "name": "query",
+        "description": "The song you want to search for.",
+        "type": "string",
+        "required": true
+      }
+    ]
+  },
+  {
+    "name": "seek",
+    "category": "music",
+    "description": "Seek to the specified time in the current song",
+    "detailDescription": "Jumps to a specific time in the currently playing song. Accepts timestamps like 1:30, 90, or 1m30s. Cannot seek beyond the song's duration.",
+    "options": [
+      {
+        "name": "time",
+        "description": "The time to seek to in format X:XX",
+        "type": "string",
+        "required": true
+      }
+    ]
+  },
+  {
+    "name": "shuffle",
+    "category": "music",
+    "description": "Shuffles the queue",
+    "detailDescription": "Randomly reorders all songs in the queue. The currently playing song stays in place. Shuffling is immediate and cannot be undone.",
+    "options": []
+  },
+  {
+    "name": "songinfo",
+    "category": "music",
+    "description": "Get information about the current song",
+    "detailDescription": "Shows detailed information about the currently playing song including title, artist, duration, source platform, and a link to the original.",
+    "options": [
+      {
+        "name": "position",
+        "description": "Displays info about the current song",
+        "type": "integer"
+      }
+    ]
+  },
+  {
+    "name": "stop",
+    "category": "music",
+    "description": "Stops the player and quits the voice channel",
+    "detailDescription": "Stops playback, clears the queue, and disconnects the bot from the voice channel. This completely ends the listening session.",
+    "options": []
+  },
+  {
+    "name": "volume",
+    "category": "music",
+    "description": "Sets the volume of the music player.",
+    "detailDescription": "Adjusts the playback volume between 0 and 100. The default volume is 100. Changes take effect immediately on the current and future tracks.",
+    "options": [
+      {
+        "name": "value",
+        "description": "The volume to set.",
+        "type": "integer",
+        "required": true,
+        "minValue": 0,
+        "maxValue": 100
+      }
+    ]
+  },
+  {
+    "name": "bindchannel",
+    "category": "util",
+    "description": "Bind the bot to a voice or text channel.",
+    "detailDescription": "Restricts the bot to specific text and voice channels. When bound, the bot will only accept commands in the bound text channel and only join the bound voice channel.",
+    "options": [
+      {
+        "name": "add",
+        "description": "Bind a channel.",
+        "type": "subcommand"
+      },
+      {
+        "name": "remove",
+        "description": "Unbind a channel.",
+        "type": "subcommand"
+      },
+      {
+        "name": "clear",
+        "description": "Clear all bound channels.",
+        "type": "subcommand"
+      },
+      {
+        "name": "list",
+        "description": "List all bound channels.",
+        "type": "subcommand"
+      }
+    ]
+  },
+  {
+    "name": "help",
+    "category": "util",
+    "description": "Show help for a command.",
+    "detailDescription": "Shows detailed information about a specific command, including its parameters, types, and whether they are required.",
+    "options": [
+      {
+        "name": "command",
+        "description": "The command to get help for.",
+        "type": "string"
+      }
+    ]
+  },
+  {
+    "name": "info",
+    "category": "util",
+    "description": "Shows basic information about the bot.",
+    "detailDescription": "Displays information about the bot including version, uptime, memory usage, server count, and the number of active music players.",
+    "options": []
+  },
+  {
+    "name": "w2g",
+    "category": "util",
+    "description": "Create a Watch2Gether room.",
+    "detailDescription": "Creates a Watch2Gether room where you and your friends can watch videos together in sync. Optionally provide a URL to start watching immediately.",
+    "options": [
+      {
+        "name": "url",
+        "description": "The video url to play in the new room.",
+        "type": "string"
+      }
+    ]
+  }
+]

@@ -2,7 +2,7 @@ import db from "@/util/db"
 import { schema } from "@/util/db"
 import { eq } from "drizzle-orm"
 import { isAllowedChannel } from "@/util/helpers"
-import { createValidator } from "@bot/validator"
+import { createValidator } from "@lib/validator"
 import isInGuild from "./isInGuild"
 import isInVC from "./isInVC"
 

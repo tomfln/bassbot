@@ -1,4 +1,4 @@
-import { createCommand } from "@bot/command"
+import { createCommand } from "@lib/command"
 import { duration } from "@/util/time"
 import { EmbedBuilder } from "discord.js"
 

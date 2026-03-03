@@ -1,4 +1,4 @@
-import { createCommand, buildOptions } from "@bot/command"
+import { createCommand, buildOptions } from "@lib/command"
 import { ApplicationCommandOptionType } from "discord.js"
 import pixelWidth from "string-pixel-width"
 

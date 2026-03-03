@@ -1,11 +1,11 @@
-import { createCommand } from "@bot/command"
+import { createCommand } from "@lib/command"
 import { cleanTrackTitle } from "@/util/helpers"
 import { duration } from "@/util/time"
 import { Queue } from "@/queue"
 import isBoundChannel from "@/validators/isBoundChannel"
 import isInGuild from "@/validators/isInGuild"
 import isInVC from "@/validators/isInVC"
-import { createMessageEmbed, EmbedColor } from "@bot/message"
+import { createMessageEmbed, EmbedColor } from "@lib/message"
 import { log } from "@/util/activity-log"
 import {
   ActionRowBuilder,

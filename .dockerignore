@@ -7,4 +7,5 @@ lavalink
 .git
 .idea
 .env
+.env.*
 *.md

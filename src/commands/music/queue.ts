@@ -1,8 +1,8 @@
 import requirePlayer from "@/middlewares/requirePlayer"
 import type { PlayerWithQueue } from "@/player"
-import { createCommand, buildOptions } from "@bot/command"
+import { createCommand, buildOptions } from "@lib/command"
 import { cleanTrackTitle } from "@/util/helpers"
-import { replyEmbed, type ReplyHelper } from "@bot/reply"
+import { replyEmbed, type ReplyHelper } from "@lib/reply"
 import { duration } from "@/util/time"
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags, type InteractionEditReplyOptions, type RepliableInteraction } from "discord.js"
 

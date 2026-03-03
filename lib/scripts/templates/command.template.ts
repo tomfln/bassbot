@@ -1,4 +1,4 @@
-import { createCommand, buildOptions } from "@bot/command"
+import { createCommand, buildOptions } from "@lib/command"
 
 export default createCommand({
   description: "",

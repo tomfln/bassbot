@@ -1,11 +1,11 @@
-import { createCommand, buildOptions } from "@bot/command"
+import { createCommand, buildOptions } from "@lib/command"
 import { cleanTrackTitle } from "@/util/helpers"
 import { duration } from "@/util/time"
 import { Queue } from "@/queue"
 import isBoundChannel from "@/validators/isBoundChannel"
 import isInGuild from "@/validators/isInGuild"
 import { time, TimestampStyles } from "discord.js"
-import { EmbedColor } from "@bot/message"
+import { EmbedColor } from "@lib/message"
 
 export default createCommand({
   description: "View recently played queues",

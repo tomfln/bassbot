@@ -1,7 +1,7 @@
 import { Elysia } from "elysia"
 import { cors } from "@elysiajs/cors"
 import type { BassBot } from "../bot"
-import logger from "@bot/logger"
+import logger from "@lib/logger"
 import { wsRoutes } from "./routes/ws"
 import { statsRoutes } from "./routes/stats"
 import { playerRoutes } from "./routes/players"

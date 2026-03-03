@@ -1,6 +1,6 @@
 import { ActivityType, ChatInputCommandInteraction, type ActivityOptions } from "discord.js"
 import { Connectors, Shoukaku } from "shoukaku"
-import { Bot } from "@bot/bot"
+import { Bot } from "@lib/bot"
 import { PlayerWithQueue } from "./player"
 import config from "./config"
 import path from "node:path"
@@ -11,7 +11,7 @@ import { eq } from "drizzle-orm"
 const pkg = await Bun.file(path.join(import.meta.dir, "..", "package.json")).json() as { version: string }
 
 // Register BassBot as the bot type for typed ctx.bot in commands
-declare module "@bot/command" {
+declare module "@lib/command" {
   interface Register {
     bot: BassBot
   }

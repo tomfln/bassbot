@@ -2,7 +2,7 @@ import type { Track } from "shoukaku"
 import db from "./util/db"
 import { schema } from "./util/db"
 import { eq } from "drizzle-orm"
-import logger from "@bot/logger"
+import logger from "@lib/logger"
 
 const QUEUE_MAX_AGE_MS = 10 * 60 * 1000 // 10 minutes
 const HISTORY_MAX_ENTRIES = 10 // max history entries per guild

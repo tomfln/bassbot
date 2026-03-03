@@ -1,11 +1,11 @@
-import config from "@/config"
+import config from "../config"
 import { drizzle } from "drizzle-orm/bun-sqlite"
 import { migrate } from "drizzle-orm/bun-sqlite/migrator"
 import { Database } from "bun:sqlite"
 import { join } from "node:path"
 import { mkdirSync } from "node:fs"
 import * as schema from "./schema"
-import logger from "@bot/logger"
+import logger from "@lib/logger"
 
 // Ensure the data directory exists before opening the database
 mkdirSync(config.dataDir, { recursive: true })

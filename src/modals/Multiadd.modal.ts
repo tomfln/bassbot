@@ -1,4 +1,4 @@
-import { createModal } from "@bot/modal";
+import { createModal } from "@lib/modal";
 import { TextInputStyle } from "discord.js";
 
 export const MultiaddModal = createModal({

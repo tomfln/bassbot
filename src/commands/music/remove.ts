@@ -1,5 +1,5 @@
 import requireQueue from "@/middlewares/requireQueue"
-import { createCommand, buildOptions } from "@bot/command"
+import { createCommand, buildOptions } from "@lib/command"
 import { log } from "@/util/activity-log"
 
 export default createCommand({

@@ -7,11 +7,11 @@ import {
 } from "discord.js"
 import { type Track } from "shoukaku"
 import { cleanTrackTitle } from "./helpers"
-import { AppEmoji } from "@/constants/emojis"
-import { EmbedColor } from "@bot/message"
+import { AppEmoji } from "../constants/emojis"
+import { EmbedColor } from "@lib/message"
 
 // Re-export generic message helpers for convenience
-export { EmbedColor, code, createMessageEmbed, embedMsg, type EmbedOpts } from "@bot/message"
+export { EmbedColor, code, createMessageEmbed, embedMsg, type EmbedOpts } from "@lib/message"
 
 export function nowPlayingButtons(paused: boolean) {
   return new ActionRowBuilder<ButtonBuilder>().addComponents(

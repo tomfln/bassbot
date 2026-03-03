@@ -1,5 +1,5 @@
 /**
- * Generates web/data/commands.json from the bot command source files.
+ * Generates web/src/assets/commands.json from the bot command source files.
  * Run: bun lib/scripts/generate-commands-json.ts
  */
 import fs from "node:fs"
@@ -7,7 +7,7 @@ import path from "node:path"
 import { ApplicationCommandOptionType } from "discord.js"
 
 const COMMANDS_DIR = path.resolve(import.meta.dir, "../../src/commands")
-const OUTPUT_FILE = path.resolve(import.meta.dir, "../../web/data/commands.json")
+const OUTPUT_FILE = path.resolve(import.meta.dir, "../../web/src/assets/commands.json")
 
 const typeNames: Record<number, string> = {
   [ApplicationCommandOptionType.String]: "string",

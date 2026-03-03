@@ -1,4 +1,4 @@
-import commandsData from "../../../data/commands.json"
+import commandsData from "@/assets/commands.json"
 import { CommandList } from "./command-list"
 
 export const metadata = {

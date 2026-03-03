@@ -1,9 +1,9 @@
-import { buildOptions, createCommand } from "@bot/command"
+import { buildOptions, createCommand } from "@lib/command"
 import { PermissionFlagsBits } from "discord.js"
 import db from "@/util/db"
 import { schema } from "@/util/db"
 import { eq } from "drizzle-orm"
-import logger from "@bot/logger"
+import logger from "@lib/logger"
 import hasPermissions from "@/validators/hasPermissions"
 import getOrCreateGuildOpts from "@/middlewares/getOrCreateGuildOpts"
 

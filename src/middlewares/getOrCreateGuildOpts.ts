@@ -1,4 +1,4 @@
-import { createMiddleware } from "@bot/middleware"
+import { createMiddleware } from "@lib/middleware"
 import db from "@/util/db"
 import { schema } from "@/util/db"
 import { eq } from "drizzle-orm"
