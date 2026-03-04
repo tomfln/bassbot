@@ -1,9 +1,10 @@
-import { Elysia } from "elysia"
+import { Elysia, t } from "elysia"
 import { auth } from "./auth"
 import { db } from "./db"
 import { account, user, webSettings } from "./schema"
 import { eq } from "drizzle-orm"
-import { signJwt, type JwtPayload } from "./jwt"
+import { signJwt, type JwtPayload } from "@lib/jwt"
+import config from "./config"
 
 /**
  * Elysia backend for the web app.
@@ -76,7 +77,7 @@ const routes = new Elysia()
       avatar: session.user.image ?? "",
     }
 
-    const token = await signJwt(payload)
+    const token = await signJwt(payload, config.jwtSecret)
     return { token }
   })
 
@@ -150,9 +151,11 @@ const routes = new Elysia()
   })
 
   // Admin: update user role
-  .post("/admin/users/:userId/role", async ({ request, params }) => {
-    await requireAdmin(request)
-    const body = (await request.json()) as { role: string }
+  .post("/admin/users/:userId/role", async ({ request, params, body }) => {
+    const session = await requireAdmin(request)
+    if (session.user.id === params.userId) {
+      throw new Response(JSON.stringify({ error: "Cannot change your own role" }), { status: 400, headers: { "content-type": "application/json" } })
+    }
 
     await db
       .update(user)
@@ -160,12 +163,18 @@ const routes = new Elysia()
       .where(eq(user.id, params.userId))
 
     return { success: true }
+  }, {
+    body: t.Object({
+      role: t.Union([t.Literal("admin"), t.Literal("user")]),
+    }),
   })
 
   // Admin: ban user
-  .post("/admin/users/:userId/ban", async ({ request, params }) => {
-    await requireAdmin(request)
-    const body = (await request.json()) as { reason?: string }
+  .post("/admin/users/:userId/ban", async ({ request, params, body }) => {
+    const session = await requireAdmin(request)
+    if (session.user.id === params.userId) {
+      throw new Response(JSON.stringify({ error: "Cannot ban yourself" }), { status: 400, headers: { "content-type": "application/json" } })
+    }
 
     await db
       .update(user)
@@ -173,6 +182,10 @@ const routes = new Elysia()
       .where(eq(user.id, params.userId))
 
     return { success: true }
+  }, {
+    body: t.Object({
+      reason: t.Optional(t.String({ maxLength: 500 })),
+    }),
   })
 
   // Admin: unban user
@@ -189,7 +202,10 @@ const routes = new Elysia()
 
   // Admin: delete user
   .delete("/admin/users/:userId", async ({ request, params }) => {
-    await requireAdmin(request)
+    const session = await requireAdmin(request)
+    if (session.user.id === params.userId) {
+      throw new Response(JSON.stringify({ error: "Cannot delete yourself" }), { status: 400, headers: { "content-type": "application/json" } })
+    }
 
     await db.delete(user).where(eq(user.id, params.userId))
     return { success: true }
@@ -217,9 +233,8 @@ const routes = new Elysia()
   })
 
   // Admin: update web settings
-  .post("/admin/settings", async ({ request }) => {
+  .post("/admin/settings", async ({ request, body }) => {
     await requireAdmin(request)
-    const body = (await request.json()) as { signupEnabled?: boolean }
 
     if (body.signupEnabled !== undefined) {
       await db
@@ -232,6 +247,10 @@ const routes = new Elysia()
     }
 
     return { success: true }
+  }, {
+    body: t.Partial(t.Object({
+      signupEnabled: t.Boolean(),
+    })),
   })
 
 const app = new Elysia({ prefix: "/rest" }).use(routes)
