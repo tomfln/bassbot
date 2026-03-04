@@ -21,5 +21,6 @@
   "_comment_web": "=== Web dashboard settings ===",
   "discordOauthSecret": "your_discord_oauth_client_secret_here",
   "betterAuthSecret": "generate_a_random_secret_here",
-  "betterAuthUrl": "http://localhost:3000"
+  "betterAuthUrl": "http://localhost:3000",
+  "adminUsers": ["enter your discord username here without the discriminator (e.g. 'tomfln')"]
 }

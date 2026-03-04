@@ -38,6 +38,14 @@ const config = {
   apiUrl: str("API_URL", "apiUrl") ?? "",
   /** SQLite database path */
   databasePath: str("DATABASE_PATH", "databasePath") ?? join(dataDir, "web.db"),
+  /** Discord usernames that are auto-promoted to admin on signup/login */
+  adminUsers: (() => {
+    const env = process.env.ADMIN_USERS
+    if (env) return env.split(",").map(s => s.trim().toLowerCase()).filter(Boolean)
+    const arr = file.adminUsers
+    if (Array.isArray(arr)) return (arr as string[]).map(s => String(s).trim().toLowerCase()).filter(Boolean)
+    return [] as string[]
+  })(),
   /** Raw data directory path */
   dataDir,
 }

@@ -1,4 +1,4 @@
-import { Elysia, status, t } from "elysia"
+import { Elysia, t } from "elysia"
 import { cors } from "@elysiajs/cors"
 import { verifyAuthHeader, verifyJwt, type JwtPayload } from "@lib/jwt"
 import type { BassBot } from "./bot"
@@ -201,12 +201,18 @@ function checkRateLimit(request: Request): void {
 
 function createRoutes(bot: BassBot) {
   return new Elysia()
-    .onError(({ error }) => {
+    .onError(({ error, set }) => {
       if (error instanceof HttpError) {
-        return new Response(JSON.stringify(error.body), {
-          status: error.statusCode,
-          headers: { "content-type": "application/json", ...error.responseHeaders },
-        })
+        set.status = error.statusCode
+        set.headers["content-type"] = "application/json"
+        if (error.responseHeaders) {
+          for (const [k, v] of Object.entries(error.responseHeaders)) {
+            set.headers[k] = v
+          }
+        }
+        // Cast as never so the error body doesn't pollute handler return types
+        // (otherwise Eden treaty clients see Record<string, unknown> in the union)
+        return error.body as never
       }
     })
     .onBeforeHandle(({ request }) => { checkRateLimit(request) })
@@ -270,7 +276,7 @@ function createRoutes(bot: BassBot) {
       const cacheKey = `player:${params.guildId}:${ql}:${hl}`
       return cache.resolve(cacheKey, TTL.PLAYER_DETAIL, () => {
         const player = bot.getPlayer(params.guildId)
-        if (!player) return status(404, { error: "Player not found" })
+        if (!player) throw new HttpError(404, { error: "Player not found" })
         return playerDetail(player, bot, ql, hl)
       })
     })
@@ -281,7 +287,7 @@ function createRoutes(bot: BassBot) {
       const offset = parseInt(query.offset ?? "0") || 0
       const limit = Math.min(parseInt(query.limit ?? "20") || 20, 200)
       const player = bot.getPlayer(params.guildId)
-      if (!player) return status(404, { error: "Player not found" })
+      if (!player) throw new HttpError(404, { error: "Player not found" })
       return {
         items: player.queue.slice(offset, offset + limit).map(trackInfo),
         total: player.queue.length,
@@ -295,7 +301,7 @@ function createRoutes(bot: BassBot) {
       const offset = parseInt(query.offset ?? "0") || 0
       const limit = Math.min(parseInt(query.limit ?? "20") || 20, 200)
       const player = bot.getPlayer(params.guildId)
-      if (!player) return status(404, { error: "Player not found" })
+      if (!player) throw new HttpError(404, { error: "Player not found" })
       return {
         items: player.history.slice(offset, offset + limit).map(trackInfo),
         total: player.history.length,
@@ -331,7 +337,7 @@ function createRoutes(bot: BassBot) {
       const cacheKey = `guild:${params.guildId}:${ml}`
       return cache.resolve(cacheKey, TTL.GUILD_DETAIL, () => {
         const guild = bot.guilds.cache.get(params.guildId)
-        if (!guild) return status(404, { error: "Guild not found" })
+        if (!guild) throw new HttpError(404, { error: "Guild not found" })
 
         const owner = guild.members.cache.get(guild.ownerId)
         const allMembers = guild.members.cache
@@ -385,7 +391,7 @@ function createRoutes(bot: BassBot) {
       const limit = Math.min(parseInt(query.limit ?? "20") || 20, 200)
       const search = (query.search ?? "").toLowerCase().slice(0, 100)
       const guild = bot.guilds.cache.get(params.guildId)
-      if (!guild) return status(404, { error: "Guild not found" })
+      if (!guild) throw new HttpError(404, { error: "Guild not found" })
 
       let members = guild.members.cache
         .sort((a, b) => {
@@ -441,14 +447,14 @@ function createRoutes(bot: BassBot) {
     .delete("/players/:guildId", async ({ params, request }) => {
       await requireAdmin(request)
       const player = bot.getPlayer(params.guildId)
-      if (!player) return status(404, { error: "Player not found" })
+      if (!player) throw new HttpError(404, { error: "Player not found" })
       await player.disconnect()
       return { ok: true }
     })
     .post("/players/:guildId/clear", async ({ params, request }) => {
       await requireAdmin(request)
       const player = bot.getPlayer(params.guildId)
-      if (!player) return status(404, { error: "Player not found" })
+      if (!player) throw new HttpError(404, { error: "Player not found" })
       player.clear()
       return { ok: true }
     })
@@ -461,7 +467,7 @@ function createRoutes(bot: BassBot) {
       if (player) await player.disconnect()
 
       const guild = bot.guilds.cache.get(params.guildId)
-      if (!guild) return status(404, { error: "Guild not found" })
+      if (!guild) throw new HttpError(404, { error: "Guild not found" })
       await guild.leave()
       cache.invalidate(`guild:${params.guildId}`)
       cache.invalidate("guilds")
@@ -489,56 +495,50 @@ function createRoutes(bot: BassBot) {
 
     // Pause / Resume
     .post("/players/:guildId/pause", async ({ params, request }) => {
-      const user = await verifyUserInVC(bot, request, params.guildId)
-      if (user instanceof Response) return user
+      await verifyUserInVC(bot, request, params.guildId)
       const player = bot.getPlayer(params.guildId)
-      if (!player) return status(404, { error: "Player not found" })
+      if (!player) throw new HttpError(404, { error: "Player not found" })
       await player.setPaused(true)
       return { ok: true }
     })
     .post("/players/:guildId/resume", async ({ params, request }) => {
-      const user = await verifyUserInVC(bot, request, params.guildId)
-      if (user instanceof Response) return user
+      await verifyUserInVC(bot, request, params.guildId)
       const player = bot.getPlayer(params.guildId)
-      if (!player) return status(404, { error: "Player not found" })
+      if (!player) throw new HttpError(404, { error: "Player not found" })
       await player.setPaused(false)
       return { ok: true }
     })
 
     // Next / Previous
     .post("/players/:guildId/next", async ({ params, request }) => {
-      const user = await verifyUserInVC(bot, request, params.guildId)
-      if (user instanceof Response) return user
+      await verifyUserInVC(bot, request, params.guildId)
       const player = bot.getPlayer(params.guildId)
-      if (!player) return status(404, { error: "Player not found" })
+      if (!player) throw new HttpError(404, { error: "Player not found" })
       await player.next()
       return { ok: true }
     })
     .post("/players/:guildId/prev", async ({ params, request }) => {
-      const user = await verifyUserInVC(bot, request, params.guildId)
-      if (user instanceof Response) return user
+      await verifyUserInVC(bot, request, params.guildId)
       const player = bot.getPlayer(params.guildId)
-      if (!player) return status(404, { error: "Player not found" })
+      if (!player) throw new HttpError(404, { error: "Player not found" })
       await player.prev()
       return { ok: true }
     })
 
     // Shuffle
     .post("/players/:guildId/shuffle", async ({ params, request }) => {
-      const user = await verifyUserInVC(bot, request, params.guildId)
-      if (user instanceof Response) return user
+      await verifyUserInVC(bot, request, params.guildId)
       const player = bot.getPlayer(params.guildId)
-      if (!player) return status(404, { error: "Player not found" })
+      if (!player) throw new HttpError(404, { error: "Player not found" })
       player.shuffle()
       return { ok: true }
     })
 
     // Loop toggle (cycles: None → Song → Queue → None)
     .post("/players/:guildId/loop", async ({ params, request }) => {
-      const user = await verifyUserInVC(bot, request, params.guildId)
-      if (user instanceof Response) return user
+      await verifyUserInVC(bot, request, params.guildId)
       const player = bot.getPlayer(params.guildId)
-      if (!player) return status(404, { error: "Player not found" })
+      if (!player) throw new HttpError(404, { error: "Player not found" })
       const modes = ["None", "Song", "Queue"] as const
       const currentIdx = modes.indexOf(player.loopMode as typeof modes[number])
       const nextMode = modes[(currentIdx + 1) % modes.length]!
@@ -551,10 +551,10 @@ function createRoutes(bot: BassBot) {
       await requireAuth(request)
 
       const q = typeof query.q === "string" ? query.q.slice(0, 200) : ""
-      if (!q) return status(400, { error: "Missing search query" })
+      if (!q) throw new HttpError(400, { error: "Missing search query" })
 
       const node = bot.lava.nodes.values().next().value
-      if (!node) return status(503, { error: "No Lavalink nodes available" })
+      if (!node) throw new HttpError(503, { error: "No Lavalink nodes available" })
 
       // Try raw search first for multiple results
       const rawResults = await node.rest.resolve(`ytsearch:${q}`)
@@ -599,17 +599,16 @@ function createRoutes(bot: BassBot) {
 
     // Add track to queue
     .post("/players/:guildId/queue", async ({ params, body, request }) => {
-      const user = await verifyUserInVC(bot, request, params.guildId)
-      if (user instanceof Response) return user
+      await verifyUserInVC(bot, request, params.guildId)
 
       const player = bot.getPlayer(params.guildId)
-      if (!player) return status(404, { error: "Player not found" })
+      if (!player) throw new HttpError(404, { error: "Player not found" })
 
       const node = bot.lava.nodes.values().next().value
-      if (!node) return status(503, { error: "No Lavalink nodes available" })
+      if (!node) throw new HttpError(503, { error: "No Lavalink nodes available" })
 
       const result = await resolveSong(body.uri, node)
-      if (!result.success) return status(400, { error: result.error ?? "Failed to resolve track" })
+      if (!result.success) throw new HttpError(400, { error: result.error ?? "Failed to resolve track" })
 
       const addNext = body.position === "next"
 
@@ -629,18 +628,17 @@ function createRoutes(bot: BassBot) {
 
     // Remove track from queue
     .post("/players/:guildId/queue/remove", async ({ params, body, request }) => {
-      const user = await verifyUserInVC(bot, request, params.guildId)
-      if (user instanceof Response) return user
+      await verifyUserInVC(bot, request, params.guildId)
 
       const player = bot.getPlayer(params.guildId)
-      if (!player) return status(404, { error: "Player not found" })
+      if (!player) throw new HttpError(404, { error: "Player not found" })
 
       if (body.index >= player.queue.length) {
-        return status(400, { error: "Invalid index" })
+        throw new HttpError(400, { error: "Invalid index" })
       }
 
       const removed = player.remove(body.index, body.index)
-      if (!removed) return status(400, { error: "Failed to remove track" })
+      if (!removed) throw new HttpError(400, { error: "Failed to remove track" })
       return { ok: true }
     }, {
       body: t.Object({
@@ -650,18 +648,17 @@ function createRoutes(bot: BassBot) {
 
     // Move track in queue (for drag-and-drop)
     .post("/players/:guildId/queue/move", async ({ params, body, request }) => {
-      const user = await verifyUserInVC(bot, request, params.guildId)
-      if (user instanceof Response) return user
+      await verifyUserInVC(bot, request, params.guildId)
 
       const player = bot.getPlayer(params.guildId)
-      if (!player) return status(404, { error: "Player not found" })
+      if (!player) throw new HttpError(404, { error: "Player not found" })
 
       if (body.from >= player.queue.length || body.to >= player.queue.length) {
-        return status(400, { error: "Invalid indices" })
+        throw new HttpError(400, { error: "Invalid indices" })
       }
 
       const moved = player.moveTrack(body.from, body.to)
-      if (!moved) return status(400, { error: "Failed to move track" })
+      if (!moved) throw new HttpError(400, { error: "Failed to move track" })
       return { ok: true }
     }, {
       body: t.Object({
@@ -672,11 +669,10 @@ function createRoutes(bot: BassBot) {
 
     // Set volume
     .post("/players/:guildId/volume", async ({ params, body, request }) => {
-      const user = await verifyUserInVC(bot, request, params.guildId)
-      if (user instanceof Response) return user
+      await verifyUserInVC(bot, request, params.guildId)
 
       const player = bot.getPlayer(params.guildId)
-      if (!player) return status(404, { error: "Player not found" })
+      if (!player) throw new HttpError(404, { error: "Player not found" })
 
       await player.setGlobalVolume(body.volume / 2)
       return { ok: true }
@@ -689,48 +685,33 @@ function createRoutes(bot: BassBot) {
 
 /**
  * Verify JWT and check user is in the same voice channel as the bot.
- * Returns the JWT payload on success, or a Response on failure.
+ * Returns the JWT payload on success, or throws HttpError on failure.
  */
 async function verifyUserInVC(
   bot: BassBot,
   request: Request,
   guildId: string,
-): Promise<JwtPayload | Response> {
+): Promise<JwtPayload> {
   const user = await verifyAuthHeader(request.headers.get("authorization"), config.jwtSecret)
-  if (!user) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 })
+  if (!user) throw new HttpError(401, { error: "Unauthorized" })
 
   // Admins bypass voice channel check
   if (user.role === "admin") return user
 
   const guild = bot.guilds.cache.get(guildId)
-  if (!guild) return new Response(JSON.stringify({ error: "Guild not found" }), { status: 404 })
+  if (!guild) throw new HttpError(404, { error: "Guild not found" })
 
   // Check if the user is in the guild
   const member = guild.members.cache.get(user.discordId)
-  if (!member) {
-    return new Response(
-      JSON.stringify({ error: "You are not a member of this server" }),
-      { status: 403 },
-    )
-  }
+  if (!member) throw new HttpError(403, { error: "You are not a member of this server" })
 
   // Check if the bot is in a voice channel
   const botVC = guild.members.me?.voice.channel
-  if (!botVC) {
-    return new Response(
-      JSON.stringify({ error: "Bot is not in a voice channel" }),
-      { status: 400 },
-    )
-  }
+  if (!botVC) throw new HttpError(400, { error: "Bot is not in a voice channel" })
 
   // Check if the user is in the same voice channel as the bot
   const userVC = member.voice.channel
-  if (userVC?.id !== botVC.id) {
-    return new Response(
-      JSON.stringify({ error: "You must be in the same voice channel as the bot" }),
-      { status: 403 },
-    )
-  }
+  if (userVC?.id !== botVC.id) throw new HttpError(403, { error: "You must be in the same voice channel as the bot" })
 
   return user
 }
