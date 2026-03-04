@@ -1,4 +1,4 @@
-import { Result } from "@bot/result"
+import { Result } from "@lib/result"
 
 const timeRegex1 = new RegExp(/\s*(?<mins>\d{0,2}):(?<secs>\d{2})\s*/)
 const timeRegex2 = new RegExp(/\s*((?<mins>\d{1,2})m(in)?)?\s*((?<secs>\d{1,2})s)?\s*/)

@@ -1,12 +1,12 @@
 "use client"
 
-import { Card, CardContent } from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
-import { usePlayers } from "@/hooks/use-api"
+import { Card, CardContent } from "@web/components/ui/card"
+import { Skeleton } from "@web/components/ui/skeleton"
+import { usePlayers } from "@web/hooks/use-api"
 import { Radio } from "lucide-react"
-import { PlayerCard } from "@/components/player-card"
+import { PlayerCard } from "@web/components/player-card"
 
-export default function PlayersPage() {
+export default function AdminPlayersPage() {
   const { data: players, isLoading } = usePlayers()
 
   return (
@@ -21,7 +21,7 @@ export default function PlayersPage() {
       </div>
 
       {isLoading ? (
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-3 xl:grid-cols-2 2xl:grid-cols-3">
           {Array.from({ length: 3 }).map((_, i) => (
             <Card key={i}>
               <CardContent className="p-0">
@@ -39,9 +39,9 @@ export default function PlayersPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-3 xl:grid-cols-2 2xl:grid-cols-3">
           {players.map((player) => (
-            <PlayerCard key={player.guildId} player={player} />
+            <PlayerCard key={player.guildId} player={player} basePath="/admin/players" />
           ))}
         </div>
       )}

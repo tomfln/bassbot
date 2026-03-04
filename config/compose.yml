@@ -1,13 +1,15 @@
 # Docker Compose for BassBot + Dashboard + Lavalink
 #
 # Quick start:
-#   1. Create data directories:  mkdir bassbot-data lavalink
+#   1. Create a data directory:  mkdir bassbot-data
 #   2. Fetch sample configs:
-#        curl -o bassbot-data/config.json https://raw.githubusercontent.com/TomFln/bassbot/main/config.example.json
-#        curl -o lavalink/application.yml https://raw.githubusercontent.com/TomFln/bassbot/main/lavalink/application.yml
-#   3. Edit bassbot-data/config.json — fill in your bot token, client ID, etc.
-#   4. (Optional) Set up YouTube OAuth — see README for instructions.
+#        curl -o bassbot-data/config.json https://raw.githubusercontent.com/TomFln/bassbot/main/config/config.example.json
+#        curl -o bassbot-data/application.yml https://raw.githubusercontent.com/TomFln/bassbot/main/config/application.yml
+#   3. Edit bassbot-data/config.json — fill in ALL values (bot token, secrets, OAuth, etc.)
+#   4. (Optional, recommended) Set up YouTube OAuth — see README for instructions.
 #   5. Start:  docker compose up -d
+#
+# All configuration lives in config.json
 
 services:
   bassbot:
@@ -20,12 +22,6 @@ services:
       - "3001:3001"
     volumes:
       - ./bassbot-data:/data
-    environment:
-      DATA_DIR: /data
-      # All config is read from /data/config.json
-      # You can override individual values via env vars:
-      # TOKEN: override_token_here
-      # CLIENT_ID: override_client_id_here
 
   web:
     image: ghcr.io/tomfln/bassbot-web:latest
@@ -35,18 +31,15 @@ services:
       - lavalink
     ports:
       - "3000:3000"
-    # The dashboard auto-derives the API URL from the browser's hostname.
-    # Override only if the bot API runs on a different host/port:
-    # environment:
-    #   API_URL: http://your-bot-host:3001
+    volumes:
+      - ./bassbot-data:/data
 
   lavalink:
     image: ghcr.io/lavalink-devs/lavalink:latest
     container_name: lavalink
     restart: unless-stopped
     environment:
-      # Change this to match your system's capabilities — see Lavalink docs for details
-      - _JAVA_OPTIONS=-Xmx4G -Xms1G -XX:+UseG1GC -XX:MaxGCPauseMillis=20 -XX:ParallelGCThreads=4
+      _JAVA_OPTIONS: -Xmx4G -Xms1G -XX:+UseG1GC -XX:MaxGCPauseMillis=20 -XX:ParallelGCThreads=4
     volumes:
       - ./bassbot-data/application.yml:/opt/Lavalink/application.yml
     expose:
@@ -57,4 +50,3 @@ services:
 networks:
   lavalink:
     name: lavalink
-    

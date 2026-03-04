@@ -1,14 +1,15 @@
-import { buildOptions, createCommand } from "@bot/command"
+import { buildOptions, createCommand } from "@lib/command"
 import { PermissionFlagsBits } from "discord.js"
-import db from "@/util/db"
-import { schema } from "@/util/db"
+import db from "@bot/util/db"
+import { schema } from "@bot/util/db"
 import { eq } from "drizzle-orm"
-import logger from "@bot/logger"
-import hasPermissions from "@/validators/hasPermissions"
-import getOrCreateGuildOpts from "@/middlewares/getOrCreateGuildOpts"
+import logger from "@lib/logger"
+import hasPermissions from "@bot/validators/hasPermissions"
+import getOrCreateGuildOpts from "@bot/middlewares/getOrCreateGuildOpts"
 
 export default createCommand({
   description: "Bind the bot to a voice or text channel.",
+  detailDescription: "Restricts the bot to specific text and voice channels. When bound, the bot will only accept commands in the bound text channel and only join the bound voice channel.",
   options: buildOptions()
     .subcommand({
       name: "add",

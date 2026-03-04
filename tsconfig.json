@@ -25,8 +25,9 @@
     "noUnusedParameters": false,
     "noPropertyAccessFromIndexSignature": false,
     "paths": {
-      "@/*": ["./src/*"],
-      "@bot/*": ["./lib/*"]
+      "@bot/*": ["./src/*"],
+      "@lib/*": ["./lib/*"],
+      "@web/*": ["./web/src/*"]
     }
   },
   "include": ["./src/**/*", "./lib/**/*", "eslint.config.ts", "prettier.config.js"]

@@ -1,17 +1,17 @@
 "use client"
 
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { Card, CardContent } from "@web/components/ui/card"
+import { Badge } from "@web/components/ui/badge"
 import Link from "next/link"
 import { Pause, Play, Music } from "lucide-react"
-import type { PlayerSummary } from "@/lib/api"
+import type { PlayerSummary } from "@web/hooks/use-api"
 
-export function PlayerCard({ player }: { player: PlayerSummary }) {
+export function PlayerCard({ player, basePath = "/players" }: { player: PlayerSummary; basePath?: string }) {
   return (
-    <Link href={`/players/${player.guildId}`} className="block">
+    <Link href={`${basePath}/${player.guildId}`} className="block">
       <Card className="hover:bg-accent/30 transition-colors cursor-pointer py-0 gap-0 scope-hover scope-2xl">
         <CardContent className="p-2.5">
-          <div className="flex h-24 gap-2.5">
+          <div className="flex h-24 gap-2.5 overflow-hidden">
             {/* Album art — inset rounded rect */}
             <div className="w-24 h-24 shrink-0 relative rounded-lg overflow-hidden bg-muted">
               {player.current?.artworkUrl ? (

@@ -1,8 +1,8 @@
-import config from "@/config"
-import { BassBot } from "@/bot"
+import config from "@bot/config"
+import { BassBot } from "@bot/bot"
 import { setupLavalinkEvents } from "./events/lavalink-events"
 import { startApiServer } from "./api"
-import logger from "@bot/logger"
+import logger from "@lib/logger"
 import { Events } from "discord.js"
 
 const bot = new BassBot()

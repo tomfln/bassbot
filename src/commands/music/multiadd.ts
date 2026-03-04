@@ -1,15 +1,16 @@
-import { createCommand, buildOptions } from "@bot/command"
-import { cleanTrackTitle } from "@/util/helpers"
-import isBoundChannel from "@/validators/isBoundChannel"
-import isInBoundVC from "@/validators/isInBoundVC"
-import { resolveSong, type ResolvedPlaylist, type ResolvedTrack } from "@/util/song-search"
-import { MultiaddModal } from "@/modals/Multiadd.modal"
-import isInGuild from "@/validators/isInGuild"
-import { createMessageEmbed } from "@bot/message"
-import { createReplyHelper } from "@bot/reply"
+import { createCommand, buildOptions } from "@lib/command"
+import { cleanTrackTitle } from "@bot/util/helpers"
+import isBoundChannel from "@bot/validators/isBoundChannel"
+import isInBoundVC from "@bot/validators/isInBoundVC"
+import { resolveSong, type ResolvedPlaylist, type ResolvedTrack } from "@bot/util/song-search"
+import { MultiaddModal } from "@bot/modals/Multiadd.modal"
+import isInGuild from "@bot/validators/isInGuild"
+import { createMessageEmbed } from "@lib/message"
+import { createReplyHelper } from "@lib/reply"
 
 export default createCommand({
   description: "Add multiple songs to the queue from a list",
+  detailDescription: "Opens a form where you can paste multiple song names or URLs, one per line. All songs will be searched and added to the queue at once.",
   options: buildOptions().build(),
 
   validators: [isInGuild(), isBoundChannel(), isInBoundVC()],

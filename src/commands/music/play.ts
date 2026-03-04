@@ -1,12 +1,13 @@
-import { createCommand, buildOptions } from "@bot/command"
-import { cleanTrackTitle } from "@/util/helpers"
-import isBoundChannel from "@/validators/isBoundChannel"
-import isInBoundVC from "@/validators/isInBoundVC"
-import { resolveSong } from "@/util/song-search"
-import { log } from "@/util/activity-log"
+import { createCommand, buildOptions } from "@lib/command"
+import { cleanTrackTitle } from "@bot/util/helpers"
+import isBoundChannel from "@bot/validators/isBoundChannel"
+import isInBoundVC from "@bot/validators/isInBoundVC"
+import { resolveSong } from "@bot/util/song-search"
+import { log } from "@bot/util/activity-log"
 
 export default createCommand({
   description: "Play a song.",
+  detailDescription: "Plays a song by name or URL. Supports YouTube, Spotify, SoundCloud, and direct links. If a playlist URL is provided, all songs will be added to the queue.",
   options: buildOptions()
     .string({
       name: "song",

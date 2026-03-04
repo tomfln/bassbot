@@ -16,9 +16,9 @@
 :root {
   --background: oklch(18.379% 0.00516 67.41);
   --foreground: oklch(0.985 0.001 106.423);
-  --card: oklch(21.57% 0.00314 16.972);
+  --card: oklch(21.851% 0.00246 67.473);
   --card-foreground: oklch(0.985 0.001 106.423);
-  --popover: oklch(21.851% 0.00246 67.473);
+  --popover: oklch(24.846% 0.00238 67.451);
   --popover-foreground: oklch(0.985 0.001 106.423);
   --primary: oklch(0.77 0.20 131);
   --primary-foreground: oklch(0.27 0.07 132);
@@ -26,7 +26,7 @@
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(27.148% 0.00482 39.119);
   --muted-foreground: oklch(0.709 0.01 56.259);
-  --accent: oklch(27.969% 0.00478 39.111);
+  --accent: oklch(24.846% 0.00238 67.451);
   --accent-foreground: oklch(0.985 0.001 106.423);
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
@@ -99,17 +99,44 @@
   }
   html {
     @apply font-sans;
-    scrollbar-gutter: stable;
+    overflow-y: scroll;
   }
 }
 
 @layer components {
+  /* Liquid glass card */
+  .glass-card {
+    background:
+      linear-gradient(
+        135deg,
+        oklch(1 0 0 / 0.05) 0%,
+        transparent 50%,
+        oklch(1 0 0 / 0.02) 100%
+      );
+    backdrop-filter: blur(4px);
+    /* -webkit-backdrop-filter: blur(4px); */
+    border: 1px solid oklch(1 0 0 / 0.06);
+    border-top-color: oklch(1 0 0 / 0.1);
+    border-bottom-color: oklch(1 0 0 / 0.03);
+    box-shadow:
+      inset 0 1px 0 0 oklch(1 0 0 / 0.06),
+      0 8px 24px -6px oklch(0 0 0 / 0.25);
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
+
+    &:hover {
+      box-shadow:
+        inset 0 1px 0 0 oklch(1 0 0 / 0.08),
+        0 12px 32px -6px oklch(0 0 0 / 0.35);
+      transform: translateY(-1px);
+    }
+  }
+
   .scope-hover {
     position: relative;
     --scope-radius: var(--radius);
     
     &:hover {
-      color: var(--primary) !important;
+      /* color: var(--primary) !important; */
     }
 
     &::before, &::after {
@@ -160,6 +187,14 @@
   .scope-3xl {
     --scope-radius: var(--radius-3xl);
   }
+}
+
+/* Full-page grid background */
+.grid-bg {
+  background-image:
+    linear-gradient(oklch(1 0 0 / 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, oklch(1 0 0 / 0.04) 1px, transparent 1px);
+  background-size: 60px 60px;
 }
 
 /* Custom scrollbar */

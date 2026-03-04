@@ -1,9 +1,10 @@
-import requirePlayer from "@/middlewares/requirePlayer"
-import { createCommand, buildOptions } from "@bot/command"
-import { log } from "@/util/activity-log"
+import requirePlayer from "@bot/middlewares/requirePlayer"
+import { createCommand, buildOptions } from "@lib/command"
+import { log } from "@bot/util/activity-log"
 
 export default createCommand({
   description: "Plays the next song in the queue",
+  detailDescription: "Skips to the next song in the queue. You can optionally specify a position to skip directly to a specific song in the queue.",
   sources: { command: true, button: true },
 
   options: buildOptions()

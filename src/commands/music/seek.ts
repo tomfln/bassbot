@@ -1,10 +1,11 @@
-import requirePlayer from "@/middlewares/requirePlayer"
-import { createCommand, buildOptions } from "@bot/command"
-import { Timestamp } from "@/util/time"
-import { log } from "@/util/activity-log"
+import requirePlayer from "@bot/middlewares/requirePlayer"
+import { createCommand, buildOptions } from "@lib/command"
+import { Timestamp } from "@bot/util/time"
+import { log } from "@bot/util/activity-log"
 
 export default createCommand({
   description: "Seek to the specified time in the current song",
+  detailDescription: "Jumps to a specific time in the currently playing song. Accepts timestamps like 1:30, 90, or 1m30s. Cannot seek beyond the song's duration.",
   options: buildOptions()
     .string({
       name: "time",

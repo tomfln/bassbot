@@ -1,4 +1,4 @@
-import { createCommand, buildOptions } from "@bot/command"
+import { createCommand, buildOptions } from "@lib/command"
 import { ApplicationCommandOptionType } from "discord.js"
 import pixelWidth from "string-pixel-width"
 
@@ -18,6 +18,7 @@ const typeMap = {
 
 export default createCommand({
   description: "Show help for a command.",
+  detailDescription: "Shows detailed information about a specific command, including its parameters, types, and whether they are required.",
   options: buildOptions()
     .string({
       name: "command",

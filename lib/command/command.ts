@@ -23,7 +23,7 @@ import logger from "../logger"
  * Module augmentation interface for registering a custom bot type.
  * Augment this interface in your app code to get typed `ctx.bot`:
  * ```ts
- * declare module "@bot/command" {
+ * declare module "@lib/command" {
  *   interface Register { bot: MyBot }
  * }
  * ```
@@ -125,6 +125,7 @@ export interface CommandDefinition<
 > {
   name: string
   description: string | Record<Locales, string>
+  detailDescription?: string
   options?: Options
   defaultMemberPermissions?: Permissions | bigint | number | null | undefined
   nsfw?: boolean
@@ -170,6 +171,7 @@ export const createCommand = <
 export interface LoadedCommand {
   name: string
   description: string | Record<Locales, string>
+  detailDescription?: string
   category: string
   options?: ApplicationCommandOption[]
   sources?: CommandSources

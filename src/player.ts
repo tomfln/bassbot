@@ -1,9 +1,9 @@
 import { Events, type ChatInputCommandInteraction, type GuildTextBasedChannel } from "discord.js"
 import { Constants, Player, type Track } from "shoukaku"
-import { createMessageEmbed, EmbedColor } from "@bot/message"
+import { createMessageEmbed, EmbedColor } from "@lib/message"
 import { nowPlayingButtons, nowPlayingMessage } from "./util/message"
 import type { BassBot } from "./bot"
-import logger from "@bot/logger"
+import logger from "@lib/logger"
 import { Queue } from "./queue"
 import { broadcast } from "./util/broadcast"
 import { cache } from "./util/api-cache"
@@ -24,7 +24,8 @@ export class PlayerWithQueue extends Player {
   
   private playerMsgId: string | null = null
   private _disconnect: ReturnType<typeof setTimeout> | null = null
-  private loopMode: LoopMode = LoopMode.None
+  private _autoPaused = false
+  private _loopMode: LoopMode = LoopMode.None
   private _playing = false
   private _historySaved = false
 
@@ -64,15 +65,15 @@ export class PlayerWithQueue extends Player {
 
       if (reason != "finished" && reason != "loadFailed") return
 
-      if (this.loopMode == LoopMode.Song)
+      if (this._loopMode == LoopMode.Song)
         return this.play(this.q.current)
       
       // Restart queue when looping and reached the end
-      if (this.loopMode == LoopMode.Queue && this.q.length == 0) {
+      if (this._loopMode == LoopMode.Queue && this.q.length == 0) {
         this.q.restart()
         return this.next()
       }
-      else if (this.loopMode == LoopMode.Autoplay) {
+      else if (this._loopMode == LoopMode.Autoplay) {
         // TODO: Implement autoplay
         await this.next()
       }
@@ -110,10 +111,25 @@ export class PlayerWithQueue extends Player {
       if (!currentVC) return
 
       if (prev.channelId !== currentVC.id && next.channelId !== currentVC.id) return
-      const members = currentVC.members.filter((m) => !m.user.bot)
+      const members = currentVC.members.filter((m: any) => !m.user.bot)
 
-      if (members.size == 0) this.scheduleDisconnect()
-      else this.cancelDisconnect()
+      if (members.size == 0) {
+        // Auto-pause immediately when no listeners remain
+        if (!this.paused && this._playing) {
+          this._autoPaused = true
+          void this.setPaused(true)
+          logger.info(`[${this.guildId}] Auto-paused — no listeners in channel`)
+        }
+        this.scheduleDisconnect(120)
+      } else {
+        this.cancelDisconnect()
+        // Resume if we auto-paused earlier
+        if (this._autoPaused) {
+          this._autoPaused = false
+          void this.setPaused(false)
+          logger.info(`[${this.guildId}] Auto-resumed — listener rejoined`)
+        }
+      }
     })
   }
 
@@ -213,9 +229,18 @@ export class PlayerWithQueue extends Player {
     return result
   }
 
+  public get loopMode(): LoopMode {
+    return this._loopMode
+  }
+
   public setLoopMode(mode: LoopMode) {
-    this.loopMode = mode
+    this._loopMode = mode
     this.broadcastUpdate()
+  }
+
+  /** Get user-facing volume (0-100%) */
+  public get userVolume(): number {
+    return Math.round(this.volume * 2)
   }
 
   public getQueueDuration() {

@@ -4,9 +4,9 @@ import { useState, type CSSProperties, type ReactNode } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { LayoutDashboard, Server, Music, Menu, X, ScrollText, Github, SlidersHorizontal } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { useStats } from "@/hooks/use-api"
+import { cn } from "@web/lib/utils"
+import { Avatar, AvatarFallback, AvatarImage } from "@web/components/ui/avatar"
+import { useStats } from "@web/hooks/use-api"
 import pkg from "../../package.json"
 
 /* ── Constants ────────────────────────────────────────────── */
@@ -95,7 +95,7 @@ function BotInfo({
   guildCount?: number
 }) {
   return (
-    <div className="px-3 pb-3 mt-4 border-t border-white/[0.06] pt-3">
+    <div className="px-3 pb-3 mt-4 border-t border-white/6 pt-3">
       <div className="flex items-center gap-2.5 px-2">
         <Avatar className="h-8 w-8 rounded-full">
           <AvatarImage src={avatar ?? undefined} />
@@ -204,7 +204,7 @@ function MobileSidebar({
 function MobileHeader({ onOpenSidebar }: { onOpenSidebar: () => void }) {
   return (
     <header
-      className="overflow-hidden sticky top-0 z-30 flex items-center justify-between px-4 h-14 border-b border-white/[0.08] md:hidden"
+      className="overflow-hidden sticky top-0 z-30 flex items-center justify-between px-4 h-14 border-b border-white/8 md:hidden"
       style={GLASS_STYLE}
     >
       <Brand size="small" />

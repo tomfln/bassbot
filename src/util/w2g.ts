@@ -1,4 +1,4 @@
-import config from "@/config"
+import config from "@bot/config"
 import { z } from "zod"
 
 const createRoomResponseSchema = z.object({

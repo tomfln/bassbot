@@ -1,5 +1,5 @@
-import { createCommand, buildOptions } from "@bot/command"
-import { fetchAndParse } from "@/util/helpers"
+import { createCommand, buildOptions } from "@lib/command"
+import { fetchAndParse } from "@bot/util/helpers"
 import { z } from "zod"
 
 const suggestSchema = z.object({
@@ -17,6 +17,7 @@ const lyricsSchema = z.object({
 
 export default createCommand({
   description: "Search for the lyrics of a specific song",
+  detailDescription: "Searches for and displays the lyrics of a song. If no song name is provided, it will look up lyrics for the currently playing track.",
   options: buildOptions()
     .string({
       name: "search_term",

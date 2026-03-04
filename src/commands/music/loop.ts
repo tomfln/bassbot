@@ -1,8 +1,8 @@
-import requirePlayer from "@/middlewares/requirePlayer"
-import { LoopMode } from "@/player"
-import { createCommand, buildOptions } from "@bot/command"
+import requirePlayer from "@bot/middlewares/requirePlayer"
+import { LoopMode } from "@bot/player"
+import { createCommand, buildOptions } from "@lib/command"
 import { z } from "zod"
-import { log } from "@/util/activity-log"
+import { log } from "@bot/util/activity-log"
 
 const isValidLoopMode = (mode: string): mode is LoopMode => {
   return mode in LoopMode
@@ -12,6 +12,7 @@ const loopModeSchema = z.string().refine(isValidLoopMode)
 
 export default createCommand({
   description: "Change the Loop Mode",
+  detailDescription: "Changes how the queue repeats. Off plays through once, Track repeats the current song, and Queue loops the entire playlist back to the start when it ends.",
   options: buildOptions()
     .string({
       name: "mode",

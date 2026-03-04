@@ -1,219 +1,130 @@
 "use client"
 
-import { useState, use } from "react"
+import { useState, useCallback, use } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
-import { useGuild, useGuildLogs, useGuildMembers, useDestroyPlayer, useLeaveGuild } from "@/hooks/use-api"
-import { formatDate } from "@/lib/format"
-import { ActivityLog } from "@/components/activity-log"
+import { GuildIcon } from "@web/components/guild-icon"
+import { Card, CardContent } from "@web/components/ui/card"
+import { Skeleton } from "@web/components/ui/skeleton"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@web/components/ui/tabs"
+import { usePlayer, useGuildLogs } from "@web/hooks/use-api"
+import { botApi } from "@web/lib/api-client"
+import { ActivityLog } from "@web/components/activity-log"
+import { TrackList } from "@web/components/track-list"
+import { PlayBar } from "@web/components/play-bar"
+import { SongCard } from "@web/components/song-card"
+import { VoiceChannelCard } from "@web/components/voice-channel-card"
+import { useOptimisticPosition } from "@web/hooks/use-optimistic-position"
 import {
   ArrowLeft,
-  Crown,
-  Users,
-  Calendar,
   Music,
-  Bot,
+  ListMusic,
+  History,
   Activity,
-  Search,
-  X,
-  ChevronDown,
-  MoreVertical,
-  Trash2,
-  LogOut,
 } from "lucide-react"
 
-/* ── Member list with search + show-more ──────────────────── */
+/* ── Main page ────────────────────────────────────────────── */
 
-interface MemberInfo {
-  id: string
-  displayName: string
-  username: string
-  avatar: string
-  isBot: boolean
-  isOwner: boolean
-  joinedAt?: number | null
-}
-
-function MemberList({
-  members,
-  total,
-  search,
-  onSearchChange,
-  onShowMore,
+export default function UserPlayerPage({
+  params,
 }: {
-  members: MemberInfo[]
-  total: number
-  search: string
-  onSearchChange: (v: string) => void
-  onShowMore: () => void
+  params: Promise<{ guildId: string }>
 }) {
-  const remaining = total - members.length
-
-  return (
-    <Card className="py-0 gap-0">
-      <CardHeader className="px-4 pt-4 pb-2">
-        <div className="flex items-center justify-between gap-3">
-          <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2 shrink-0">
-            <Users className="h-4 w-4" />
-            Members ({total})
-          </CardTitle>
-          <div className="relative w-full max-w-52">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder="Search members..."
-              value={search}
-              onChange={(e) => onSearchChange(e.target.value)}
-              className="w-full rounded-md border border-border bg-card px-2.5 py-1.5 pl-8 text-xs outline-none focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground"
-            />
-            {search && (
-              <button
-                onClick={() => onSearchChange("")}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            )}
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="p-2">
-        {members.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-4">
-            No members found
-          </p>
-        ) : (
-          <div className="space-y-0.5">
-            {members.map((member) => (
-              <div
-                key={member.id}
-                className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-accent/50 transition-colors"
-              >
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={member.avatar} />
-                  <AvatarFallback className="text-xs">
-                    {member.displayName.slice(0, 2).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium truncate">
-                      {member.displayName}
-                    </span>
-                    {member.isOwner && (
-                      <Crown className="h-3 w-3 text-amber-400 shrink-0" />
-                    )}
-                    {member.isBot && (
-                      <Badge
-                        variant="outline"
-                        className="text-[10px] px-1 py-0 h-4 shrink-0"
-                      >
-                        BOT
-                      </Badge>
-                    )}
-                  </div>
-                  <p className="text-xs text-muted-foreground truncate">
-                    {member.username}
-                  </p>
-                </div>
-                {member.joinedAt && (
-                  <span className="text-xs text-muted-foreground shrink-0">
-                    {formatDate(member.joinedAt)}
-                  </span>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-        {remaining > 0 && (
-          <button
-            onClick={onShowMore}
-            className="flex items-center justify-center gap-1.5 w-full py-2.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ChevronDown className="h-3.5 w-3.5" />
-            Show more ({remaining} remaining)
-          </button>
-        )}
-      </CardContent>
-    </Card>
-  )
-}
-
-export default function GuildDetailPage({ params }: { params: Promise<{ guildId: string }> }) {
   const { guildId } = use(params)
-  const router = useRouter()
-  const [memberLimit, setMemberLimit] = useState(20)
-  const [memberSearch, setMemberSearch] = useState("")
-  const [confirmDestroyPlayer, setConfirmDestroyPlayer] = useState(false)
-  const [confirmLeave, setConfirmLeave] = useState(false)
-  const { data: guild, isLoading, error } = useGuild(guildId, { memberLimit })
-  const { data: guildLogs } = useGuildLogs(guildId, 10)
-  const { data: searchResults } = useGuildMembers(guildId, 0, 200, memberSearch)
-  const destroyPlayer = useDestroyPlayer(guildId)
-  const leaveGuild = useLeaveGuild(guildId)
+  const [queueLimit, setQueueLimit] = useState(20)
+  const [historyLimit, setHistoryLimit] = useState(10)
+  const { data: player, isLoading, refetch } = usePlayer(guildId, {
+    queueLimit,
+    historyLimit,
+  })
+  const { data: logs } = useGuildLogs(guildId, 20)
+
+  const position = useOptimisticPosition(
+    player?.position ?? 0,
+    player?.current?.length ?? 0,
+    player?.paused ?? true,
+  )
+
+  const progress =
+    player?.current && player.current.length > 0
+      ? (position / player.current.length) * 100
+      : 0
+
+  const handleRefresh = useCallback(() => {
+    setTimeout(() => refetch(), 300)
+  }, [refetch])
+
+  const handleQueueReorder = useCallback(
+    async (from: number, to: number) => {
+      try {
+        await botApi.players({ guildId }).queue.move.post({ from, to })
+        refetch()
+      } catch {
+        /* ignore */
+      }
+    },
+    [guildId, refetch],
+  )
+
+  const handleQueueRemove = useCallback(
+    async (index: number) => {
+      try {
+        await botApi.players({ guildId }).queue.remove.post({ index })
+        refetch()
+      } catch {
+        /* ignore */
+      }
+    },
+    [guildId, refetch],
+  )
+
+  const handlePlayNext = useCallback(
+    async (index: number) => {
+      if (index === 0) return // already first
+      try {
+        await botApi.players({ guildId }).queue.move.post({ from: index, to: 0 })
+        refetch()
+      } catch {
+        /* ignore */
+      }
+    },
+    [guildId, refetch],
+  )
 
   if (isLoading) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-40 w-full" />
         <Skeleton className="h-64 w-full" />
       </div>
     )
   }
 
-  if (error || !guild) {
+  if (!player) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-6">
         <Link
           href="/guilds"
-          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to guilds
+          Back to servers
         </Link>
-        <Card>
-          <CardContent className="p-6 text-center text-muted-foreground">
-            <p className="text-lg font-medium">Guild not found</p>
+        <Card className="py-0 gap-0">
+          <CardContent className="p-8 text-center text-muted-foreground">
+            <Music className="h-10 w-10 mx-auto mb-3 opacity-40" />
+            <p className="font-medium">No active player</p>
+            <p className="text-sm mt-1">
+              Use <code className="text-primary">/play</code> in Discord to get started!
+            </p>
           </CardContent>
         </Card>
       </div>
     )
   }
 
-  // When searching, use server-side filtered results; otherwise use guild detail members
-  const displayMembers = memberSearch
-    ? (searchResults?.items ?? [])
-    : guild.members
-  const displayTotal = memberSearch
-    ? (searchResults?.total ?? 0)
-    : guild.memberTotal
-
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Back + Header */}
       <div className="flex items-center gap-4 min-h-12">
         <Link
           href="/guilds"
@@ -221,196 +132,87 @@ export default function GuildDetailPage({ params }: { params: Promise<{ guildId:
         >
           <ArrowLeft className="h-4 w-4" />
         </Link>
-        <Avatar className="h-12 w-12 rounded-lg">
-          <AvatarImage src={guild.icon ?? undefined} />
-          <AvatarFallback className="rounded-lg">
-            {guild.name.slice(0, 2).toUpperCase()}
-          </AvatarFallback>
-        </Avatar>
+        <GuildIcon name={player.guildName} icon={player.guildIcon} />
         <div className="flex-1 min-w-0">
-          <h1 className="text-xl font-bold tracking-tight truncate">
-            {guild.name}
-          </h1>
+          <h1 className="text-xl font-bold tracking-tight">{player.guildName}</h1>
           <p className="text-xs text-muted-foreground">
-            {guild.memberCount.toLocaleString()} members
+            {player.paused ? "Paused" : "Now Playing"}
           </p>
         </div>
-        {guild.hasPlayer && (
-          <Link href={`/players/${guild.id}`}>
-            <Badge variant="default" className="gap-1">
-              <Music className="h-3 w-3" />
-              Active Player
-            </Badge>
-          </Link>
-        )}
-        {/* Action menu */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
-              <MoreVertical className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            {guild.hasPlayer && (
-              <>
-                <DropdownMenuItem
-                  className="gap-2 cursor-pointer text-destructive focus:text-destructive"
-                  onClick={() => setConfirmDestroyPlayer(true)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                  Destroy Player
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-              </>
-            )}
-            <DropdownMenuItem
-              className="gap-2 cursor-pointer text-destructive focus:text-destructive"
-              onClick={() => setConfirmLeave(true)}
-            >
-              <LogOut className="h-4 w-4" />
-              Leave Guild
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
       </div>
 
-      {/* Confirm: destroy player */}
-      <AlertDialog open={confirmDestroyPlayer} onOpenChange={setConfirmDestroyPlayer}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Destroy player?</AlertDialogTitle>
-            <AlertDialogDescription>
-              The bot will stop playing and leave the voice channel. The queue will be saved.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={() => destroyPlayer.mutate()}
-            >
-              Destroy
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Now Playing card */}
+      <SongCard
+        current={player.current}
+        position={position}
+        progress={progress}
+      />
 
-      {/* Confirm: leave guild */}
-      <AlertDialog open={confirmLeave} onOpenChange={setConfirmLeave}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Leave {guild.name}?</AlertDialogTitle>
-            <AlertDialogDescription>
-              The bot will leave this server. Any active player will be stopped first.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={() => leaveGuild.mutate(undefined, { onSuccess: () => router.push("/guilds") })}
-            >
-              Leave
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* PlayBar below info card */}
+      <PlayBar
+        guildId={guildId}
+        paused={player.paused}
+        loopMode={player.loopMode}
+        volume={player.volume}
+        onRefresh={handleRefresh}
+      />
 
-      {/* Info cards */}
-      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              Created
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm font-semibold">{formatDate(guild.createdAt)}</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <Crown className="h-4 w-4" />
-              Owner
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {guild.owner ? (
-              <div className="flex items-center gap-2">
-                <Avatar className="h-6 w-6">
-                  <AvatarImage src={guild.owner.avatar} />
-                  <AvatarFallback className="text-xs">
-                    {guild.owner.displayName.slice(0, 2).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="text-sm font-semibold truncate">
-                  {guild.owner.displayName}
-                </span>
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">Unknown</p>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              Members
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm font-semibold">{guild.humanCount.toLocaleString()}</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <Bot className="h-4 w-4" />
-              Bots
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm font-semibold">{guild.botCount.toLocaleString()}</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-[1fr_350px]">
-        {/* Member list */}
-        <MemberList
-          members={displayMembers}
-          total={displayTotal}
-          search={memberSearch}
-          onSearchChange={setMemberSearch}
-          onShowMore={() => {
-            if (memberSearch) {
-              // Search already fetches up to 200, no more to load
-            } else {
-              setMemberLimit((l) => l + 20)
-            }
-          }}
-        />
-
-        {/* Activity Log */}
-        <div className="space-y-3 order-last">
-          <h3 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-            <Activity className="h-4 w-4" />
-            Recent Activity
-          </h3>
+      {/* Tabs: Queue / History / Activity */}
+      <Tabs defaultValue="queue">
+        <TabsList className="h-11 p-1 max-sm:w-full max-sm:*:flex-1">
+          <TabsTrigger value="queue" className="gap-1.5 text-xs px-3 py-1.5">
+            <ListMusic className="h-3.5 w-3.5" />
+            Queue ({player.queueTotal})
+          </TabsTrigger>
+          <TabsTrigger value="history" className="gap-1.5 text-xs px-3 py-1.5">
+            <History className="h-3.5 w-3.5" />
+            History ({player.historyTotal})
+          </TabsTrigger>
+          <TabsTrigger value="activity" className="gap-1.5 text-xs px-3 py-1.5">
+            <Activity className="h-3.5 w-3.5" />
+            Activity
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="queue">
+          {player.queueTotal === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">
+              Queue is empty
+            </p>
+          ) : (
+            <TrackList
+              tracks={player.queue}
+              total={player.queueTotal}
+              onReorder={handleQueueReorder}
+              onRemove={handleQueueRemove}
+              onPlayNext={handlePlayNext}
+              onLoadMore={() => setQueueLimit((l) => l + 20)}
+            />
+          )}
+        </TabsContent>
+        <TabsContent value="history">
+          {player.historyTotal === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">
+              No history
+            </p>
+          ) : (
+            <TrackList
+              tracks={player.history}
+              total={player.historyTotal}
+              onLoadMore={() => setHistoryLimit((l) => l + 10)}
+            />
+          )}
+        </TabsContent>
+        <TabsContent value="activity">
           <ActivityLog
-            entries={guildLogs ?? []}
-            maxHeight="440px"
-            limit={10}
-            seeAllHref={`/logs?guild=${guildId}`}
+            entries={logs ?? []}
+            maxHeight="400px"
+            limit={20}
           />
-        </div>
-      </div>
+        </TabsContent>
+      </Tabs>
+
+      {/* Voice channel — below content */}
+      <VoiceChannelCard voiceChannel={player.voiceChannel} compact />
     </div>
   )
 }

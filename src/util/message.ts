@@ -7,11 +7,11 @@ import {
 } from "discord.js"
 import { type Track } from "shoukaku"
 import { cleanTrackTitle } from "./helpers"
-import { AppEmoji } from "@/constants/emojis"
-import { EmbedColor } from "@bot/message"
+import { AppEmoji } from "@bot/constants/emojis"
+import { EmbedColor } from "@lib/message"
 
 // Re-export generic message helpers for convenience
-export { EmbedColor, code, createMessageEmbed, embedMsg, type EmbedOpts } from "@bot/message"
+export { EmbedColor, code, createMessageEmbed, embedMsg, type EmbedOpts } from "@lib/message"
 
 export function nowPlayingButtons(paused: boolean) {
   return new ActionRowBuilder<ButtonBuilder>().addComponents(
@@ -29,7 +29,7 @@ export function nowPlayingMessage(track: Track) {
   const title = cleanTrackTitle(track)
   const padChar = "\u00A0"
   const padLength = 47 - Math.floor(1.8 * title.length)
-  const padding = `${padLength > 0 ? padChar.repeat(padLength) : ""}${padLength > -5 ? AppEmoji.string("spacer") : ""}`
+  const padding = padLength > 0 ? padChar.repeat(padLength) : ""
   const embed = new EmbedBuilder()
     .setAuthor({ name: "Now Playing" })
     .setDescription(`[${title}](${track.info.uri})${padding}\nby ${track.info.author}\n`)

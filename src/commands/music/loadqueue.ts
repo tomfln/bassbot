@@ -1,12 +1,12 @@
-import { createCommand } from "@bot/command"
-import { cleanTrackTitle } from "@/util/helpers"
-import { duration } from "@/util/time"
-import { Queue } from "@/queue"
-import isBoundChannel from "@/validators/isBoundChannel"
-import isInGuild from "@/validators/isInGuild"
-import isInVC from "@/validators/isInVC"
-import { createMessageEmbed, EmbedColor } from "@bot/message"
-import { log } from "@/util/activity-log"
+import { createCommand } from "@lib/command"
+import { cleanTrackTitle } from "@bot/util/helpers"
+import { duration } from "@bot/util/time"
+import { Queue } from "@bot/queue"
+import isBoundChannel from "@bot/validators/isBoundChannel"
+import isInGuild from "@bot/validators/isInGuild"
+import isInVC from "@bot/validators/isInVC"
+import { createMessageEmbed, EmbedColor } from "@lib/message"
+import { log } from "@bot/util/activity-log"
 import {
   ActionRowBuilder,
   ButtonBuilder,
@@ -24,6 +24,7 @@ function abbreviate(str: string, maxLen: number) {
 
 export default createCommand({
   description: "Load a recently played queue",
+  detailDescription: "Restores a previously played queue from the server's history. Select from the list and songs will be added to your current queue. Any currently queued songs will remain.",
 
   validators: [isBoundChannel(), isInGuild(), isInVC()],
 

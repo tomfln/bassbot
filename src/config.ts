@@ -21,9 +21,10 @@ try {
 // ── Merge: config.json defaults, env vars override ──
 
 const raw = {
-  token: process.env.TOKEN ?? file.token,
-  clientId: process.env.CLIENT_ID ?? file.clientId,
+  token: process.env.DISCORD_BOT_TOKEN ?? file.token,
+  appId: process.env.DISCORD_APP_ID ?? file.appId,
   w2gKey: process.env.W2G_KEY ?? file.w2gKey,
+  jwtSecret: process.env.JWT_SECRET ?? file.jwtSecret,
   dataDir,
   apiPort:
     process.env.API_PORT != null
@@ -40,8 +41,9 @@ const raw = {
 
 const configSchema = z.object({
   token: z.string().min(1),
-  clientId: z.string().min(1),
+  appId: z.string().min(1),
   w2gKey: z.string().min(1),
+  jwtSecret: z.string().min(1),
   dataDir: z.string(),
   apiPort: z.number().default(3001),
   apiEnabled: z.boolean().default(true),

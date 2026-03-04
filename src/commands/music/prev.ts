@@ -1,10 +1,11 @@
-import requireHistory from "@/middlewares/requireHistory"
-import { createCommand } from "@bot/command"
-import isInGuild from "@/validators/isInGuild"
-import { log } from "@/util/activity-log"
+import requireHistory from "@bot/middlewares/requireHistory"
+import { createCommand } from "@lib/command"
+import isInGuild from "@bot/validators/isInGuild"
+import { log } from "@bot/util/activity-log"
 
 export default createCommand({
   description: "Plays the previous song in the queue",
+  detailDescription: "Goes back to the previously played song. Returns to the track that was playing before the current one.",
   sources: { command: true, button: true },
   
   validators: [isInGuild()],

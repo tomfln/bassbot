@@ -1,9 +1,10 @@
-import requirePlayer from "@/middlewares/requirePlayer";
-import { createCommand } from "@bot/command";
-import { log } from "@/util/activity-log";
+import requirePlayer from "@bot/middlewares/requirePlayer";
+import { createCommand } from "@lib/command";
+import { log } from "@bot/util/activity-log";
 
 export default createCommand({
   description: "Resume the current song",
+  detailDescription: "Resumes playback of the currently paused song from where it was paused. Has no effect if the player is already playing.",
   sources: { command: true, button: true },
 
   middleware: m => m.use(requirePlayer),

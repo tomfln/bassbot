@@ -1,9 +1,10 @@
-import requireQueue from "@/middlewares/requireQueue"
-import { createCommand } from "@bot/command"
-import { log } from "@/util/activity-log"
+import requireQueue from "@bot/middlewares/requireQueue"
+import { createCommand } from "@lib/command"
+import { log } from "@bot/util/activity-log"
 
 export default createCommand({
   description: "Remove all songs from the queue",
+  detailDescription: "Removes all songs from the queue at once. The currently playing song will continue until it ends or is skipped.",
 
   middleware: m => m.use(requireQueue),
 

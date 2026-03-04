@@ -1,13 +1,14 @@
-import requirePlayer from "@/middlewares/requirePlayer"
-import type { PlayerWithQueue } from "@/player"
-import { createCommand, buildOptions } from "@bot/command"
-import { cleanTrackTitle } from "@/util/helpers"
-import { replyEmbed, type ReplyHelper } from "@bot/reply"
-import { duration } from "@/util/time"
+import requirePlayer from "@bot/middlewares/requirePlayer"
+import type { PlayerWithQueue } from "@bot/player"
+import { createCommand, buildOptions } from "@lib/command"
+import { cleanTrackTitle } from "@bot/util/helpers"
+import { replyEmbed, type ReplyHelper } from "@lib/reply"
+import { duration } from "@bot/util/time"
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags, type InteractionEditReplyOptions, type RepliableInteraction } from "discord.js"
 
 export default createCommand({
   description: "View a list of songs in the queue",
+  detailDescription: "Displays the current queue of songs with titles, artists, and positions. Results are paginated with 10 songs per page.",
   sources: { command: true, button: true },
   options: buildOptions()
     .integer({

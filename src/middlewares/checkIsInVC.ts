@@ -1,4 +1,4 @@
-import { createMiddleware } from "@bot/middleware";
+import { createMiddleware } from "@lib/middleware";
 
 export default createMiddleware((ctx, abort) => {
   const vc = ctx.i.member.voice.channel

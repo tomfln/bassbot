@@ -1,14 +1,15 @@
-import { createCommand, buildOptions } from "@bot/command"
-import { cleanTrackTitle } from "@/util/helpers"
-import { duration } from "@/util/time"
-import { Queue } from "@/queue"
-import isBoundChannel from "@/validators/isBoundChannel"
-import isInGuild from "@/validators/isInGuild"
+import { createCommand, buildOptions } from "@lib/command"
+import { cleanTrackTitle } from "@bot/util/helpers"
+import { duration } from "@bot/util/time"
+import { Queue } from "@bot/queue"
+import isBoundChannel from "@bot/validators/isBoundChannel"
+import isInGuild from "@bot/validators/isInGuild"
 import { time, TimestampStyles } from "discord.js"
-import { EmbedColor } from "@bot/message"
+import { EmbedColor } from "@lib/message"
 
 export default createCommand({
   description: "View recently played queues",
+  detailDescription: "Shows a list of recently played queues for this server. Each entry shows when it was played and how many songs it contained. Use /loadqueue to restore a previous queue.",
 
   options: buildOptions()
     .integer({

@@ -1,12 +1,12 @@
 "use client"
 
-import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Skeleton } from "@/components/ui/skeleton"
-import { Badge } from "@/components/ui/badge"
-import { useBotSettings, useUpdateBotSettings } from "@/hooks/use-api"
-import { cn } from "@/lib/utils"
+import { useState, useEffect } from "react"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@web/components/ui/card"
+import { Button } from "@web/components/ui/button"
+import { Skeleton } from "@web/components/ui/skeleton"
+import { Badge } from "@web/components/ui/badge"
+import { useBotSettings, useUpdateBotSettings } from "@web/hooks/use-api"
+import { cn } from "@web/lib/utils"
 import {
   Settings,
   MessageSquareOff,
@@ -14,6 +14,8 @@ import {
   Plus,
   Trash2,
   RotateCcw,
+  UserPlus,
+  Globe,
 } from "lucide-react"
 
 /* ── Inline toggle switch ─────────────────────────────────── */
@@ -58,7 +60,7 @@ const DEFAULT_SLOGANS = [
 
 /* ── Control Panel Page ───────────────────────────────────── */
 
-export default function ControlPage() {
+export default function AdminControlPage() {
   const { data: settings, isLoading } = useBotSettings()
   const updateSettings = useUpdateBotSettings()
 
@@ -68,6 +70,39 @@ export default function ControlPage() {
    */
   const [pendingEnabled, setPendingEnabled] = useState<boolean | null>(null)
   const commandsEnabled = pendingEnabled ?? settings?.commandsEnabled ?? true
+
+  /* ── Web settings (signup toggle) ──────────────────── */
+  const [webSettings, setWebSettings] = useState<{ signupEnabled: boolean } | null>(null)
+  const [pendingSignup, setPendingSignup] = useState<boolean | null>(null)
+  const signupEnabled = pendingSignup ?? webSettings?.signupEnabled ?? true
+
+  useEffect(() => {
+    let cancel = false
+    async function load() {
+      try {
+        const res = await fetch("/rest/admin/settings")
+        if (res.ok && !cancel) setWebSettings(await res.json())
+      } catch { /* ignore */ }
+    }
+    load()
+    return () => { cancel = true }
+  }, [])
+
+  function handleSignupToggle(value: boolean) {
+    setPendingSignup(value)
+    fetch("/rest/admin/settings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ signupEnabled: value }),
+    })
+      .then(async (res) => {
+        if (res.ok) {
+          const data = await fetch("/rest/admin/settings")
+          if (data.ok) setWebSettings(await data.json())
+        }
+      })
+      .finally(() => setPendingSignup(null))
+  }
 
   /*
    * Slogan draft — null means "no local edits yet, show server data".
@@ -161,6 +196,45 @@ export default function ControlPage() {
               <Toggle
                 checked={commandsEnabled}
                 onChange={handleCommandToggle}
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Web Settings card */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Globe className="h-4 w-4 text-muted-foreground" />
+            Web Settings
+          </CardTitle>
+          <CardDescription>
+            Settings for the web dashboard.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Signup toggle */}
+          <div className="flex items-center justify-between gap-4 py-1">
+            <div className="flex items-start gap-3">
+              <UserPlus className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+              <div>
+                <p className="text-sm font-medium">Allow Signups</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  When disabled, new users cannot sign up via Discord OAuth. Existing users can still log in.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <Badge
+                variant={signupEnabled ? "default" : "outline"}
+                className="text-xs"
+              >
+                {signupEnabled ? "Open" : "Closed"}
+              </Badge>
+              <Toggle
+                checked={signupEnabled}
+                onChange={handleSignupToggle}
               />
             </div>
           </div>

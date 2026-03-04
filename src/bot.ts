@@ -1,6 +1,6 @@
 import { ActivityType, ChatInputCommandInteraction, type ActivityOptions } from "discord.js"
 import { Connectors, Shoukaku } from "shoukaku"
-import { Bot } from "@bot/bot"
+import { Bot } from "@lib/bot"
 import { PlayerWithQueue } from "./player"
 import config from "./config"
 import path from "node:path"
@@ -11,7 +11,7 @@ import { eq } from "drizzle-orm"
 const pkg = await Bun.file(path.join(import.meta.dir, "..", "package.json")).json() as { version: string }
 
 // Register BassBot as the bot type for typed ctx.bot in commands
-declare module "@bot/command" {
+declare module "@lib/command" {
   interface Register {
     bot: BassBot
   }
@@ -60,7 +60,7 @@ export class BassBot extends Bot<BassBot> {
     await this.loadSettings()
     const commandDir = path.join(import.meta.dir, "commands")
     await this.loadCommands(commandDir, { depth: 2, silent: true })
-    this._syncResult = await this.syncCommands({ token: config.token, clientId: config.clientId, silent: true })
+    this._syncResult = await this.syncCommands({ token: config.token, clientId: config.appId, silent: true })
 
     setInterval(() => this.randomActivity(), 1000 * 15)
   }

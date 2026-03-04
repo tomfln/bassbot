@@ -2,8 +2,8 @@
 
 import { useEffect, useRef } from "react"
 import { useQueryClient } from "@tanstack/react-query"
-import { getApiUrl } from "@/lib/api"
-import type { ActivityEntry } from "@/lib/api"
+import { BOT_API_URL } from "@web/lib/api-client"
+import type { ActivityEntry } from "@web/hooks/use-api"
 
 interface WsEvent {
   event: string
@@ -21,7 +21,7 @@ export function useWebSocket() {
 
   useEffect(() => {
     function connect() {
-      const wsUrl = getApiUrl().replace(/^http/, "ws") + "/api/ws"
+      const wsUrl = BOT_API_URL.replace(/^http/, "ws") + "/api/ws"
       const ws = new WebSocket(wsUrl)
       wsRef.current = ws
 

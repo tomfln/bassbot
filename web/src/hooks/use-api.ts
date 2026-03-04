@@ -1,32 +1,14 @@
 "use client"
 
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query"
-import { getApiUrl } from "@/lib/api"
-import type {
-  Stats,
-  PlayerSummary,
-  PlayerDetail,
-  GuildInfo,
-  GuildDetail,
-  ActivityEntry,
-  PaginatedResponse,
-  Track,
-  GuildMember,
-} from "@/lib/api"
+import { botApi, webApi } from "@web/lib/api-client"
 
 /* ── Helpers ──────────────────────────────────────────────── */
 
-async function fetchApi<T>(path: string, init?: RequestInit): Promise<T> {
-  const base = getApiUrl()
-  const res = await fetch(`${base}${path}`, init)
-  if (!res.ok) throw new Error(`API error: ${res.status}`)
-  return res.json() as Promise<T>
-}
-
-function qs(params: Record<string, string | undefined>): string {
-  const entries = Object.entries(params).filter(([, v]) => v !== undefined) as [string, string][]
-  if (entries.length === 0) return ""
-  return "?" + new URLSearchParams(entries).toString()
+function unwrap<T>(result: { data: T | null; error: unknown }): NonNullable<T> {
+  if (result.error) throw result.error
+  if (result.data == null) throw new Error("No data")
+  return result.data as NonNullable<T>
 }
 
 /*
@@ -38,9 +20,9 @@ function qs(params: Record<string, string | undefined>): string {
 /* ── Stats ────────────────────────────────────────────────── */
 
 export function useStats() {
-  return useQuery<Stats>({
+  return useQuery({
     queryKey: ["stats"],
-    queryFn: () => fetchApi("/api/stats"),
+    queryFn: async () => unwrap(await botApi.stats.get()),
     staleTime: Infinity,
   })
 }
@@ -48,9 +30,9 @@ export function useStats() {
 /* ── Players ──────────────────────────────────────────────── */
 
 export function usePlayers() {
-  return useQuery<PlayerSummary[]>({
+  return useQuery({
     queryKey: ["players"],
-    queryFn: () => fetchApi("/api/players"),
+    queryFn: async () => unwrap(await botApi.players.get()),
     staleTime: Infinity,
   })
 }
@@ -61,13 +43,17 @@ export function usePlayer(
 ) {
   const ql = opts.queueLimit ?? 10
   const hl = opts.historyLimit ?? 10
-  return useQuery<PlayerDetail>({
+  return useQuery({
     queryKey: ["player", guildId, ql, hl],
-    queryFn: () =>
-      fetchApi(`/api/players/${guildId}${qs({ ql: String(ql), hl: String(hl) })}`),
+    queryFn: async () =>
+      unwrap(
+        await botApi.players({ guildId: guildId! })
+          .get({ query: { ql: String(ql), hl: String(hl) } }),
+      ),
     enabled: !!guildId,
     staleTime: Infinity,
     placeholderData: keepPreviousData,
+    retry: false,
   })
 }
 
@@ -78,10 +64,13 @@ export function usePlayerQueue(
   offset: number,
   limit: number,
 ) {
-  return useQuery<PaginatedResponse<Track>>({
+  return useQuery({
     queryKey: ["player-queue", guildId, offset, limit],
-    queryFn: () =>
-      fetchApi(`/api/players/${guildId}/queue${qs({ offset: String(offset), limit: String(limit) })}`),
+    queryFn: async () =>
+      unwrap(
+        await botApi.players({ guildId: guildId! })
+          .queue.get({ query: { offset: String(offset), limit: String(limit) } }),
+      ),
     enabled: !!guildId && offset > 0,
     staleTime: Infinity,
   })
@@ -92,10 +81,13 @@ export function usePlayerHistory(
   offset: number,
   limit: number,
 ) {
-  return useQuery<PaginatedResponse<Track>>({
+  return useQuery({
     queryKey: ["player-history", guildId, offset, limit],
-    queryFn: () =>
-      fetchApi(`/api/players/${guildId}/history${qs({ offset: String(offset), limit: String(limit) })}`),
+    queryFn: async () =>
+      unwrap(
+        await botApi.players({ guildId: guildId! })
+          .history.get({ query: { offset: String(offset), limit: String(limit) } }),
+      ),
     enabled: !!guildId && offset > 0,
     staleTime: Infinity,
   })
@@ -104,9 +96,9 @@ export function usePlayerHistory(
 /* ── Guilds ───────────────────────────────────────────────── */
 
 export function useGuilds() {
-  return useQuery<GuildInfo[]>({
+  return useQuery({
     queryKey: ["guilds"],
-    queryFn: () => fetchApi("/api/guilds"),
+    queryFn: async () => unwrap(await botApi.guilds.get()),
     staleTime: Infinity,
   })
 }
@@ -116,10 +108,13 @@ export function useGuild(
   opts: { memberLimit?: number } = {},
 ) {
   const ml = opts.memberLimit ?? 20
-  return useQuery<GuildDetail>({
+  return useQuery({
     queryKey: ["guild", guildId, ml],
-    queryFn: () =>
-      fetchApi(`/api/guilds/${guildId}${qs({ ml: String(ml) })}`),
+    queryFn: async () =>
+      unwrap(
+        await botApi.guilds({ guildId: guildId! })
+          .get({ query: { ml: String(ml) } }),
+      ),
     enabled: !!guildId,
     staleTime: Infinity,
   })
@@ -133,14 +128,19 @@ export function useGuildMembers(
   limit: number,
   search = "",
 ) {
-  return useQuery<PaginatedResponse<GuildMember>>({
+  return useQuery({
     queryKey: ["guild-members", guildId, offset, limit, search],
-    queryFn: () =>
-      fetchApi(`/api/guilds/${guildId}/members${qs({
-        offset: String(offset),
-        limit: String(limit),
-        search: search || undefined,
-      })}`),
+    queryFn: async () =>
+      unwrap(
+        await botApi.guilds({ guildId: guildId! })
+          .members.get({
+            query: {
+              offset: String(offset),
+              limit: String(limit),
+              ...(search ? { search } : {}),
+            },
+          }),
+      ),
     enabled: !!guildId && (offset > 0 || search.length > 0),
     staleTime: Infinity,
   })
@@ -149,18 +149,22 @@ export function useGuildMembers(
 /* ── Logs — fetched once, new entries pushed via WebSocket ── */
 
 export function useGlobalLogs(limit = 50) {
-  return useQuery<ActivityEntry[]>({
+  return useQuery({
     queryKey: ["global-logs", limit],
-    queryFn: () => fetchApi(`/api/logs${qs({ limit: String(limit) })}`),
+    queryFn: async () =>
+      unwrap(await botApi.logs.get({ query: { limit: String(limit) } })),
     staleTime: Infinity,
   })
 }
 
 export function useGuildLogs(guildId: string | undefined, limit = 50) {
-  return useQuery<ActivityEntry[]>({
+  return useQuery({
     queryKey: ["guild-logs", guildId, limit],
-    queryFn: () =>
-      fetchApi(`/api/logs/${guildId}${qs({ limit: String(limit) })}`),
+    queryFn: async () =>
+      unwrap(
+        await botApi.logs({ guildId: guildId! })
+          .get({ query: { limit: String(limit) } }),
+      ),
     enabled: !!guildId,
     staleTime: Infinity,
   })
@@ -168,12 +172,10 @@ export function useGuildLogs(guildId: string | undefined, limit = 50) {
 
 /* ── BotSettings ──────────────────────────────────────────── */
 
-export type BotSettings = { commandsEnabled: boolean; slogans: string[] }
-
 export function useBotSettings() {
-  return useQuery<BotSettings>({
+  return useQuery({
     queryKey: ["bot-settings"],
-    queryFn: () => fetchApi("/api/control/settings"),
+    queryFn: async () => unwrap(await botApi.control.settings.get()),
     staleTime: Infinity,
   })
 }
@@ -181,14 +183,12 @@ export function useBotSettings() {
 export function useUpdateBotSettings() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (patch: Partial<BotSettings>) =>
-      fetchApi<BotSettings>("/api/control/settings", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(patch),
-      }),
+    mutationFn: async (patch: { commandsEnabled?: boolean; slogans?: string[] }) => {
+      const result = await botApi.control.settings.patch(patch)
+      return unwrap(result)
+    },
     onSuccess: (data) => {
-      queryClient.setQueryData<BotSettings>(["bot-settings"], data)
+      queryClient.setQueryData(["bot-settings"], data)
     },
   })
 }
@@ -198,8 +198,9 @@ export function useUpdateBotSettings() {
 export function useDestroyPlayer(guildId: string) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: () =>
-      fetchApi<{ ok: boolean }>(`/api/players/${guildId}`, { method: "DELETE" }),
+    mutationFn: async () => {
+      return unwrap(await botApi.players({ guildId }).delete())
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["players"] })
       queryClient.removeQueries({ queryKey: ["player", guildId] })
@@ -211,11 +212,35 @@ export function useDestroyPlayer(guildId: string) {
 export function useClearQueue(guildId: string) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: () =>
-      fetchApi<{ ok: boolean }>(`/api/players/${guildId}/clear`, { method: "POST" }),
+    mutationFn: async () => {
+      return unwrap(await botApi.players({ guildId }).clear.post())
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["player", guildId] })
     },
+  })
+}
+
+/* ── User guilds (mutual guilds cached via React Query) ─── */
+
+async function fetchUserGuilds() {
+  const [userRes, botRes] = await Promise.all([
+    webApi["my-guilds"].get(),
+    botApi.guilds.get(),
+  ])
+  const guilds = userRes.data?.guilds ?? []
+  const botGuilds = botRes.data ?? []
+  const botGuildIds = new Set(
+    (botGuilds as { id: string }[]).map((g) => g.id),
+  )
+  return { guilds, botGuildIds }
+}
+
+export function useUserGuilds() {
+  return useQuery({
+    queryKey: ["user-guilds"],
+    queryFn: fetchUserGuilds,
+    staleTime: 5 * 60 * 1000, // cache 5 min
   })
 }
 
@@ -224,8 +249,9 @@ export function useClearQueue(guildId: string) {
 export function useLeaveGuild(guildId: string) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: () =>
-      fetchApi<{ ok: boolean }>(`/api/guilds/${guildId}`, { method: "DELETE" }),
+    mutationFn: async () => {
+      return unwrap(await botApi.guilds({ guildId }).delete())
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["guilds"] })
       queryClient.removeQueries({ queryKey: ["guild", guildId] })
@@ -233,3 +259,12 @@ export function useLeaveGuild(guildId: string) {
     },
   })
 }
+
+/* ── Re-exported types (inferred from hooks) ──────────────── */
+
+export type PlayerDetail = NonNullable<ReturnType<typeof usePlayer>["data"]>
+export type PlayerSummary = NonNullable<ReturnType<typeof usePlayers>["data"]>[number]
+export type Track = PlayerDetail["queue"][number]
+export type GuildInfo = NonNullable<ReturnType<typeof useGuilds>["data"]>[number]
+export type ActivityEntry = NonNullable<ReturnType<typeof useGlobalLogs>["data"]>[number]
+export type DiscordGuild = NonNullable<Awaited<ReturnType<typeof fetchUserGuilds>>["guilds"]>[number]
