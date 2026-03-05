@@ -55,6 +55,7 @@ function FeatureCard({
 }) {
   return (
     <div className="scope-hover scope-xl glass-card relative rounded-xl p-6">
+      <div className="glass-glint" />
       <div className="relative">
         <div className="mb-3 inline-flex rounded-lg p-2 bg-primary/10 text-primary">
           {icon}

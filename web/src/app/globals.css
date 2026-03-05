@@ -131,6 +131,42 @@
     }
   }
 
+  /* Diagonal glint sweep (rendered via .glass-glint child div) */
+  .glass-glint {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .glass-glint::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      120deg,
+      transparent 30%,
+      oklch(1 0 0 / 0.04) 45%,
+      oklch(1 0 0 / 0.09) 50%,
+      oklch(1 0 0 / 0.04) 55%,
+      transparent 70%
+    );
+    transform: translateX(-100%);
+    transition: none;
+  }
+  .glass-card:hover .glass-glint::after {
+    animation: glint 0.4s ease-out forwards;
+  }
+
+  @keyframes glint {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(100%);
+    }
+  }
+
   .scope-hover {
     position: relative;
     --scope-radius: var(--radius);
