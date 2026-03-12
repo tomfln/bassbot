@@ -24,6 +24,5 @@ export function wsRoute() {
     close(ws) {
       removeWsClient(ws)
     },
-    message() {},
   })
 }
