@@ -14,7 +14,10 @@
     "lint": "tsc",
     "g": "bun lib/scripts/generate.ts",
     "db:generate": "drizzle-kit generate",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "build-bot": "docker build -t bassbot:latest -f docker/Dockerfile.bot .",
+    "build-web": "docker build -t bassbot-web:latest -f docker/Dockerfile.web .",
+    "build": "bun run build-bot && bun run build-web"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
