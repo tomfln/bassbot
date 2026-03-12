@@ -10,6 +10,7 @@
     "dev:web": "cd web && bun run dev",
     "register": "bun lib/scripts/register-commands.ts",
     "start": "bun run src/index.ts",
+    "ci:docker-check": "bun lib/scripts/docker-publish-check.ts",
     "eslint": "eslint .",
     "lint": "tsc",
     "g": "bun lib/scripts/generate.ts",
