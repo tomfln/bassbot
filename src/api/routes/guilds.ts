@@ -1,7 +1,10 @@
-import { Elysia, status } from "elysia"
+import { Elysia } from "elysia"
 import type { BassBot } from "../../bot"
 import type { PlayerWithQueue } from "../../player"
 import { cache } from "../../util/api-cache"
+import { HttpError } from "../error"
+import { requireAuth, requireAdmin } from "../auth"
+import { clampParam } from "../helpers"
 
 /* ── Cache TTLs (ms) ─────────────────────────────────────── */
 
@@ -10,14 +13,23 @@ const TTL = {
   GUILD_DETAIL: 10_000,
 } as const
 
+/* ── Helpers ──────────────────────────────────────────────── */
+
+function getGuild(bot: BassBot, guildId: string) {
+  const guild = bot.guilds.cache.get(guildId)
+  if (!guild) throw new HttpError(404, { error: "Guild not found" })
+  return guild
+}
+
 /* ── Routes ───────────────────────────────────────────────── */
 
 export function guildRoutes(bot: BassBot) {
   return new Elysia()
 
     /* ── Guild list ─────────────────────────────────────── */
-    .get("/guilds", () =>
-      cache.resolve("guilds", TTL.GUILD_LIST, () =>
+    .get("/guilds", async ({ request }) => {
+      await requireAuth(request)
+      return cache.resolve("guilds", TTL.GUILD_LIST, () =>
         bot.guilds.cache.map((g) => {
           const player = bot.lava.players.get(g.id) as PlayerWithQueue | undefined
           const current = player?.current
@@ -32,16 +44,16 @@ export function guildRoutes(bot: BassBot) {
               : null,
           }
         }),
-      ),
-    )
+      )
+    })
 
     /* ── Guild detail — configurable member limit ───────── */
-    .get("/guilds/:guildId", ({ params, query }) => {
-      const ml = Math.min(parseInt(query.ml ?? "20") || 20, 200)
+    .get("/guilds/:guildId", async ({ params, query, request }) => {
+      await requireAuth(request)
+      const ml = clampParam(query.ml, 20, 200)
       const cacheKey = `guild:${params.guildId}:${ml}`
       return cache.resolve(cacheKey, TTL.GUILD_DETAIL, () => {
-        const guild = bot.guilds.cache.get(params.guildId)
-        if (!guild) return status(404, { error: "Guild not found" })
+        const guild = getGuild(bot, params.guildId)
 
         const owner = guild.members.cache.get(guild.ownerId)
         const allMembers = guild.members.cache
@@ -89,12 +101,12 @@ export function guildRoutes(bot: BassBot) {
     })
 
     /* ── Guild members page ─────────────────────────────── */
-    .get("/guilds/:guildId/members", ({ params, query }) => {
+    .get("/guilds/:guildId/members", async ({ params, query, request }) => {
+      await requireAuth(request)
       const offset = parseInt(query.offset ?? "0") || 0
       const limit = Math.min(parseInt(query.limit ?? "20") || 20, 200)
-      const search = (query.search ?? "").toLowerCase()
-      const guild = bot.guilds.cache.get(params.guildId)
-      if (!guild) return status(404, { error: "Guild not found" })
+      const search = (query.search ?? "").slice(0, 100).toLowerCase()
+      const guild = getGuild(bot, params.guildId)
 
       let members = guild.members.cache
         .sort((a, b) => {
@@ -128,14 +140,13 @@ export function guildRoutes(bot: BassBot) {
       }
     })
 
-    /* ── Guild actions ──────────────────────────────────── */
-    .delete("/guilds/:guildId", async ({ params }) => {
-      // Gracefully stop player first
+    /* ── Admin: leave guild ─────────────────────────────── */
+    .delete("/guilds/:guildId", async ({ params, request }) => {
+      await requireAdmin(request)
       const player = bot.getPlayer(params.guildId)
       if (player) await player.disconnect()
 
-      const guild = bot.guilds.cache.get(params.guildId)
-      if (!guild) return status(404, { error: "Guild not found" })
+      const guild = getGuild(bot, params.guildId)
       await guild.leave()
       cache.invalidate(`guild:${params.guildId}`)
       cache.invalidate("guilds")

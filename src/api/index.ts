@@ -2,7 +2,8 @@ import { Elysia } from "elysia"
 import { cors } from "@elysiajs/cors"
 import type { BassBot } from "../bot"
 import logger from "@lib/logger"
-import { wsRoutes } from "./routes/ws"
+import { apiBase } from "./base"
+import { wsRoute } from "./ws"
 import { statsRoutes } from "./routes/stats"
 import { playerRoutes } from "./routes/players"
 import { guildRoutes } from "./routes/guilds"
@@ -11,7 +12,8 @@ import { controlRoutes } from "./routes/control"
 
 function createRoutes(bot: BassBot) {
   return new Elysia()
-    .use(wsRoutes)
+    .use(apiBase())
+    .use(wsRoute())
     .use(statsRoutes(bot))
     .use(playerRoutes(bot))
     .use(guildRoutes(bot))

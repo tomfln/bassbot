@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react"
 import { useQueryClient } from "@tanstack/react-query"
-import { BOT_API_URL } from "@web/lib/api-client"
+import { BOT_API_URL, getJwt } from "@web/lib/api-client"
 import type { ActivityEntry } from "@web/hooks/use-api"
 
 interface WsEvent {
@@ -13,6 +13,7 @@ interface WsEvent {
 /**
  * WebSocket-first data flow: connects to the bot API server and
  * invalidates TanStack Query caches when the bot pushes events.
+ * Auth: sends JWT token via the Sec-WebSocket-Protocol header.
  */
 export function useWebSocket() {
   const queryClient = useQueryClient()
@@ -20,9 +21,18 @@ export function useWebSocket() {
   const reconnectTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   useEffect(() => {
-    function connect() {
+    async function connect() {
+      const token = await getJwt()
+      if (!token) {
+        // No JWT yet — retry after a delay
+        reconnectTimer.current = setTimeout(connect, 3000)
+        return
+      }
+
       const wsUrl = BOT_API_URL.replace(/^http/, "ws") + "/api/ws"
-      const ws = new WebSocket(wsUrl)
+      // Pass the JWT as a sub-protocol — the server reads it from
+      // the Sec-WebSocket-Protocol header and verifies it on open.
+      const ws = new WebSocket(wsUrl, [token])
       wsRef.current = ws
 
       ws.addEventListener("message", (e) => {

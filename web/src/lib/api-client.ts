@@ -28,7 +28,7 @@ export const BOT_API_URL = botUrl
 let _jwt: string | null = null
 let _jwtExpiry = 0
 
-async function getJwt(): Promise<string | null> {
+export async function getJwt(): Promise<string | null> {
   if (_jwt && Date.now() < _jwtExpiry - 60_000) return _jwt
   try {
     const { data } = await webApi.jwt.get()

@@ -1,15 +1,11 @@
 # Docker Compose for BassBot + Dashboard + Lavalink
 #
 # Quick start:
-#   1. Create a data directory:  mkdir bassbot-data
-#   2. Fetch sample configs:
-#        curl -o bassbot-data/config.json https://raw.githubusercontent.com/TomFln/bassbot/main/config/config.example.json
-#        curl -o bassbot-data/application.yml https://raw.githubusercontent.com/TomFln/bassbot/main/config/application.yml
-#   3. Edit bassbot-data/config.json — fill in ALL values (bot token, secrets, OAuth, etc.)
-#   4. (Optional, recommended) Set up YouTube OAuth — see README for instructions.
-#   5. Start:  docker compose up -d
+#   1. curl the compose.yml and .env.example into the same directory.
+#   2. Rename .env.example to .env and fill in all values.
+#   3. Start:  docker compose up -d
 #
-# All configuration lives in config.json
+# All configuration lives in the .env file next to this compose.yml.
 
 services:
   bassbot:
@@ -18,10 +14,29 @@ services:
     restart: unless-stopped
     networks:
       - lavalink
+    depends_on:
+      lavalink:
+        condition: service_healthy
     ports:
-      - "3001:3001"
+      - "${API_PORT}:${API_PORT}"
+    environment:
+      - DISCORD_BOT_TOKEN=${DISCORD_BOT_TOKEN}
+      - DISCORD_APP_ID=${DISCORD_APP_ID}
+      - W2G_KEY=${W2G_KEY:-}
+      - JWT_SECRET=${JWT_SECRET}
+      - WEB_BASE_URL=${WEB_BASE_URL}
+      - API_PORT=${API_PORT}
+      - API_ENABLED=${API_ENABLED}
+      - LAVALINK_HOST=${LAVALINK_HOST}
+      - LAVALINK_PASSWORD=${LAVALINK_PASSWORD}
+      - LAVALINK_NAME=${LAVALINK_NAME}
+      - LAVALINK_SECURE=${LAVALINK_SECURE}
     volumes:
-      - ./bassbot-data:/data
+      - ${BOT_DATA_PATH}:/data
+      # To use a named volume instead of a bind mount, comment the line
+      # above and uncomment the next line. Also uncomment the volume
+      # definition at the bottom of this file.
+      # - bassbot-data:/data
 
   web:
     image: ghcr.io/tomfln/bassbot-web:latest
@@ -30,23 +45,45 @@ services:
     networks:
       - lavalink
     ports:
-      - "3000:3000"
+      - "${WEB_PORT}:3000"
+    environment:
+      - DISCORD_APP_ID=${DISCORD_APP_ID}
+      - DISCORD_OAUTH_CLIENT_SECRET=${DISCORD_OAUTH_CLIENT_SECRET}
+      - JWT_SECRET=${JWT_SECRET}
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
+      - WEB_BASE_URL=${WEB_BASE_URL}
+      - API_URL=${API_URL:-}
+      - ADMIN_USERS=${ADMIN_USERS:-}
     volumes:
-      - ./bassbot-data:/data
+      - ${WEB_DATA_PATH}:/data
+      # To use a named volume instead of a bind mount, comment the line
+      # above and uncomment the next line. Also uncomment the volume
+      # definition at the bottom of this file.
+      # - bassbot-web-data:/data
 
   lavalink:
     image: ghcr.io/lavalink-devs/lavalink:latest
     container_name: lavalink
     restart: unless-stopped
     environment:
-      _JAVA_OPTIONS: -Xmx4G -Xms1G -XX:+UseG1GC -XX:MaxGCPauseMillis=20 -XX:ParallelGCThreads=4
+      _JAVA_OPTIONS: "-Xmx4G -Xms1G -XX:+UseG1GC -XX:MaxGCPauseMillis=20 -XX:ParallelGCThreads=4"
     volumes:
-      - ./bassbot-data/application.yml:/opt/Lavalink/application.yml
+      - ${LAVALINK_CONFIG}:/opt/Lavalink/application.yml
     expose:
       - 2333
     networks:
       - lavalink
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs -H \"Authorization: ${LAVALINK_PASSWORD}\" http://localhost:2333/version"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
 networks:
   lavalink:
     name: lavalink
+
+# ── Named volumes (uncomment if using named volumes above) ───
+# volumes:
+#   bassbot-data:
+#   bassbot-web-data:

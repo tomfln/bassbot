@@ -83,7 +83,7 @@ export class PlayerWithQueue extends Player {
     this.on("start", async (data) => {
       this.broadcastUpdate()
       if (!this.textChannel) return
-      const msg = await this.textChannel.send(nowPlayingMessage(data.track))
+      const msg = await this.textChannel.send(nowPlayingMessage(data.track, i.guildId))
       this.playerMsgId = msg.id
 
       logger.info(`[${i.guild} > ${i.member.voice.channel?.name} @ ${this.node.name}] ${data.track.info.title} - ${data.track.info.author}`)

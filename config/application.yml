@@ -4,6 +4,7 @@ server:
 
 lavalink:
   server:
+    # can be overwritten by the LAVALINK_PASSWORD env var in the self host setup .env file
     password: "youshallnotpass"
     sources:
       youtube: false

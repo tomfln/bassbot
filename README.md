@@ -36,53 +36,51 @@ built-in lyrics search and many more features, it offers the best listening expe
 
 The easiest way to run BassBot is with Docker Compose.
 
-### 1. Create data directory
+### 1. Download the files
 
 ```bash
-mkdir bassbot-data && cd bassbot-data
+mkdir bassbot && cd bassbot
+mkdir bot web
+
+# Docker Compose file
+curl -O https://raw.githubusercontent.com/tomfln/bassbot/main/config/compose.yml
+
+# Environment template (rename to .env)
+curl -o .env https://raw.githubusercontent.com/tomfln/bassbot/main/config/.env.example
+
+# Lavalink config (into the data directory)
+mkdir -p bassbot-data
+curl -o bassbot-data/application.yml https://raw.githubusercontent.com/tomfln/bassbot/main/config/application.yml
 ```
 
-### 2. Fetch sample configs
+### 2. Fill in the `.env` file
 
-```bash
-# Bot config
-curl -o config.json https://raw.githubusercontent.com/tomfln/bassbot/main/config/config.example.json
+Open `.env` and set all required values. Docker Compose will warn you about any missing variables.
 
-# Lavalink config, can be placed anywhere
-curl -o application.yml https://raw.githubusercontent.com/tomfln/bassbot/main/config/application.yml
-```
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `DISCORD_BOT_TOKEN` | Yes | Bot token ([Developer Portal](https://discord.com/developers/applications) → Bot) |
+| `DISCORD_APP_ID` | Yes | Application ID (General Information) |
+| `DISCORD_OAUTH_CLIENT_SECRET` | Yes | OAuth client secret (OAuth2 page) |
+| `JWT_SECRET` | Yes | Shared secret for bot ↔ web auth. Generate: `openssl rand -hex 32` |
+| `BETTER_AUTH_SECRET` | Yes | Web auth encryption secret. Generate: `openssl rand -hex 32` |
+| `WEB_BASE_URL` | Yes | Public URL of the dashboard (e.g. `http://localhost:3000`) |
+| `LAVALINK_HOST` | No | Lavalink address (default: `lavalink:2333`) |
+| `LAVALINK_PASSWORD` | No | Lavalink password (default: `youshallnotpass`) |
+| `W2G_KEY` | No | Watch2Gether API key |
+| `ADMIN_USERS` | No | Comma-separated Discord usernames auto-promoted to admin |
+| `API_PORT` | No | Bot REST API port (default: `3001`) |
+| `WEB_PORT` | No | Web dashboard port (default: `3000`) |
+| `API_URL` | No | Bot API URL from the browser — only set when bot is on a different domain |
+| `BOT_DATA_PATH` | No | Bot data bind-mount path (default: `./bot`) |
+| `WEB_DATA_PATH` | No | Web data bind-mount path (default: `./web`) |
+| `LAVALINK_CONFIG` | No | Path to Lavalink `application.yml` (default: `./application.yml`) |
 
-### 3. Edit the bot config
+> **Named volumes:** If you prefer Docker named volumes instead of bind mounts, see the commented-out sections in `compose.yml`.
 
-Open `bassbot-data/config.json` and fill in your values:
+### 3. (Optional) Configure Spotify
 
-```json
-{
-  "token": "your_bot_token_here",
-  "clientId": "your_client_id_here",
-  "w2gKey": "your_w2g_api_key_here",
-  "nodes": [
-    {
-      "name": "node1",
-      "url": "lavalink:2333",
-      "auth": "youshallnotpass"
-    }
-  ]
-}
-```
-
-| Key | Description |
-|-----|-------------|
-| `token` | Your Discord bot token ([Discord Developer Portal](https://discord.com/developers/applications)) |
-| `clientId` | Your Discord application's client ID |
-| `w2gKey` | Your [Watch2Gether](https://w2g.tv/) API key |
-| `apiPort` | Dashboard API port (default: `3001`) |
-| `apiEnabled` | Enable the REST API for the dashboard (default: `true`) |
-| `nodes` | Lavalink nodes — defaults work with the compose file |
-
-### 4. (Optional) Configure Spotify
-
-To enable Spotify link support, edit `application.yml`, enable the spotify source and set your Spotify API credentials under `plugins.lavasrc.spotify`:
+To enable Spotify link support, edit `bassbot-data/application.yml`, enable the spotify source and set your Spotify API credentials under `plugins.lavasrc.spotify`:
 
 ```yaml
 lavasrc:
@@ -97,15 +95,13 @@ lavasrc:
 
 You can create these at the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard).
 
-### 5. Start
+### 4. Start
 
 ```bash
 docker compose up -d
 ```
 
 The bot will start, connect to Lavalink, and be ready to use. Invite it to your server, join a voice channel, and run `/play`.
-
-> **Tip:** All config values can also be overridden via environment variables in the compose file (e.g., `TOKEN`, `CLIENT_ID`). Env vars take priority over `config.json`.
 
 ---
 
@@ -180,45 +176,21 @@ The web dashboard lets users control music playback from a browser. It uses Disc
 4. Copy the **Client ID** and **Client Secret**
 5. Add a redirect URL: `http://localhost:3000/rest/auth/callback/discord` (or your production domain)
 
-### 2. Create a `.env` file
+### 2. Set the env vars
 
-Create a `.env` file in the same directory as your `compose.yml`:
+Make sure these variables are set in your `.env`:
 
 ```env
-# Shared secret between bot and web for JWT auth — use a random string
+DISCORD_APP_ID=your_client_id
+DISCORD_OAUTH_CLIENT_SECRET=your_client_secret
 JWT_SECRET=your-random-secret-here
-
-# Discord OAuth credentials (from Developer Portal)
-DISCORD_CLIENT_ID=your_client_id
-DISCORD_CLIENT_SECRET=your_client_secret
-
-# Public URL where users access the dashboard
-BETTER_AUTH_URL=http://localhost:3000
+BETTER_AUTH_SECRET=your-random-secret-here
+WEB_BASE_URL=http://localhost:3000
 ```
 
-> **Tip:** Generate a random JWT secret with `openssl rand -base64 32`
+### 3. Admin Access
 
-### 3. Environment Variables Reference
-
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `JWT_SECRET` | Yes | Shared secret for bot ↔ web JWT auth |
-| `DISCORD_CLIENT_ID` | Yes | Discord application client ID |
-| `DISCORD_CLIENT_SECRET` | Yes | Discord application client secret |
-| `BETTER_AUTH_URL` | No | Public URL for the dashboard (default: `http://localhost:3000`) |
-| `API_URL` | No | Bot API URL from web container's perspective (default: `http://bassbot:3001`) |
-| `DATABASE_PATH` | No | Path to web SQLite database (default: `/app/data/web.db`) |
-
-### 4. Admin Access
-
-The first user to log in can be promoted to admin via the database, or you can set the role directly:
-
-1. Log in to the dashboard with your Discord account
-2. Access the SQLite database: `sqlite3 web-data/web.db`
-3. Promote yourself: `UPDATE user SET role = 'admin' WHERE name = 'YourDiscordName';`
-4. Refresh the dashboard — you'll see the Admin Panel link in the sidebar
-
-Once you're an admin, you can promote other users from the **Admin → Users** page.
+Set `ADMIN_USERS=yourdiscordusername` in `.env` to auto-promote yourself on login. Once you're an admin, you can promote other users from the **Admin → Users** page.
 
 ---
 
@@ -226,9 +198,8 @@ Once you're an admin, you can promote other users from the **Admin → Users** p
 
 1. Clone the repository
 2. Run `bun install`
-3. Create a `data/` directory with a `config.json` (see `config.example.json`)
-5. Run `bun dev` to start the bot in dev mode
-6. Run `cd web && bun dev` to start the dashboard in dev mode
+3. Copy `.env.example` to `.env` and fill in the values
+4. Run `bun dev` to start the bot and dashboard in dev mode
 
 ## Technologies
 

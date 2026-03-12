@@ -1,7 +1,7 @@
 import config from "@bot/config"
 import { BassBot } from "@bot/bot"
 import { setupLavalinkEvents } from "./events/lavalink-events"
-import { startApiServer } from "./api"
+import { startApiServer } from "./api/index"
 import logger from "@lib/logger"
 import { Events } from "discord.js"
 
