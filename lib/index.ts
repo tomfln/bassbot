@@ -41,6 +41,6 @@ export { syncCommands, registerCommands, clearCommands, type SyncCommandsOptions
 // Utilities
 export { Result } from "./result"
 export type { Result as ResultType } from "./result"
-export { initEnv } from "./init-env"
+export { parseEnv } from "./init-env"
 export { default as logger } from "./logger"
 export type { Flatten } from "./types"

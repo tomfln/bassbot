@@ -1,84 +1,54 @@
+import { z } from "zod"
 import { resolve, join } from "node:path"
-import { existsSync, readFileSync } from "node:fs"
+import { parseEnv } from "@lib/init-env"
+import { PHASE_PRODUCTION_BUILD } from "next/dist/shared/lib/constants"
 
-// ── Resolve data directory (env-only, needed to locate config.json) ──
+// During `next build` env vars aren't available — skip validation
+const isBuild = process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD
 
-const dataDir = resolve(
-  process.env.DATA_DIR ?? join(process.cwd(), "..", "data"),
-)
+const envSchema = z.object({
+  DISCORD_APP_ID: z.string().min(1),
+  DISCORD_OAUTH_CLIENT_SECRET: z.string().min(1),
+  JWT_SECRET: z.string().min(1),
+  BETTER_AUTH_SECRET: z.string().min(1),
+  WEB_BASE_URL: z.string().default("http://localhost:3000"),
+  API_URL: z.string().default(""),
+  DATABASE_PATH: z.string().default(""),
+  DATA_DIR: z.string().default(""),
+  ADMIN_USERS: z
+    .string()
+    .default("")
+    .transform((v) =>
+      v
+        .split(",")
+        .map((s) => s.trim().toLowerCase())
+        .filter(Boolean),
+    ),
+})
 
-// ── Load config.json ──
+const env = isBuild
+  ? (envSchema.partial().parse({}) as z.infer<typeof envSchema>)
+  : parseEnv(process.env, envSchema)
 
-let file: Record<string, unknown> = {}
-try {
-  const configPath = join(dataDir, "config.json")
-  if (existsSync(configPath)) {
-    file = JSON.parse(readFileSync(configPath, "utf-8")) as Record<string, unknown>
-  }
-} catch { /* config.json not found or invalid — env vars will be used */ }
-
-// ── Merge: config.json defaults, env vars override ──
-
-function str(envKey: string, fileKey: string): string | undefined {
-  return (process.env[envKey] ?? file[fileKey]) as string | undefined
-}
+const dataDir = env.DATA_DIR
+  ? resolve(env.DATA_DIR)
+  : resolve(join(process.cwd(), "..", "data"))
 
 const config = {
-  /** Discord application ID (shared between bot and web, also used as OAuth client ID) */
-  appId: str("DISCORD_APP_ID", "appId") ?? "",
-  /** Discord OAuth client secret (web only) */
-  discordOauthSecret: str("DISCORD_OAUTH_CLIENT_SECRET", "discordOauthSecret") ?? "",
-  /** Shared JWT secret for auth between bot and web */
-  jwtSecret: str("JWT_SECRET", "jwtSecret") ?? "",
-  /** BetterAuth encryption secret */
-  betterAuthSecret: str("BETTER_AUTH_SECRET", "betterAuthSecret") ?? "",
-  /** Public URL of the web app (for OAuth callbacks) */
-  betterAuthUrl: str("BETTER_AUTH_URL", "betterAuthUrl") ?? "http://localhost:3000",
-  /** Bot API base URL for browser calls (empty = same-origin, set only when bot API is on a different domain) */
-  apiUrl: str("API_URL", "apiUrl") ?? "",
-  /** SQLite database path */
-  databasePath: str("DATABASE_PATH", "databasePath") ?? join(dataDir, "web.db"),
-  /** Discord usernames that are auto-promoted to admin on signup/login */
-  adminUsers: (() => {
-    const env = process.env.ADMIN_USERS
-    if (env) return env.split(",").map(s => s.trim().toLowerCase()).filter(Boolean)
-    const arr = file.adminUsers
-    if (Array.isArray(arr)) return (arr as string[]).map(s => String(s).trim().toLowerCase()).filter(Boolean)
-    return [] as string[]
-  })(),
-  /** Raw data directory path */
+  appId: env.DISCORD_APP_ID ?? "",
+  discordOauthSecret: env.DISCORD_OAUTH_CLIENT_SECRET ?? "",
+  jwtSecret: env.JWT_SECRET ?? "",
+  betterAuthSecret: env.BETTER_AUTH_SECRET ?? "",
+  webBaseUrl: env.WEB_BASE_URL ?? "http://localhost:3000",
+  apiUrl: env.API_URL ?? "",
+  databasePath: env.DATABASE_PATH || join(dataDir, "web.db"),
+  adminUsers: env.ADMIN_USERS ?? [],
   dataDir,
 }
 
-// ── Validate required fields at startup (warn only — Next.js build has no config) ──
-
-const isBuild = process.argv.some(a => a.includes("next") && process.argv.includes("build"))
-
-if (!isBuild) {
-  const missing: string[] = []
-  if (!config.appId) missing.push("appId / DISCORD_APP_ID")
-  if (!config.discordOauthSecret) missing.push("discordOauthSecret / DISCORD_OAUTH_CLIENT_SECRET")
-  if (!config.jwtSecret) missing.push("jwtSecret / JWT_SECRET")
-  if (!config.betterAuthSecret) missing.push("betterAuthSecret / BETTER_AUTH_SECRET")
-
-  if (missing.length > 0) {
-    console.error("\n❌ Missing web configuration:")
-    for (const key of missing) {
-      console.error(` - ${key}: required but not set`)
-    }
-    console.error("\nSet values in config.json or as environment variables.\n")
-  }
-}
-
-// ── Inject env vars that BetterAuth reads automatically ──
-// BetterAuth reads BETTER_AUTH_SECRET and BETTER_AUTH_URL from process.env
-// so we ensure they're set from our unified config.
-
-if (!process.env.BETTER_AUTH_SECRET) {
+// BetterAuth reads BETTER_AUTH_SECRET from process.env
+if (config.betterAuthSecret && !process.env.BETTER_AUTH_SECRET) {
   process.env.BETTER_AUTH_SECRET = config.betterAuthSecret
-}
-if (!process.env.BETTER_AUTH_URL) {
-  process.env.BETTER_AUTH_URL = config.betterAuthUrl
 }
 
 export default config

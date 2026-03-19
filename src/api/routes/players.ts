@@ -1,10 +1,12 @@
-import { Elysia, status } from "elysia"
+import { Elysia, t } from "elysia"
 import type { BassBot } from "../../bot"
 import type { PlayerWithQueue } from "../../player"
 import { LoadType, type Track } from "shoukaku"
 import { cache } from "../../util/api-cache"
 import { resolveSong } from "../../util/song-search"
-import { verifyJwt, verifyUserInVC } from "../auth"
+import { HttpError } from "../error"
+import { requireAuth, requireAdmin, requireUserInVC } from "../auth"
+import { clampParam } from "../helpers"
 
 /* ── Cache TTLs (ms) ─────────────────────────────────────── */
 
@@ -25,7 +27,6 @@ function trackInfo(t: { info: { title: string; author: string; uri?: string | nu
   }
 }
 
-/** Minimal player info for list views — no queue/history arrays. */
 function playerSummary(player: PlayerWithQueue, bot: BassBot) {
   const guild = bot.guilds.cache.get(player.guildId)
   const vc = guild?.members.me?.voice.channel
@@ -49,7 +50,6 @@ function playerSummary(player: PlayerWithQueue, bot: BassBot) {
   }
 }
 
-/** Full player info for detail view — lists are truncated. */
 function playerDetail(
   player: PlayerWithQueue,
   bot: BassBot,
@@ -104,37 +104,52 @@ function playerDetail(
   }
 }
 
+/* ── Helpers ──────────────────────────────────────────────── */
+
+function getPlayer(bot: BassBot, guildId: string): PlayerWithQueue {
+  const player = bot.getPlayer(guildId)
+  if (!player) throw new HttpError(404, { error: "Player not found" })
+  return player
+}
+
+function getNode(bot: BassBot) {
+  const node = bot.lava.nodes.values().next().value
+  if (!node) throw new HttpError(503, { error: "No Lavalink nodes available" })
+  return node
+}
+
 /* ── Routes ───────────────────────────────────────────────── */
 
 export function playerRoutes(bot: BassBot) {
   return new Elysia()
 
-    /* ── Player list — summary only ─────────────────────── */
-    .get("/players", () =>
-      cache.resolve("players", TTL.PLAYER_LIST, () => {
+    /* ── Player list ────────────────────────────────────── */
+    .get("/players", async ({ request }) => {
+      await requireAuth(request)
+      return cache.resolve("players", TTL.PLAYER_LIST, () => {
         const players = [...bot.lava.players.values()] as PlayerWithQueue[]
         return players.map((p) => playerSummary(p, bot))
-      }),
-    )
+      })
+    })
 
-    /* ── Player detail — configurable list limits ───────── */
-    .get("/players/:guildId", ({ params, query }) => {
-      const ql = Math.min(parseInt(query.ql ?? "10") || 10, 5000)
-      const hl = Math.min(parseInt(query.hl ?? "10") || 10, 5000)
+    /* ── Player detail ──────────────────────────────────── */
+    .get("/players/:guildId", async ({ params, query, request }) => {
+      await requireAuth(request)
+      const ql = clampParam(query.ql, 10, 200)
+      const hl = clampParam(query.hl, 10, 200)
       const cacheKey = `player:${params.guildId}:${ql}:${hl}`
       return cache.resolve(cacheKey, TTL.PLAYER_DETAIL, () => {
-        const player = bot.getPlayer(params.guildId)
-        if (!player) return status(404, { error: "Player not found" })
+        const player = getPlayer(bot, params.guildId)
         return playerDetail(player, bot, ql, hl)
       })
     })
 
     /* ── Player queue page ──────────────────────────────── */
-    .get("/players/:guildId/queue", ({ params, query }) => {
+    .get("/players/:guildId/queue", async ({ params, query, request }) => {
+      await requireAuth(request)
       const offset = parseInt(query.offset ?? "0") || 0
       const limit = Math.min(parseInt(query.limit ?? "20") || 20, 200)
-      const player = bot.getPlayer(params.guildId)
-      if (!player) return status(404, { error: "Player not found" })
+      const player = getPlayer(bot, params.guildId)
       return {
         items: player.queue.slice(offset, offset + limit).map(trackInfo),
         total: player.queue.length,
@@ -143,11 +158,11 @@ export function playerRoutes(bot: BassBot) {
     })
 
     /* ── Player history page ────────────────────────────── */
-    .get("/players/:guildId/history", ({ params, query }) => {
+    .get("/players/:guildId/history", async ({ params, query, request }) => {
+      await requireAuth(request)
       const offset = parseInt(query.offset ?? "0") || 0
       const limit = Math.min(parseInt(query.limit ?? "20") || 20, 200)
-      const player = bot.getPlayer(params.guildId)
-      if (!player) return status(404, { error: "Player not found" })
+      const player = getPlayer(bot, params.guildId)
       return {
         items: player.history.slice(offset, offset + limit).map(trackInfo),
         total: player.history.length,
@@ -155,74 +170,54 @@ export function playerRoutes(bot: BassBot) {
       }
     })
 
-    /* ── Player actions (admin) ─────────────────────────── */
-    .delete("/players/:guildId", async ({ params }) => {
-      const player = bot.getPlayer(params.guildId)
-      if (!player) return status(404, { error: "Player not found" })
+    /* ── Admin: destroy / clear player ──────────────────── */
+    .delete("/players/:guildId", async ({ params, request }) => {
+      await requireAdmin(request)
+      const player = getPlayer(bot, params.guildId)
       await player.disconnect()
       return { ok: true }
     })
-    .post("/players/:guildId/clear", ({ params }) => {
-      const player = bot.getPlayer(params.guildId)
-      if (!player) return status(404, { error: "Player not found" })
+    .post("/players/:guildId/clear", async ({ params, request }) => {
+      await requireAdmin(request)
+      const player = getPlayer(bot, params.guildId)
       player.clear()
       return { ok: true }
     })
 
-    /* ── User player controls (JWT-authenticated) ───────── */
-
-    // Pause / Resume
+    /* ── User controls (must be in same VC) ─────────────── */
     .post("/players/:guildId/pause", async ({ params, request }) => {
-      const user = await verifyUserInVC(bot, request, params.guildId)
-      if (user instanceof Response) return user
-      const player = bot.getPlayer(params.guildId)
-      if (!player) return status(404, { error: "Player not found" })
+      await requireUserInVC(bot, request, params.guildId)
+      const player = getPlayer(bot, params.guildId)
       await player.setPaused(true)
       return { ok: true }
     })
     .post("/players/:guildId/resume", async ({ params, request }) => {
-      const user = await verifyUserInVC(bot, request, params.guildId)
-      if (user instanceof Response) return user
-      const player = bot.getPlayer(params.guildId)
-      if (!player) return status(404, { error: "Player not found" })
+      await requireUserInVC(bot, request, params.guildId)
+      const player = getPlayer(bot, params.guildId)
       await player.setPaused(false)
       return { ok: true }
     })
-
-    // Next / Previous
     .post("/players/:guildId/next", async ({ params, request }) => {
-      const user = await verifyUserInVC(bot, request, params.guildId)
-      if (user instanceof Response) return user
-      const player = bot.getPlayer(params.guildId)
-      if (!player) return status(404, { error: "Player not found" })
+      await requireUserInVC(bot, request, params.guildId)
+      const player = getPlayer(bot, params.guildId)
       await player.next()
       return { ok: true }
     })
     .post("/players/:guildId/prev", async ({ params, request }) => {
-      const user = await verifyUserInVC(bot, request, params.guildId)
-      if (user instanceof Response) return user
-      const player = bot.getPlayer(params.guildId)
-      if (!player) return status(404, { error: "Player not found" })
+      await requireUserInVC(bot, request, params.guildId)
+      const player = getPlayer(bot, params.guildId)
       await player.prev()
       return { ok: true }
     })
-
-    // Shuffle
     .post("/players/:guildId/shuffle", async ({ params, request }) => {
-      const user = await verifyUserInVC(bot, request, params.guildId)
-      if (user instanceof Response) return user
-      const player = bot.getPlayer(params.guildId)
-      if (!player) return status(404, { error: "Player not found" })
+      await requireUserInVC(bot, request, params.guildId)
+      const player = getPlayer(bot, params.guildId)
       player.shuffle()
       return { ok: true }
     })
-
-    // Loop toggle (cycles: None → Song → Queue → None)
     .post("/players/:guildId/loop", async ({ params, request }) => {
-      const user = await verifyUserInVC(bot, request, params.guildId)
-      if (user instanceof Response) return user
-      const player = bot.getPlayer(params.guildId)
-      if (!player) return status(404, { error: "Player not found" })
+      await requireUserInVC(bot, request, params.guildId)
+      const player = getPlayer(bot, params.guildId)
       const modes = ["None", "Song", "Queue"] as const
       const currentIdx = modes.indexOf(player.loopMode as typeof modes[number])
       const nextMode = modes[(currentIdx + 1) % modes.length]!
@@ -230,18 +225,13 @@ export function playerRoutes(bot: BassBot) {
       return { ok: true, loopMode: nextMode }
     })
 
-    // Search for tracks
+    /* ── Search ─────────────────────────────────────────── */
     .get("/players/:guildId/search", async ({ query, request }) => {
-      const user = await verifyJwt(request)
-      if (!user) return status(401, { error: "Unauthorized" })
+      await requireAuth(request)
+      const q = typeof query.q === "string" ? query.q.slice(0, 200) : ""
+      if (!q) throw new HttpError(400, { error: "Missing search query" })
 
-      const q = query.q
-      if (!q) return status(400, { error: "Missing search query" })
-
-      const node = bot.lava.nodes.values().next().value
-      if (!node) return status(503, { error: "No Lavalink nodes available" })
-
-      // Try raw search first for multiple results
+      const node = getNode(bot)
       const rawResults = await node.rest.resolve(`ytsearch:${q}`)
       if (rawResults?.loadType === LoadType.SEARCH && rawResults.data.length > 0) {
         return {
@@ -255,7 +245,6 @@ export function playerRoutes(bot: BassBot) {
         }
       }
 
-      // Fallback to resolveSong
       const result = await resolveSong(q, node)
       if (!result.success) return { results: [] }
 
@@ -282,25 +271,16 @@ export function playerRoutes(bot: BassBot) {
       }
     })
 
-    // Add track to queue
-    .post("/players/:guildId/queue", async ({ params, request }) => {
-      const user = await verifyUserInVC(bot, request, params.guildId)
-      if (user instanceof Response) return user
-
-      const player = bot.getPlayer(params.guildId)
-      if (!player) return status(404, { error: "Player not found" })
-
-      const body = await request.json() as { uri: string; position?: "next" | "end" }
-      if (!body.uri) return status(400, { error: "Missing track URI" })
-
-      const node = bot.lava.nodes.values().next().value
-      if (!node) return status(503, { error: "No Lavalink nodes available" })
+    /* ── Queue mutations ────────────────────────────────── */
+    .post("/players/:guildId/queue", async ({ params, body, request }) => {
+      await requireUserInVC(bot, request, params.guildId)
+      const player = getPlayer(bot, params.guildId)
+      const node = getNode(bot)
 
       const result = await resolveSong(body.uri, node)
-      if (!result.success) return status(400, { error: result.error ?? "Failed to resolve track" })
+      if (!result.success) throw new HttpError(400, { error: result.error ?? "Failed to resolve track" })
 
       const addNext = body.position === "next"
-
       if (result.value.type === "playlist") {
         await player.addTracks(result.value.tracks, addNext)
         return { ok: true, added: result.value.tracks.length }
@@ -308,62 +288,46 @@ export function playerRoutes(bot: BassBot) {
         await player.addTrack(result.value.track, addNext)
         return { ok: true, added: 1 }
       }
+    }, {
+      body: t.Object({
+        uri: t.String({ minLength: 1, maxLength: 2000 }),
+        position: t.Optional(t.Union([t.Literal("next"), t.Literal("end")])),
+      }),
     })
 
-    // Remove track from queue
-    .post("/players/:guildId/queue/remove", async ({ params, request }) => {
-      const user = await verifyUserInVC(bot, request, params.guildId)
-      if (user instanceof Response) return user
-
-      const player = bot.getPlayer(params.guildId)
-      if (!player) return status(404, { error: "Player not found" })
-
-      const body = await request.json() as { index: number }
-      if (typeof body.index !== "number" || body.index < 0 || body.index >= player.queue.length) {
-        return status(400, { error: "Invalid index" })
-      }
-
+    .post("/players/:guildId/queue/remove", async ({ params, body, request }) => {
+      await requireUserInVC(bot, request, params.guildId)
+      const player = getPlayer(bot, params.guildId)
+      if (body.index >= player.queue.length) throw new HttpError(400, { error: "Invalid index" })
       const removed = player.remove(body.index, body.index)
-      if (!removed) return status(400, { error: "Failed to remove track" })
+      if (!removed) throw new HttpError(400, { error: "Failed to remove track" })
       return { ok: true }
+    }, {
+      body: t.Object({ index: t.Integer({ minimum: 0 }) }),
     })
 
-    // Move track in queue (for drag-and-drop)
-    .post("/players/:guildId/queue/move", async ({ params, request }) => {
-      const user = await verifyUserInVC(bot, request, params.guildId)
-      if (user instanceof Response) return user
-
-      const player = bot.getPlayer(params.guildId)
-      if (!player) return status(404, { error: "Player not found" })
-
-      const body = await request.json() as { from: number; to: number }
-      if (
-        typeof body.from !== "number" || typeof body.to !== "number" ||
-        body.from < 0 || body.from >= player.queue.length ||
-        body.to < 0 || body.to >= player.queue.length
-      ) {
-        return status(400, { error: "Invalid indices" })
+    .post("/players/:guildId/queue/move", async ({ params, body, request }) => {
+      await requireUserInVC(bot, request, params.guildId)
+      const player = getPlayer(bot, params.guildId)
+      if (body.from >= player.queue.length || body.to >= player.queue.length) {
+        throw new HttpError(400, { error: "Invalid indices" })
       }
-
       const moved = player.moveTrack(body.from, body.to)
-      if (!moved) return status(400, { error: "Failed to move track" })
+      if (!moved) throw new HttpError(400, { error: "Failed to move track" })
       return { ok: true }
+    }, {
+      body: t.Object({
+        from: t.Integer({ minimum: 0 }),
+        to: t.Integer({ minimum: 0 }),
+      }),
     })
 
-    // Set volume
-    .post("/players/:guildId/volume", async ({ params, request }) => {
-      const user = await verifyUserInVC(bot, request, params.guildId)
-      if (user instanceof Response) return user
-
-      const player = bot.getPlayer(params.guildId)
-      if (!player) return status(404, { error: "Player not found" })
-
-      const body = await request.json() as { volume: number }
-      if (typeof body.volume !== "number" || body.volume < 0 || body.volume > 100) {
-        return status(400, { error: "Volume must be 0-100" })
-      }
-
+    .post("/players/:guildId/volume", async ({ params, body, request }) => {
+      await requireUserInVC(bot, request, params.guildId)
+      const player = getPlayer(bot, params.guildId)
       await player.setGlobalVolume(body.volume / 2)
       return { ok: true }
+    }, {
+      body: t.Object({ volume: t.Number({ minimum: 0, maximum: 100 }) }),
     })
 }

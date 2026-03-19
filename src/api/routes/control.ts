@@ -1,10 +1,15 @@
 import { Elysia, t } from "elysia"
 import type { BassBot } from "../../bot"
+import { requireAdmin } from "../auth"
 
 export function controlRoutes(bot: BassBot) {
   return new Elysia()
-    .get("/control/settings", () => bot.getSettings())
-    .patch("/control/settings", async ({ body }) => {
+    .get("/control/settings", async ({ request }) => {
+      await requireAdmin(request)
+      return bot.getSettings()
+    })
+    .patch("/control/settings", async ({ body, request }) => {
+      await requireAdmin(request)
       await bot.updateSettings(body)
       return bot.getSettings()
     }, {

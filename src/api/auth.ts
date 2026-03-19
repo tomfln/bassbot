@@ -1,74 +1,55 @@
-import { jwtVerify } from "jose"
+import { verifyAuthHeader, verifyJwt, type JwtPayload } from "@lib/jwt"
 import type { BassBot } from "../bot"
 import config from "../config"
+import { HttpError } from "./error"
 
-export interface JwtPayload {
-  sub: string
-  discordId: string
-  role: "admin" | "user"
-  name: string
-  avatar: string
+export { type JwtPayload }
+
+/** Require any valid JWT. Returns the payload or throws 401. */
+export async function requireAuth(request: Request): Promise<JwtPayload> {
+  const user = await verifyAuthHeader(request.headers.get("authorization"), config.jwtSecret)
+  if (!user) throw new HttpError(401, { error: "Unauthorized" })
+  return user
 }
 
-export async function verifyJwt(request: Request): Promise<JwtPayload | null> {
-  const authHeader = request.headers.get("authorization")
-  if (!authHeader?.startsWith("Bearer ")) return null
-
-  try {
-    const { payload } = await jwtVerify(
-      authHeader.slice(7),
-      new TextEncoder().encode(config.jwtSecret),
-    )
-    return payload as unknown as JwtPayload
-  } catch {
-    return null
-  }
+/** Require JWT with admin role. Returns the payload or throws 401/403. */
+export async function requireAdmin(request: Request): Promise<JwtPayload> {
+  const user = await requireAuth(request)
+  if (user.role !== "admin") throw new HttpError(403, { error: "Forbidden" })
+  return user
 }
 
-/**
- * Verify JWT and check user is in the same voice channel as the bot.
- * Returns the JWT payload on success, or a Response on failure.
- */
-export async function verifyUserInVC(
+/** Require the authenticated user to be in the same voice channel as the bot. Admins bypass. */
+export async function requireUserInVC(
   bot: BassBot,
   request: Request,
   guildId: string,
-): Promise<JwtPayload | Response> {
-  const user = await verifyJwt(request)
-  if (!user) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 })
-
-  // Admins bypass voice channel check
+): Promise<JwtPayload> {
+  const user = await requireAuth(request)
   if (user.role === "admin") return user
 
   const guild = bot.guilds.cache.get(guildId)
-  if (!guild) return new Response(JSON.stringify({ error: "Guild not found" }), { status: 404 })
+  if (!guild) throw new HttpError(404, { error: "Guild not found" })
 
-  // Check if the user is in the guild
   const member = guild.members.cache.get(user.discordId)
-  if (!member) {
-    return new Response(
-      JSON.stringify({ error: "You are not a member of this server" }),
-      { status: 403 },
-    )
-  }
+  if (!member) throw new HttpError(403, { error: "You are not a member of this server" })
 
-  // Check if the bot is in a voice channel
   const botVC = guild.members.me?.voice.channel
-  if (!botVC) {
-    return new Response(
-      JSON.stringify({ error: "Bot is not in a voice channel" }),
-      { status: 400 },
-    )
-  }
+  if (!botVC) throw new HttpError(400, { error: "Bot is not in a voice channel" })
 
-  // Check if the user is in the same voice channel as the bot
   const userVC = member.voice.channel
   if (userVC?.id !== botVC.id) {
-    return new Response(
-      JSON.stringify({ error: "You must be in the same voice channel as the bot" }),
-      { status: 403 },
-    )
+    throw new HttpError(403, { error: "You must be in the same voice channel as the bot" })
   }
 
   return user
+}
+
+/** Verify a raw JWT string. Used for WebSocket auth (Sec-WebSocket-Protocol). */
+export async function verifyToken(token: string): Promise<JwtPayload> {
+  try {
+    return await verifyJwt(token, config.jwtSecret)
+  } catch {
+    throw new HttpError(401, { error: "Invalid token" })
+  }
 }

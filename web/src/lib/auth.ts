@@ -8,6 +8,7 @@ import * as schema from "./schema"
 import config from "./config"
 
 export const auth = betterAuth({
+  baseURL: config.webBaseUrl || undefined,
   basePath: "/rest/auth",
   database: drizzleAdapter(db, {
     provider: "sqlite",

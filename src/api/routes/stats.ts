@@ -4,6 +4,7 @@ import type { PlayerWithQueue } from "../../player"
 import { cache } from "../../util/api-cache"
 import { join } from "node:path"
 import { readFileSync } from "node:fs"
+import { requireAuth } from "../auth"
 
 const pkg = JSON.parse(readFileSync(join(import.meta.dir, "..", "..", "..", "package.json"), "utf-8")) as { version: string }
 
@@ -11,8 +12,9 @@ const TTL = 30_000
 
 export function statsRoutes(bot: BassBot) {
   return new Elysia()
-    .get("/stats", () =>
-      cache.resolve("stats", TTL, () => {
+    .get("/stats", async ({ request }) => {
+      await requireAuth(request)
+      return cache.resolve("stats", TTL, () => {
         const players = [...bot.lava.players.values()] as PlayerWithQueue[]
         return {
           botName: bot.user?.displayName ?? "bassbot",
@@ -26,6 +28,6 @@ export function statsRoutes(bot: BassBot) {
           uptime: process.uptime(),
           lavalinkNodes: bot.lava.nodes.size,
         }
-      }),
-    )
+      })
+    })
 }

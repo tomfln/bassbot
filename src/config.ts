@@ -1,76 +1,101 @@
 import { z } from "zod"
 import { resolve, join } from "node:path"
 import { existsSync, readFileSync } from "node:fs"
+import { parseEnv } from "@lib/init-env"
 
-// ── Resolve data directory (env-only, needed to locate config.json) ──
+// ── Env schema ──
 
-const dataDir = resolve(
-  process.env.DATA_DIR ?? join(import.meta.dir, "..", "data"),
-)
-
-// ── Load config.json ──
-
-let file: Record<string, unknown> = {}
-try {
-  const configPath = join(dataDir, "config.json")
-  if (existsSync(configPath)) {
-    file = JSON.parse(readFileSync(configPath, "utf-8")) as Record<string, unknown>
-  }
-} catch { /* config.json not found or invalid — env vars will be used */ }
-
-// ── Merge: config.json defaults, env vars override ──
-
-const raw = {
-  token: process.env.DISCORD_BOT_TOKEN ?? file.token,
-  appId: process.env.DISCORD_APP_ID ?? file.appId,
-  w2gKey: process.env.W2G_KEY ?? file.w2gKey,
-  jwtSecret: process.env.JWT_SECRET ?? file.jwtSecret,
-  dataDir,
-  apiPort:
-    process.env.API_PORT != null
-      ? Number(process.env.API_PORT)
-      : (file.apiPort ?? 3001),
-  apiEnabled:
-    process.env.API_ENABLED != null
-      ? process.env.API_ENABLED === "true" || process.env.API_ENABLED === "1"
-      : (file.apiEnabled ?? true),
-  nodes: file.nodes ?? [],
-}
-
-// ── Validate ──
-
-const configSchema = z.object({
-  token: z.string().min(1),
-  appId: z.string().min(1),
-  w2gKey: z.string().min(1),
-  jwtSecret: z.string().min(1),
-  dataDir: z.string(),
-  apiPort: z.number().default(3001),
-  apiEnabled: z.boolean().default(true),
-  nodes: z
-    .array(
-      z.object({
-        name: z.string(),
-        url: z.string(),
-        auth: z.string(),
-        secure: z.boolean().optional(),
-        group: z.string().optional(),
-      }),
-    )
-    .default([]),
+const envSchema = z.object({
+  DISCORD_BOT_TOKEN: z.string().min(1),
+  DISCORD_APP_ID: z.string().min(1),
+  W2G_KEY: z.string().optional(),
+  JWT_SECRET: z.string().min(1),
+  DATA_DIR: z.string().default(""),
+  API_PORT: z.coerce.number().default(3001),
+  API_ENABLED: z
+    .enum(["true", "false", "1", "0"])
+    .default("true")
+    .transform((v) => v === "true" || v === "1"),
+  WEB_BASE_URL: z.string().min(1),
+  // Primary lavalink node via env (LAVALINK_HOST, LAVALINK_PASSWORD, LAVALINK_NAME)
+  LAVALINK_HOST: z.string().optional(),
+  LAVALINK_PASSWORD: z.string().optional(),
+  LAVALINK_NAME: z.string().optional(),
+  LAVALINK_SECURE: z
+    .enum(["true", "false", "1", "0"])
+    .optional()
+    .transform((v) => v === "true" || v === "1"),
 })
 
-const result = configSchema.safeParse(raw)
+const env = parseEnv(process.env, envSchema)
 
-if (!result.success) {
-  console.error("\n❌ Invalid configuration:")
-  for (const [key, errors] of Object.entries(
-    result.error.flatten().fieldErrors,
-  )) {
-    console.error(` - ${key}: ${errors}`)
-  }
-  console.error("\nSet values in config.json or as environment variables.\n")
-  process.exit(1)
+// ── Resolve data directory ──
+
+const dataDir = env.DATA_DIR
+  ? resolve(env.DATA_DIR)
+  : resolve(join(import.meta.dir, "..", "data"))
+
+// ── Lavalink nodes ──
+
+interface LavalinkNode {
+  name: string
+  url: string
+  auth: string
+  secure?: boolean
 }
 
-export default result.data
+function loadNodes(): LavalinkNode[] {
+  const nodes: LavalinkNode[] = []
+
+  // 1. Primary node from env
+  if (env.LAVALINK_HOST && env.LAVALINK_PASSWORD) {
+    nodes.push({
+      name: env.LAVALINK_NAME ?? "main",
+      url: env.LAVALINK_HOST,
+      auth: env.LAVALINK_PASSWORD,
+      secure: env.LAVALINK_SECURE,
+    })
+  }
+
+  // 2. Extra nodes from LAVALINK_HOST_1, LAVALINK_PASSWORD_1, etc.
+  for (let i = 1; i <= 10; i++) {
+    const host = process.env[`LAVALINK_HOST_${i}`]
+    const password = process.env[`LAVALINK_PASSWORD_${i}`]
+    if (!host || !password) break
+    nodes.push({
+      name: process.env[`LAVALINK_NAME_${i}`] ?? `node${i}`,
+      url: host,
+      auth: password,
+      secure: process.env[`LAVALINK_SECURE_${i}`] === "true",
+    })
+  }
+
+  // 3. Fall back to nodes.json in data dir
+  if (nodes.length === 0) {
+    try {
+      const nodesPath = join(dataDir, "nodes.json")
+      if (existsSync(nodesPath)) {
+        const parsed = JSON.parse(readFileSync(nodesPath, "utf-8"))
+        if (Array.isArray(parsed)) return parsed as LavalinkNode[]
+      }
+    } catch { /* ignore */ }
+  }
+
+  return nodes
+}
+
+// ── Export ──
+
+const config = {
+  token: env.DISCORD_BOT_TOKEN,
+  appId: env.DISCORD_APP_ID,
+  w2gKey: env.W2G_KEY ?? "",
+  jwtSecret: env.JWT_SECRET,
+  dataDir,
+  apiPort: env.API_PORT,
+  apiEnabled: env.API_ENABLED,
+  nodes: loadNodes(),
+  webBaseUrl: env.WEB_BASE_URL,
+}
+
+export default config
