@@ -12,7 +12,7 @@
     "g": "turbo run g --filter=@bassbot/bot",
     "register": "turbo run register --filter=@bassbot/bot",
     "gen:commands": "turbo run gen:commands --filter=@bassbot/bot",
-    "ci:docker-check": "bun apps/bot/scripts/docker-publish-check.ts",
+    "ci:docker-check": "bun packages/scripts/docker-publish-check.ts",
     "build-bot": "docker build -t bassbot:latest -f docker/Dockerfile.bot .",
     "build-web": "docker build -t bassbot-web:latest -f docker/Dockerfile.web .",
     "build-docker": "bun run build-bot && bun run build-web"
