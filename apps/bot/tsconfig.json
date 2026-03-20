@@ -1,0 +1,10 @@
+{
+  "extends": "@bassbot/tsconfig/base.json",
+  "compilerOptions": {
+    "paths": {
+      "@bot/*": ["./src/*"],
+      "@lib/*": ["../../packages/lib/src/*"]
+    }
+  },
+  "include": ["./src/**/*", "./scripts/**/*", "eslint.config.ts", "drizzle.config.ts"]
+}

@@ -33,7 +33,7 @@ const env = parseEnv(process.env, envSchema)
 
 const dataDir = env.DATA_DIR
   ? resolve(env.DATA_DIR)
-  : resolve(join(import.meta.dir, "..", "data"))
+  : resolve(join(import.meta.dir, "..", "..", "..", "data"))
 
 // ── Lavalink nodes ──
 

@@ -32,7 +32,7 @@ const env = isBuild
 
 const dataDir = env.DATA_DIR
   ? resolve(env.DATA_DIR)
-  : resolve(join(process.cwd(), "..", "data"))
+  : resolve(join(process.cwd(), "..", "..", "data"))
 
 const config = {
   appId: env.DISCORD_APP_ID ?? "",

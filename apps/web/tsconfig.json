@@ -20,8 +20,8 @@
     ],
     "paths": {
       "@web/*": ["./src/*"],
-      "@bot/*": ["../src/*"],
-      "@lib/*": ["../lib/*"]
+      "@bot/*": ["../bot/src/*"],
+      "@lib/*": ["../../packages/lib/src/*"]
     }
   },
   "include": [

@@ -1,0 +1,9 @@
+{
+  "extends": "@bassbot/tsconfig/base.json",
+  "compilerOptions": {
+    "paths": {
+      "@lib/*": ["./src/*"]
+    }
+  },
+  "include": ["./src/**/*"]
+}

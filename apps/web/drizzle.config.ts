@@ -6,6 +6,6 @@ export default defineConfig({
   out: "./drizzle",
   dbCredentials: {
     // for local studio 
-    url: "file:./data/web.db",
+    url: "file:../../data/web.db",
   }
 })

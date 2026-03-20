@@ -1,0 +1,50 @@
+{
+  "name": "@bassbot/bot",
+  "version": "1.4.0",
+  "private": true,
+  "module": "src/index.ts",
+  "type": "module",
+  "scripts": {
+    "dev": "bun --watch src/index.ts",
+    "start": "bun run src/index.ts",
+    "lint": "tsc",
+    "eslint": "eslint .",
+    "g": "bun scripts/generate.ts",
+    "register": "bun scripts/register-commands.ts",
+    "gen:commands": "bun scripts/generate-commands-json.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "@bassbot/lib": "workspace:*",
+    "@elysiajs/cors": "^1.4.1",
+    "@elysiajs/static": "^1.4.7",
+    "@sinclair/typebox": ">=0.34.0 <1",
+    "chalk": "^5.6.2",
+    "discord.js": "^14.25.1",
+    "drizzle-orm": "^0.45.1",
+    "elysia": "^1.4.25",
+    "jose": "^6.1.3",
+    "moment": "^2.30.1",
+    "shoukaku": "^4.3.0",
+    "string-pixel-width": "^1.11.0",
+    "zod": "4.3.6"
+  },
+  "devDependencies": {
+    "@bassbot/config": "workspace:*",
+    "@bassbot/tsconfig": "workspace:*",
+    "@eslint/js": "^9.39.2",
+    "@inquirer/prompts": "^8.2.1",
+    "@types/bun": "^1.3.9",
+    "@types/string-pixel-width": "^1.11.0",
+    "@typescript-eslint/parser": "^8.55.0",
+    "drizzle-kit": "^0.31.9",
+    "eslint": "^9.39.2",
+    "globals": "^17.3.0",
+    "jiti": "^2.6.1",
+    "prettier": "^3.8.1",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.55.0"
+  },
+  "prettier": "@bassbot/config/prettier"
+}

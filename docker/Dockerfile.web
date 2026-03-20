@@ -4,7 +4,10 @@ WORKDIR /app
 # ── Dependencies ──
 FROM base AS deps
 COPY package.json bun.lock ./
-COPY web/package.json web/
+COPY apps/bot/package.json apps/bot/
+COPY apps/web/package.json apps/web/
+COPY packages/lib/package.json packages/lib/
+COPY packages/config/package.json packages/config/
 RUN bun install --frozen-lockfile
 
 # ── Build ──
@@ -13,17 +16,17 @@ FROM base AS builder
 COPY . .
 # Overlay installed node_modules from deps stage
 COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/web/node_modules ./web/node_modules
-WORKDIR /app/web
+COPY --from=deps /app/apps/web/node_modules ./apps/web/node_modules
+WORKDIR /app/apps/web
 ENV NEXT_TELEMETRY_DISABLED=1
 # Run next build directly — the prebuild (generate-commands-json) requires
 # bot runtime config that isn't available at image build time.
-# commands.json is committed to web/src/assets/ and kept up-to-date in CI.
+# commands.json is committed to apps/web/src/assets/ and kept up-to-date in CI.
 RUN bun run next build
 
 # ── Production ──
-# With outputFileTracingRoot pointing to repo root, standalone
-# preserves the web/ + lib/ directory layout.
+# With outputFileTracingRoot pointing to monorepo root, standalone
+# preserves the apps/web/ + packages/lib/ directory layout.
 FROM base AS runner
 WORKDIR /app
 
@@ -39,13 +42,13 @@ RUN useradd --system --uid 1001 --create-home --shell /usr/sbin/nologin nextjs \
 COPY docker/web-entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-COPY --from=builder /app/web/public ./web/public
-COPY --from=builder --chown=nextjs /app/web/.next/standalone ./
-COPY --from=builder --chown=nextjs /app/web/.next/static ./web/.next/static
+COPY --from=builder /app/apps/web/public ./apps/web/public
+COPY --from=builder --chown=nextjs /app/apps/web/.next/standalone ./
+COPY --from=builder --chown=nextjs /app/apps/web/.next/static ./apps/web/.next/static
 
 EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
 ENTRYPOINT ["/entrypoint.sh"]
-CMD ["bun", "web/server.js"]
+CMD ["bun", "apps/web/server.js"]

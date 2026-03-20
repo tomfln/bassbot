@@ -2,7 +2,7 @@
 #   Quickly register your slash commands with this script.
 #   You can choose to register to the application or only to a specific guild.
 #
-#   made by nlfmt aka Tom F (https://github.com/nlfmt)
+#   made by Tom F (https://github.com/tomfln)
 #   MIT License
 */
 
@@ -44,7 +44,7 @@ const opts = {
   ...(guildId && { guildId }),
 }
 
-const commandDir = path.join(import.meta.dir, "..", "..", "src", "commands")
+const commandDir = path.join(import.meta.dir, "..", "src", "commands")
 
 if (mode === "clear") {
   rl.question(

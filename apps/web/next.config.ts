@@ -4,8 +4,8 @@ import path from "node:path";
 const nextConfig: NextConfig = {
   reactCompiler: true,
   output: "standalone",
-  // Include parent dir so standalone output traces ../lib/* runtime imports
-  outputFileTracingRoot: path.join(__dirname, ".."),
+  // Include monorepo root so standalone output traces packages/lib/* runtime imports
+  outputFileTracingRoot: path.join(__dirname, "../.."),
 };
 
 export default nextConfig;

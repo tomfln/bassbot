@@ -26,8 +26,8 @@ const isMainPush = eventName === "push" && gitRef === "refs/heads/main";
 const shouldCheckRegistry = !isPr && !commitMessage.includes("[no-publish]") && (isDispatch || isMainPush);
 
 const images: Image[] = [
-	{ name: "bot", repo: "bassbot", packageFile: "package.json", version: "", build: false, publish: false, exists: null, reason: "" },
-	{ name: "web", repo: "bassbot-web", packageFile: "web/package.json", version: "", build: false, publish: false, exists: null, reason: "" },
+	{ name: "bot", repo: "bassbot", packageFile: "apps/bot/package.json", version: "", build: false, publish: false, exists: null, reason: "" },
+	{ name: "web", repo: "bassbot-web", packageFile: "apps/web/package.json", version: "", build: false, publish: false, exists: null, reason: "" },
 ];
 
 console.log(`[docker-check] event=${eventName} ref=${gitRef || "<none>"} owner=${owner}`);

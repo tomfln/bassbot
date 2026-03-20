@@ -5,7 +5,7 @@ import { spawn } from "bun"
 import { select, input } from "@inquirer/prompts"
 
 const TEMPLATE_DIR = path.join(import.meta.dir, "templates")
-const COMMANDS_DIR = "src/commands"
+const COMMANDS_DIR = path.join(import.meta.dir, "..", "src", "commands")
 
 type TemplateType = "command" | "validator" | "middleware"
 
@@ -115,13 +115,13 @@ async function generateCommand(category: string, command: string) {
 }
 
 async function generateValidator(name: string) {
-  const validatorDir = "src/validators"
+  const validatorDir = path.join(import.meta.dir, "..", "src", "validators")
   await mkdir(validatorDir, { recursive: true })
   await writeTemplate("validator", `${validatorDir}/${name}.ts`)
 }
 
 async function generateMiddleware(name: string) {
-  const middlewareDir = "src/middlewares"
+  const middlewareDir = path.join(import.meta.dir, "..", "src", "middlewares")
   await mkdir(middlewareDir, { recursive: true })
   await writeTemplate("middleware", `${middlewareDir}/${name}.ts`)
 }

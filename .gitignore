@@ -114,6 +114,9 @@ web_modules/
 .next
 out
 
+# Turborepo
+.turbo
+
 # Nuxt.js build / generate output
 
 .nuxt
