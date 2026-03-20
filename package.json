@@ -18,7 +18,7 @@
     "build-docker": "bun run build-bot && bun run build-web"
   },
   "devDependencies": {
-    "turbo": "^2.5.4",
+    "turbo": "^2.8.20",
     "prettier": "^3.8.1"
   },
   "prettier": "@bassbot/config/prettier",
