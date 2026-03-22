@@ -8,12 +8,20 @@ COPY apps/bot/package.json apps/bot/
 COPY apps/web/package.json apps/web/
 COPY packages/lib/package.json packages/lib/
 COPY packages/config/package.json packages/config/
+COPY packages/tsconfig/package.json packages/tsconfig/
+COPY packages/scripts/package.json packages/scripts/
 RUN bun install --frozen-lockfile
 
 # ── Build ──
 FROM base AS builder
 # Copy full repo (web imports @bot/* and @lib/* types from bot source)
-COPY . .
+# COPY . .
+COPY apps/web/ apps/web/
+COPY apps/bot/ apps/bot/
+COPY packages/lib/ packages/lib/
+COPY packages/config/ packages/config/
+COPY packages/tsconfig/ packages/tsconfig/
+
 # Overlay installed node_modules from deps stage
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/apps/web/node_modules ./apps/web/node_modules
