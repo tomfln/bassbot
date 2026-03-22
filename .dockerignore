@@ -1,6 +1,6 @@
 node_modules
-web/node_modules
-web/.next
+apps/web/node_modules
+apps/web/.next
 data
 bassbot-data
 lavalink
@@ -9,3 +9,4 @@ lavalink
 .env
 .env.*
 *.md
+.turbo

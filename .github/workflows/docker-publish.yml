@@ -22,10 +22,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
-      - run: bun run eslint
       - run: bun run lint
-      - name: Lint web dashboard
-        run: cd web && bun run lint
 
   # ── Determine which images need building / publishing ──────
   check:

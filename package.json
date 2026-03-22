@@ -1,55 +1,26 @@
 {
   "name": "bassbot",
   "version": "1.4.0",
-  "module": "src/index.ts",
-  "type": "module",
-  "workspaces": ["web"],
+  "private": true,
+  "workspaces": ["apps/*", "packages/*"],
   "scripts": {
-    "dev": "bun lib/scripts/dev.ts",
-    "dev:bot": "bun --watch src/index.ts",
-    "dev:web": "cd web && bun run dev",
-    "register": "bun lib/scripts/register-commands.ts",
-    "start": "bun run src/index.ts",
-    "ci:docker-check": "bun lib/scripts/docker-publish-check.ts",
-    "eslint": "eslint .",
-    "lint": "tsc",
-    "g": "bun lib/scripts/generate.ts",
-    "db:generate": "drizzle-kit generate",
-    "db:studio": "drizzle-kit studio",
+    "dev": "turbo dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "eslint": "turbo run eslint",
+    "test": "turbo run test",
+    "g": "bun run apps/bot/scripts/generate.ts",
+    "register": "bun run apps/bot/scripts/register-commands.ts",
+    "gen:commands": "turbo run gen:commands --filter=@bassbot/bot",
+    "ci:docker-check": "bun packages/scripts/docker-publish-check.ts",
     "build-bot": "docker build -t bassbot:latest -f docker/Dockerfile.bot .",
     "build-web": "docker build -t bassbot-web:latest -f docker/Dockerfile.web .",
-    "build": "bun run build-bot && bun run build-web"
+    "build-docker": "bun run build-bot && bun run build-web"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.2",
-    "@inquirer/prompts": "^8.2.1",
-    "@types/bun": "^1.3.9",
-    "@types/string-pixel-width": "^1.11.0",
-    "@typescript-eslint/parser": "^8.55.0",
-    "drizzle-kit": "^0.31.9",
-    "eslint": "^9.39.2",
-    "globals": "^17.3.0",
-    "jiti": "^2.6.1",
-    "prettier": "^3.8.1",
-    "prettier-eslint": "^16.4.2",
-    "typescript-eslint": "^8.55.0"
+    "turbo": "^2.8.20",
+    "prettier": "^3.8.1"
   },
-  "peerDependencies": {
-    "typescript": "^5.9.3"
-  },
-  "dependencies": {
-    "@elysiajs/cors": "^1.4.1",
-    "@elysiajs/static": "^1.4.7",
-    "@sinclair/typebox": ">=0.34.0 <1",
-    "chalk": "^5.6.2",
-    "discord.js": "^14.25.1",
-    "drizzle-orm": "^0.45.1",
-    "elysia": "^1.4.25",
-    "jose": "^6.1.3",
-    "moment": "^2.30.1",
-    "shoukaku": "^4.3.0",
-    "string-pixel-width": "^1.11.0",
-    "zod": "4.3.6"
-  },
-  "packageManager": "pnpm@10.2.0+sha512.0d27364e0139c6aadeed65ada153135e0ca96c8da42123bd50047f961339dc7a758fc2e944b428f52be570d1bd3372455c1c65fa2e7aa0bfbf931190f9552001"
+  "prettier": "@bassbot/config/prettier",
+  "packageManager": "bun@1.3.5"
 }

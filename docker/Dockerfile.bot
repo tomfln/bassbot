@@ -6,14 +6,19 @@ RUN mkdir -p /data && chown -R bun:bun /data
 
 # Install workspace dependencies
 COPY package.json bun.lock ./
-COPY web/package.json web/
+COPY apps/bot/package.json apps/bot/
+COPY apps/web/package.json apps/web/
+COPY packages/lib/package.json packages/lib/
+COPY packages/config/package.json packages/config/
+COPY packages/scripts/package.json packages/scripts/
+COPY packages/tsconfig/package.json packages/tsconfig/
 RUN bun install --frozen-lockfile
 
 # Copy source
-COPY tsconfig.json ./
-COPY lib/ lib/
-COPY src/ src/
-COPY drizzle/ drizzle/
+COPY packages/tsconfig/base.json packages/tsconfig/base.json
+COPY packages/lib/ packages/lib/
+COPY apps/bot/ apps/bot/
 
 USER bun
+WORKDIR /app/apps/bot
 CMD ["bun", "start"]
