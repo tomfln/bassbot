@@ -10,10 +10,11 @@ COPY apps/bot/package.json apps/bot/
 COPY apps/web/package.json apps/web/
 COPY packages/lib/package.json packages/lib/
 COPY packages/config/package.json packages/config/
+COPY packages/tsconfig/package.json packages/tsconfig/
 RUN bun install --frozen-lockfile
 
 # Copy source
-COPY tsconfig.json ./
+COPY packages/tsconfig/base.json packages/tsconfig/base.json
 COPY packages/lib/ packages/lib/
 COPY apps/bot/ apps/bot/
 

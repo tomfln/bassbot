@@ -5,13 +5,13 @@
   "module": "src/index.ts",
   "type": "module",
   "scripts": {
-    "dev": "bun --watch src/index.ts",
-    "start": "bun run src/index.ts",
+    "dev": "bun --env-file=../../.env --hot src/index.ts",
+    "start": "bun run --env-file=../../.env src/index.ts",
     "lint": "tsc",
     "eslint": "eslint .",
     "g": "bun scripts/generate.ts",
-    "register": "bun scripts/register-commands.ts",
-    "gen:commands": "bun scripts/generate-commands-json.ts",
+    "register": "bun --env-file=../../.env scripts/register-commands.ts",
+    "gen:commands": "bun --env-file=../../.env scripts/generate-commands-json.ts",
     "db:generate": "drizzle-kit generate",
     "db:studio": "drizzle-kit studio"
   },

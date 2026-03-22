@@ -6,12 +6,12 @@
       "name": "bassbot",
       "devDependencies": {
         "prettier": "^3.8.1",
-        "turbo": "^2.5.4",
+        "turbo": "^2.8.20",
       },
     },
     "apps/bot": {
       "name": "@bassbot/bot",
-      "version": "1.4.0",
+      "version": "1.4.1",
       "dependencies": {
         "@bassbot/lib": "workspace:*",
         "@elysiajs/cors": "^1.4.1",
@@ -46,7 +46,7 @@
     },
     "apps/web": {
       "name": "@bassbot/web",
-      "version": "1.1.2",
+      "version": "1.1.3",
       "dependencies": {
         "@base-ui/react": "^1.2.0",
         "@bassbot/lib": "workspace:*",
@@ -110,6 +110,10 @@
         "@types/bun": "^1.3.9",
         "typescript": "^5.9.3",
       },
+    },
+    "packages/scripts": {
+      "name": "@bassbot/scripts",
+      "version": "0.0.0",
     },
     "packages/tsconfig": {
       "name": "@bassbot/tsconfig",
@@ -191,6 +195,8 @@
     "@bassbot/config": ["@bassbot/config@workspace:packages/config"],
 
     "@bassbot/lib": ["@bassbot/lib@workspace:packages/lib"],
+
+    "@bassbot/scripts": ["@bassbot/scripts@workspace:packages/scripts"],
 
     "@bassbot/tsconfig": ["@bassbot/tsconfig@workspace:packages/tsconfig"],
 

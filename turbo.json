@@ -13,7 +13,7 @@
       "dependsOn": ["^lint"]
     },
     "eslint": {
-      "dependsOn": ["^lint"]
+      "dependsOn": ["^eslint"]
     },
     "test": {
       "cache": false
