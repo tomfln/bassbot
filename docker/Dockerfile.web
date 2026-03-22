@@ -25,6 +25,7 @@ COPY packages/tsconfig/ packages/tsconfig/
 # Overlay installed node_modules from deps stage
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/apps/web/node_modules ./apps/web/node_modules
+COPY --from=deps /app/packages/lib/node_modules ./packages/lib/node_modules
 WORKDIR /app/apps/web
 ENV NEXT_TELEMETRY_DISABLED=1
 # Run next build directly — the prebuild (generate-commands-json) requires
